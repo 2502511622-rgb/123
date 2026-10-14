@@ -57,6 +57,7 @@ func run() -> void:
 	await frames(3)
 	check(game.state.zone == "graveyard" and game.world.plot_at(Vector2(335, 270)) == -1, "separate cemetery map")
 	check(get_nodes_in_group("enemies").filter(func(e): return not e.is_queued_for_deletion()).size() == 5, "cemetery spawns enemies")
+	for actor in get_nodes_in_group("enemies"): actor.stun = 100
 	var enemy: YinEnemy = game.nearest_enemy(Vector2(280, 240), 40)
 	var enemy_record: Dictionary = enemy.record
 	game.player.position = Vector2(280, 273)
@@ -78,6 +79,8 @@ func run() -> void:
 	var r: Dictionary = game.state.remains[0]
 	check(r.zone == "graveyard" and r.integrity == 100 and r.fierceness == 12, "suppressed combat yields better remains")
 	game.state.pickup(r.id)
+	game.state.cultivation = 80
+	game.state.learn_skill("fire")
 	var second: YinEnemy = game.nearest_enemy(Vector2(380, 390), 45)
 	var second_record: Dictionary = second.record
 	game.player.position = Vector2(380, 423)
@@ -118,7 +121,7 @@ func run() -> void:
 	var hp: int = game.state.health
 	game.take_damage(20)
 	check(game.state.health == hp, "dodge grants real invulnerability")
-	if boss != null: boss.receive_hit(500, "sword")
+	if boss != null: boss.receive_hit(10000, "sword")
 	await frames(2)
 	check(game.state.boss_defeated and not game.has_live_boss(), "boss defeated through scene combat")
 	game.advance_day()

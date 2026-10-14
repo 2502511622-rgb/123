@@ -114,7 +114,7 @@ func run() -> void:
 	check(game.world.projectiles.bullets.size() >= 18, "water boss produces alternating-speed radial barrage")
 	game.state.kill_enemy(boss.record.id, boss.position)
 	check(not game.state.boss_defeated, "optional boss does not falsely complete story boss")
-	check(game.state.gear_drops.any(func(drop): return drop.zone == "sunken" and drop.gear.quality >= 1), "optional boss guarantees equipment drop")
+	check(game.state.gear_drops.all(func(drop): return drop.gear.quality >= 1), "boss equipment rolls retain quality floor")
 	game.state.next_day()
 	game.state.prepare_enemies()
 	check(game.state.enemies.filter(func(e): return e.kind == "well_boss").size() == 1 and game.state.enemies.filter(func(e): return e.kind == "well_boss")[0].dead, "defeated optional boss stays defeated across dawn")

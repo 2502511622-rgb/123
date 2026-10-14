@@ -9,7 +9,7 @@ const CROPS = {
 	"gourd": preload("res://resources/crops/gourd.tres"),
 	"rice": preload("res://resources/crops/rice.tres")
 }
-const SPIRITS = {"water": "担水尸", "bone": "掘土骨", "child": "食秽童"}
+const SPIRITS = {"water": "担水尸", "bone": "掘土骨", "child": "食秽童", "archer": "吐骨役灵", "lantern": "追灯役灵", "gunner": "纸铳役灵", "brute": "山魈役灵", "boss": "棺将", "well_boss": "井中龙婆", "opera_boss": "无面伶王"}
 const INVENTORY_KEYS = ["candle_seeds", "vine_seeds", "gourd_seeds", "rice_seeds", "candle", "vine", "gourd", "rice"]
 var day: int = 1
 var money: int = 90
@@ -26,6 +26,17 @@ var equipped_gear: int = 1
 var equipped_armor: int = 0
 var next_gear_id: int = 3
 var smart_farming: bool = true
+var weapon_slots: Dictionary = {"melee": 1, "primary": 0, "secondary": 2}
+var active_slot: String = "melee"
+var skill_ranks: Dictionary = {"seal": 1, "fire": 0, "breath": 0, "command": 0}
+var skill_charges: Dictionary = {"seal": 2, "fire": 2}
+var skill_timers: Dictionary = {"seal": 0.0, "fire": 0.0}
+var energy_fraction: float = 0
+var villagers: Array = []
+var letters: Array = []
+var raid_day: int = 0
+var raid_status: String = "quiet"
+var village_integrity: int = 100
 var storage: Dictionary = {}
 var bag_slots: Array = []
 var chest_slots: Array = []
@@ -65,6 +76,8 @@ var order: String = "follow"
 
 func _init() -> void:
 	for id in YinItemCatalog.IDS: storage[id] = 0
+	for i in range(6):
+		villagers.append({"id": i + 1, "name": ["村长柳伯", "药婆秋婶", "铁匠阿祁", "灯匠小满", "农人禾生", "书生砚青"][i], "hp": 100, "max_hp": 100, "at": [260.0 + (i % 3) * 300, 300.0 + int(i / 3) * 320]})
 	for i in range(WIDTH * HEIGHT):
 		plots.append({"tilled": false, "crop": "", "growth": 0, "watered": false, "yin": 0, "sealed": false, "branch": "eat"})
 
@@ -87,7 +100,7 @@ func use_tool(index: int, tool: int) -> String:
 		if p.crop == "" or p.growth < CROPS[p.crop].growth_days:
 			return "未成熟。每日浇灌后，睡觉推进生长。"
 		if p.crop == "rice" and not p.sealed:
-			return "稻穗传来师父的声音。不要答应：靠近按 E，以一张符封声。"
+			return "稻穗传来师父的声音。不要答应：靠近按 E，以镇符技能封声。"
 		if not can_gain(p.crop, 1): return "行囊已满，先去仓箱存放物品。"
 		inventory[p.crop] += 1
 		total_harvest += 1
@@ -129,15 +142,14 @@ func seal_plot(index: int) -> String:
 		return "没有需要封声的禁种。"
 	if plots[index].sealed:
 		return "这一株已封声。"
-	if talismans < 1:
-		return "需要一张符箓，在义庄用阴灰制作。"
-	talismans -= 1
+	if not spend_skill("seal"):
+		return "镇符体力或充能不足。"
 	plots[index].sealed = true
 	pollution = maxi(0, pollution - 5)
 	return "符纸贴上稻穗，声音停了。现在可以安全收获。"
 
 func capacity() -> int:
-	return (2 if hall_level == 1 else 3) + int((YinBalance.level(cultivation) - 1) / 3)
+	return (2 if hall_level == 1 else 3) + int((YinBalance.level(cultivation) - 1) / 3) + int(skill_ranks.command)
 
 func release_gourd(index: int) -> String:
 	if spirits.size() >= capacity():
@@ -159,7 +171,7 @@ func make_spirit(kind: String, risk: int, branch: String = "eat") -> Dictionary:
 	var spirit_name: String = SPIRITS.get(kind, "无名役灵")
 	if kind == "child":
 		spirit_name = {"eat": "食秽童", "light": "提灯童", "shadow": "伏影童"}.get(branch, "食秽童")
-	var spirit: Dictionary = {"id": next_id, "kind": kind, "name": spirit_name, "branch": branch, "job": "rest", "risk": clampi(risk, 0, 90), "affinity": 0, "level": 1}
+	var spirit: Dictionary = {"id": next_id, "kind": kind, "name": spirit_name, "branch": branch, "job": "rest", "risk": clampi(risk, 0, 90), "affinity": 0, "level": 1, "source_kind": "lantern" if kind == "child" else kind, "hp": YinAbilities.spirit_hp(kind, 1), "max_hp": YinAbilities.spirit_hp(kind, 1), "xp": 0, "active": deployment_used() + YinAbilities.deployment_cost(kind) <= 3}
 	next_id += 1
 	return spirit
 
@@ -175,11 +187,13 @@ func rollcall() -> String:
 func next_day() -> void:
 	var report: Array[String] = []
 	var kept: Array = []
+	settle_raid()
 	for s in spirits:
 		if called_day != day:
 			s.risk += 20
-		if oil > 0:
-			oil -= 1
+		if oil >= YinAbilities.deployment_cost(s.source_kind):
+			oil -= YinAbilities.deployment_cost(s.source_kind)
+			s.hp = mini(s.max_hp, s.hp + maxi(8, int(s.max_hp / 4)))
 		else:
 			s.risk += 25
 			continue_spirit_warning(report, s.name)
@@ -197,7 +211,7 @@ func next_day() -> void:
 		if s.job == "water" and s.kind == "water":
 			for p in plots:
 				if p.crop != "": p.watered = true
-		elif s.job == "dig" and s.kind == "bone":
+		elif s.job == "dig" and s.kind in ["bone", "brute"]:
 			var dug: int = 0
 			for p in plots:
 				if not p.tilled and dug < 3:
@@ -220,6 +234,13 @@ func next_day() -> void:
 	health = mini(100, health + 45)
 	minutes = 360
 	weather = "rain" if day % 4 == 0 else "sun"
+	for villager in villagers: villager.hp = mini(100, villager.hp + 15)
+	if day % 3 == 0:
+		raid_day = day
+		raid_status = "warned"
+		letters.append({"day": day, "status": "warned", "read": false})
+		while letters.size() > 12: letters.pop_front()
+		add_log("青槐村来信：今夜邪祟将袭村，请到村口救援。")
 	for p in plots:
 		p.watered = p.crop != "" and weather == "rain"
 	ward = maxi(0, ward - 5 - int(pollution / 20))
@@ -230,7 +251,8 @@ func next_day() -> void:
 
 func preferred_job(s: Dictionary) -> String:
 	if s.kind == "water": return "water"
-	if s.kind == "bone": return "dig"
+	if s.kind in ["bone", "brute"]: return "dig"
+	if s.kind != "child": return "guard"
 	return "guard" if s.branch == "light" else "clean"
 
 func continue_spirit_warning(report: Array[String], spirit_name: String) -> void:
@@ -316,7 +338,7 @@ func craft(which: String) -> String:
 func prepare_enemies() -> void:
 	if enemy_day == day: return
 	enemy_day = day
-	enemies = enemies.filter(func(e): return (e.zone == "farm" and not e.dead) or e.kind in ["well_boss", "opera_boss"])
+	enemies = enemies.filter(func(e): return (e.zone == "farm" and not e.dead) or e.kind in ["well_boss", "opera_boss"] or (e.zone == "village" and int(e.get("raid", 0)) > 0 and not e.dead))
 	for i in range(5):
 		var kind: String = "water" if i % 2 == 0 else "bone"
 		spawn_record(kind, "graveyard", Vector2(280 + i * 100, 240 + (i % 2) * 150), 1 + int((day - 1) / 4))
@@ -346,9 +368,11 @@ func kill_enemy(id: int, at: Vector2) -> void:
 		if e.id != id or e.dead: continue
 		e.dead = true
 		var boss: bool = e.kind == "boss"
-		remains.append({"id": next_id, "kind": e.kind, "name": "棺将遗骸" if boss else ("担水尸骸" if e.kind == "water" else YinBalance.MONSTERS[e.kind].name + "遗骸"), "integrity": e.integrity, "regret": "守门" if boss else ("生前担水" if e.kind == "water" else {"bone": "替人掘墓", "archer": "守山残念", "lantern": "不肯熄灭的旧灯", "gunner": "未传到的军令", "brute": "山中猎食"}.get(e.kind, "未散残念")), "fierceness": 50 if boss else (12 if e.suppressed else 30), "yin": "山煞" if boss else ("水阴" if e.kind == "water" else "土阴"), "at": [at.x, at.y], "zone": e.zone})
+		remains.append({"id": next_id, "kind": e.kind, "name": "棺将遗骸" if boss else ("担水尸骸" if e.kind == "water" else YinBalance.MONSTERS[e.kind].name + "遗骸"), "integrity": e.integrity, "regret": "守门" if boss else ("生前担水" if e.kind == "water" else {"bone": "替人掘墓", "archer": "守山残念", "lantern": "不肯熄灭的旧灯", "gunner": "未传到的军令", "brute": "山中猎食"}.get(e.kind, "未散残念")), "fierceness": 40 if e.kind in YinAbilities.BOSSES else (12 if e.suppressed else 30), "yin": "山煞" if boss else ("水阴" if e.kind == "water" else "土阴"), "at": [at.x, at.y], "zone": e.zone, "source_level": int(e.get("level", 1))})
 		next_id += 1
 		cultivation += (8 * int(e.get("level", 1))) if not boss else 30
+		for spirit in spirits:
+			if spirit.active and spirit.hp > 0: gain_spirit_xp(spirit, 8 + int(e.get("level", 1)) * 2)
 		reward_enemy(e, at)
 		if e.kind in ["well_boss", "opera_boss"]:
 			add_log("支线首领已超克：" + YinBalance.MONSTERS[e.kind].name)
@@ -375,13 +399,16 @@ func process_remains(id: int, method: String, plot_index: int = -1) -> String:
 	if r.is_empty(): return "没有这具遗骸。"
 	match method:
 		"refine":
-			if r.kind in ["boss", "well_boss", "opera_boss"]: return "首领残念不可收役，可拆解、埋田或超度。"
 			if r.integrity < 60: return "完整度不足 60，不能炼成完整役灵。"
 			if spirits.size() >= capacity(): return "安置位不足。可先扩建或选择其他用途。"
-			if oil < 2: return "炼化需要 2 灯油。"
-			oil -= 2
-			var kind: String = "water" if r.kind == "water" else ("child" if r.kind == "lantern" else "bone")
-			spirits.append(make_spirit(kind, r.fierceness, "shadow" if r.kind == "lantern" else "eat"))
+			var cost: int = 6 if r.kind in YinAbilities.BOSSES else 2
+			if oil < cost: return "炼化需要 %d 灯油。" % cost
+			oil -= cost
+			var spirit: Dictionary = make_spirit(r.kind, r.fierceness)
+			spirit.level = clampi(int(r.get("source_level", 1)), 1, 10)
+			spirit.max_hp = YinAbilities.spirit_hp(r.kind, spirit.level)
+			spirit.hp = spirit.max_hp
+			spirits.append(spirit)
 		"dismantle":
 			if not can_gain_many({"bone": 2 if r.integrity >= 60 else 1, "ash": 2 if r.kind == "boss" else 1}): return "行囊已满，遗骸保持原状。"
 			bones += 2 if r.integrity >= 60 else 1
@@ -436,7 +463,7 @@ func ritual(path: String) -> String:
 func maybe_boss() -> bool:
 	if boss_spawned or minutes < 1080 or (day < 9 and ritual_count == 0): return false
 	boss_spawned = true
-	enemies.append({"id": next_id, "kind": "boss", "zone": "farm", "at": [248.0, 300.0], "hp": 220 + pollution, "max_hp": 220 + pollution, "integrity": 100, "suppressed": false, "dead": false})
+	enemies.append({"id": next_id, "kind": "boss", "zone": "farm", "at": [248.0, 300.0], "hp": 520 + pollution * 2, "max_hp": 520 + pollution * 2, "damage": 23, "armor": 18, "level": 4, "elite": true, "integrity": 100, "suppressed": false, "dead": false})
 	next_id += 1
 	add_log("夜袭：棺中客循着田里的声音，来到了义庄。")
 	return true
@@ -462,14 +489,14 @@ func choose_ending(choice: String) -> String:
 func snapshot() -> Dictionary:
 	YinInventoryModel.new(self, "bag").sync()
 	YinInventoryModel.new(self, "chest").sync()
-	var data: Dictionary = {"version": 5}
+	var data: Dictionary = {"version": 6}
 	for key in save_keys(): data[key] = get(key)
 	data.player_position = [player_position.x, player_position.y]
 	data.saved_facing = [saved_facing.x, saved_facing.y]
 	return data.duplicate(true)
 
 static func save_keys() -> Array:
-	return ["equipment", "gear_drops", "equipped_gear", "equipped_armor", "next_gear_id", "smart_farming", "day", "money", "energy", "health", "minutes", "weather", "selected_crop", "inventory", "supplies", "storage", "bag_slots", "chest_slots", "terrain", "drops", "placements", "plots", "oil", "talismans", "bones", "ash", "reputation", "cultivation", "pollution", "ward", "hall_level", "spirits", "remains", "cargo", "enemies", "enemy_day", "next_id", "total_harvest", "called_day", "ritual_count", "ritual_path", "boss_spawned", "boss_defeated", "ending", "intro_seen", "zone", "journal", "last_report", "order"]
+	return ["weapon_slots", "active_slot", "skill_ranks", "skill_charges", "skill_timers", "villagers", "letters", "raid_day", "raid_status", "village_integrity", "equipment", "gear_drops", "equipped_gear", "equipped_armor", "next_gear_id", "smart_farming", "day", "money", "energy", "health", "minutes", "weather", "selected_crop", "inventory", "supplies", "storage", "bag_slots", "chest_slots", "terrain", "drops", "placements", "plots", "oil", "talismans", "bones", "ash", "reputation", "cultivation", "pollution", "ward", "hall_level", "spirits", "remains", "cargo", "enemies", "enemy_day", "next_id", "total_harvest", "called_day", "ritual_count", "ritual_path", "boss_spawned", "boss_defeated", "ending", "intro_seen", "zone", "journal", "last_report", "order"]
 
 static func valid_int(value: Variant, minimum: int, maximum: int = 100000000) -> bool:
 	return (value is int or value is float) and is_finite(float(value)) and float(value) == floor(float(value)) and value >= minimum and value <= maximum
@@ -478,7 +505,7 @@ static func valid_point(value: Variant) -> bool:
 	return value is Array and value.size() == 2 and (value[0] is float or value[0] is int) and (value[1] is float or value[1] is int) and is_finite(float(value[0])) and is_finite(float(value[1])) and value[0] >= 0 and value[0] <= 1920 and value[1] >= 0 and value[1] <= 1280
 
 func restore(data: Dictionary) -> bool:
-	if not valid_int(data.get("version"), 3, 5): return false
+	if not valid_int(data.get("version"), 3, 6): return false
 	var defaults := FarmState.new()
 	if int(data.version) == 3:
 		data = data.duplicate(true)
@@ -495,6 +522,37 @@ func restore(data: Dictionary) -> bool:
 			if not data.supplies.has(key): data.supplies[key] = defaults.supplies[key]
 		for id in YinItemCatalog.IDS:
 			if not data.storage.has(id): data.storage[id] = 0
+	if int(data.version) == 5:
+		data = data.duplicate(true)
+		data.version = 6
+		for collection in ["equipment", "gear_drops", "spirits"]:
+			if not data.get(collection) is Array: return false
+		for gear in data.equipment:
+			if not gear is Dictionary or gear.get("weapon") not in YinBalance.WEAPONS or not valid_int(gear.get("id"), 1): return false
+		for spirit in data.spirits:
+			if not spirit is Dictionary or spirit.get("kind") not in SPIRITS or not valid_int(spirit.get("level"), 0, 100000): return false
+		for drop in data.gear_drops:
+			if not drop is Dictionary or not drop.get("gear") is Dictionary: return false
+		for key in ["weapon_slots", "active_slot", "skill_ranks", "skill_charges", "skill_timers", "villagers", "letters", "raid_day", "raid_status", "village_integrity"]:
+			var value: Variant = defaults.get(key)
+			data[key] = value.duplicate(true) if value is Array or value is Dictionary else value
+		for slot in ["melee", "primary", "secondary"]: data.weapon_slots[slot] = 0
+		for gear in data.equipment:
+			gear.affixes = []
+			var slot: String = "melee" if gear.weapon == "sword" else ("secondary" if gear.weapon == "pistol" else "primary")
+			if gear.weapon != "armor" and data.weapon_slots[slot] == 0: data.weapon_slots[slot] = gear.id
+		for gear in data.equipment:
+			if gear.id == data.equipped_gear:
+				data.active_slot = gear_slot(gear.weapon)
+				data.weapon_slots[data.active_slot] = gear.id
+		for drop in data.gear_drops: drop.gear.affixes = []
+		for spirit in data.spirits:
+			spirit.source_kind = "lantern" if spirit.kind == "child" else spirit.kind
+			spirit.level = clampi(int(spirit.level), 1, 10)
+			spirit.max_hp = YinAbilities.spirit_hp(spirit.source_kind, spirit.level)
+			spirit.hp = spirit.max_hp
+			spirit.xp = 0
+			spirit.active = false
 	for key in save_keys():
 		if not data.has(key): return false
 		var expected: Variant = defaults.get(key)
@@ -505,8 +563,8 @@ func restore(data: Dictionary) -> bool:
 		if expected is Dictionary and not data[key] is Dictionary: return false
 	if data.day < 1 or data.health > 100 or data.energy > 100 or data.ward > 100 or data.pollution > 100 or not valid_int(data.hall_level, 1, 2): return false
 	if (not data.minutes is float and not data.minutes is int) or not is_finite(float(data.minutes)) or data.minutes < 360 or data.minutes >= 1800: return false
-	if data.zone not in ["farm", "graveyard", "forest", "sunken", "theatre", "hall", "shop"] or data.weather not in ["sun", "rain"] or data.order not in ["follow", "guard", "focus"]: return false
-	if data.selected_crop not in CROPS or data.plots.size() != WIDTH * HEIGHT or data.spirits.size() > ((2 if int(data.hall_level) == 1 else 3) + int((YinBalance.level(int(data.cultivation)) - 1) / 3)) or data.cargo.size() > 2: return false
+	if data.zone not in ["farm", "graveyard", "forest", "sunken", "theatre", "village", "hall", "shop"] or data.weather not in ["sun", "rain"] or data.order not in ["follow", "guard", "focus"]: return false
+	if data.selected_crop not in CROPS or data.plots.size() != WIDTH * HEIGHT or data.spirits.size() > ((2 if int(data.hall_level) == 1 else 3) + int((YinBalance.level(int(data.cultivation)) - 1) / 3) + int(data.skill_ranks.get("command", 0))) or data.cargo.size() > 2: return false
 	for key in INVENTORY_KEYS:
 		if not valid_int(data.inventory.get(key), 0): return false
 	for key in defaults.supplies:
@@ -524,7 +582,7 @@ func restore(data: Dictionary) -> bool:
 		if not key is String or not record is Dictionary or not valid_int(record.get("hp"), 0, 3): return false
 	for collection in [data.drops, data.placements]:
 		for record in collection:
-			if not record is Dictionary or not valid_int(record.get("id"), 1) or record.get("zone") not in ["farm", "graveyard", "forest", "sunken", "theatre", "hall", "shop"] or not valid_point(record.get("at")): return false
+			if not record is Dictionary or not valid_int(record.get("id"), 1) or record.get("zone") not in ["farm", "graveyard", "forest", "sunken", "theatre", "village", "hall", "shop"] or not valid_point(record.get("at")): return false
 	for drop in data.drops:
 		if drop.get("item") not in YinItemCatalog.IDS or not valid_int(drop.get("count"), 1, 99): return false
 	for placed in data.placements:
@@ -538,13 +596,13 @@ func restore(data: Dictionary) -> bool:
 		for key in ["id", "risk", "affinity", "level"]:
 			if not valid_int(s.get(key), 0, 100000): return false
 	for r in data.remains:
-		if not r is Dictionary or r.get("kind") not in YinBalance.MONSTERS.keys() or r.get("zone") not in ["farm", "graveyard", "forest", "sunken", "theatre", "cargo"] or not valid_point(r.get("at")): return false
+		if not r is Dictionary or r.get("kind") not in YinBalance.MONSTERS.keys() or r.get("zone") not in ["farm", "graveyard", "forest", "sunken", "theatre", "village", "cargo"] or not valid_point(r.get("at")): return false
 		for key in ["id", "integrity", "fierceness"]:
 			if not valid_int(r.get(key), 0, 100000): return false
 		for key in ["name", "regret", "yin"]:
 			if not r.get(key) is String: return false
 	for e in data.enemies:
-		if not e is Dictionary or e.get("kind") not in YinBalance.MONSTERS.keys() or e.get("zone") not in ["farm", "graveyard", "forest", "sunken", "theatre"] or not valid_point(e.get("at")) or not e.get("dead") is bool or not e.get("suppressed") is bool: return false
+		if not e is Dictionary or e.get("kind") not in YinBalance.MONSTERS.keys() or e.get("zone") not in ["farm", "graveyard", "forest", "sunken", "theatre", "village"] or not valid_point(e.get("at")) or not e.get("dead") is bool or not e.get("suppressed") is bool: return false
 		for key in ["id", "hp", "max_hp", "integrity"]:
 			if not valid_int(e.get(key), 0, 100000): return false
 		for key in ["level", "damage", "armor"]:
@@ -570,10 +628,38 @@ func restore(data: Dictionary) -> bool:
 	if not data.equipment.any(func(g): return g.id == data.equipped_gear and g.weapon != "armor"): return false
 	if data.equipped_armor != 0 and not data.equipment.any(func(g): return g.id == data.equipped_armor and g.weapon == "armor"): return false
 	for drop in data.gear_drops:
-		if not drop is Dictionary or not valid_int(drop.get("id"), 1) or drop.get("zone") not in ["farm", "graveyard", "forest", "sunken", "theatre", "hall", "shop"] or not valid_point(drop.get("at")) or not valid_gear(drop.get("gear")): return false
+		if not drop is Dictionary or not valid_int(drop.get("id"), 1) or drop.get("zone") not in ["farm", "graveyard", "forest", "sunken", "theatre", "village", "hall", "shop"] or not valid_point(drop.get("at")) or not valid_gear(drop.get("gear")): return false
 		if drop.gear.id in gear_ids: return false
 		gear_ids.append(drop.gear.id)
 	if gear_ids.any(func(id): return id >= data.next_gear_id): return false
+	if data.active_slot not in ["melee", "primary", "secondary"] or data.raid_status not in ["quiet", "warned", "active", "success", "failed"] or not valid_int(data.village_integrity, 0, 100): return false
+	if data.skill_ranks.size() != 4 or data.skill_charges.size() != 2 or data.skill_timers.size() != 2 or data.weapon_slots.size() != 3: return false
+	for key in YinAbilities.SKILLS:
+		if not valid_int(data.skill_ranks.get(key), 0, 3): return false
+	if data.skill_ranks.seal < 1 or skill_spent(data.skill_ranks) > YinBalance.level(int(data.cultivation)) - 1: return false
+	for key in ["seal", "fire"]:
+		if not valid_int(data.skill_charges.get(key), 0, 2): return false
+		var timer: Variant = data.skill_timers.get(key)
+		if (not timer is float and not timer is int) or not is_finite(float(timer)) or timer < 0 or timer > 18: return false
+	var deployment: int = 0
+	for spirit in data.spirits:
+		if spirit.get("source_kind") not in YinAbilities.MONSTERS or not valid_int(spirit.get("level"), 1, 10): return false
+		if not valid_int(spirit.get("max_hp"), 1, 300) or not valid_int(spirit.get("hp"), 0, spirit.max_hp) or not valid_int(spirit.get("xp"), 0, 400) or not spirit.get("active") is bool: return false
+		if spirit.max_hp != YinAbilities.spirit_hp(spirit.source_kind, int(spirit.level)) or spirit.xp >= spirit.level * 40 or (spirit.level == 10 and spirit.xp != 0): return false
+		if spirit.active:
+			if spirit.hp == 0: return false
+			deployment += YinAbilities.deployment_cost(spirit.source_kind)
+	if deployment > 3: return false
+	if data.villagers.size() != 6 or data.letters.size() > 12: return false
+	var villager_ids: Array = []
+	for villager in data.villagers:
+		if not villager is Dictionary or not valid_int(villager.get("id"), 1, 6) or villager.id in villager_ids or not villager.get("name") is String or not valid_point(villager.get("at")) or not valid_int(villager.get("hp"), 0, 100) or villager.get("max_hp") != 100: return false
+		villager_ids.append(villager.id)
+	for letter in data.letters:
+		if not letter is Dictionary or not valid_int(letter.get("day"), 1) or letter.get("status") not in ["warned", "active", "success", "failed"] or not letter.get("read") is bool: return false
+	for slot in ["melee", "primary", "secondary"]:
+		if not valid_int(data.weapon_slots.get(slot), 0): return false
+		if data.weapon_slots[slot] != 0 and not data.equipment.any(func(gear): return gear.id == data.weapon_slots[slot] and gear_slot(gear.weapon) == slot): return false
 	var normalized: Dictionary = data.duplicate(true)
 	for key in save_keys():
 		if defaults.get(key) is int: normalized[key] = int(normalized[key])
@@ -591,10 +677,11 @@ func restore(data: Dictionary) -> bool:
 	for p in normalized.plots:
 		for key in ["growth", "yin"]: p[key] = int(p[key])
 	for item in normalized.spirits:
-		for key in ["id", "risk", "affinity", "level"]: item[key] = int(item[key])
+		for key in ["id", "risk", "affinity", "level", "hp", "max_hp", "xp"]: item[key] = int(item[key])
 	for item in normalized.remains:
 		for key in ["id", "integrity", "fierceness"]: item[key] = int(item[key])
 		item.at = [float(item.at[0]), float(item.at[1])]
+		if item.has("source_level"): item.source_level = int(item.source_level)
 	for item in normalized.enemies:
 		for key in ["id", "hp", "max_hp", "integrity"]: item[key] = int(item[key])
 		for key in ["level", "damage", "armor"]:
@@ -605,6 +692,16 @@ func restore(data: Dictionary) -> bool:
 	for drop in normalized.gear_drops:
 		drop.id = int(drop.id)
 		for key in ["id", "tier", "quality", "bonus", "magazine"]: drop.gear[key] = int(drop.gear[key])
+	for slot in normalized.weapon_slots: normalized.weapon_slots[slot] = int(normalized.weapon_slots[slot])
+	for key in normalized.skill_ranks: normalized.skill_ranks[key] = int(normalized.skill_ranks[key])
+	for key in normalized.skill_charges: normalized.skill_charges[key] = int(normalized.skill_charges[key])
+	for villager in normalized.villagers:
+		for key in ["id", "hp", "max_hp"]: villager[key] = int(villager[key])
+	for letter in normalized.letters: letter.day = int(letter.day)
+	for gear in normalized.equipment:
+		for affix in gear.affixes: affix.value = int(affix.value)
+	for drop in normalized.gear_drops:
+		for affix in drop.gear.affixes: affix.value = int(affix.value)
 	normalized.cargo = normalized.cargo.map(func(id): return int(id))
 	for key in save_keys(): set(key, normalized[key])
 	player_position = Vector2(data.player_position[0], data.player_position[1])
@@ -635,6 +732,12 @@ static func valid_gear(gear: Variant) -> bool:
 	if not gear is Dictionary or gear.get("weapon") not in YinBalance.WEAPONS: return false
 	for key in ["id", "tier", "quality", "bonus", "magazine"]:
 		if not valid_int(gear.get(key), 0): return false
+	if not gear.get("affixes") is Array or gear.affixes.size() > 2: return false
+	var used: Array = []
+	for affix in gear.affixes:
+		if not affix is Dictionary or affix.get("id") not in YinAbilities.AFFIXES or affix.id in used or not valid_int(affix.get("value"), 1, 25): return false
+		if affix.id == "bleed" and affix.value > 6: return false
+		used.append(affix.id)
 	return gear.id >= 1 and gear.tier >= 1 and gear.tier <= 20 and gear.quality <= 3 and gear.bonus == gear.quality * 8 and gear.magazine <= YinBalance.WEAPONS[gear.weapon].magazine
 func current_gear() -> Dictionary:
 	for gear in equipment:
@@ -648,7 +751,10 @@ func equip(id: int) -> bool:
 	for gear in equipment:
 		if gear.id != id: continue
 		if gear.weapon == "armor": equipped_armor = id
-		else: equipped_gear = id
+		else:
+			equipped_gear = id
+			active_slot = gear_slot(gear.weapon)
+			weapon_slots[active_slot] = id
 		return true
 	return false
 func grant_gear(weapon: String, tier: int = 1, quality: int = 0) -> Dictionary:
@@ -664,18 +770,28 @@ func reward_enemy(enemy: Dictionary, at: Vector2) -> void:
 	var random := RandomNumberGenerator.new()
 	random.seed = int(enemy.id) * 92821 + day * 193
 	var level_value: int = int(enemy.get("level", 1))
-	add_drop("rifle_ammo" if enemy.kind in ["archer", "brute"] else "light_ammo", 3 + level_value, enemy.zone, at + Vector2(14, 10))
-	if gear_drops.size() < 200 and (random.randf() < 0.35 or enemy.get("elite", false) or enemy.kind == "boss"):
+	add_drop("rifle_ammo" if enemy.kind in ["archer", "brute"] else "light_ammo", 5 + level_value, enemy.zone, at + Vector2(14, 10))
+	if random.randf() < 0.75:
+		add_drop(["wood", "stone", "scrap", "bone", "ash"][random.randi_range(0, 4)], random.randi_range(1, 3), enemy.zone, at + Vector2(0, 16))
+	var chance: float = 0.65 if enemy.kind in YinAbilities.BOSSES else (0.35 if enemy.get("elite", false) else 0.12)
+	if gear_drops.size() < 200 and random.randf() < chance:
 		var roll: float = random.randf()
 		var quality: int = 3 if roll > 0.98 else (2 if roll > 0.88 else (1 if roll > 0.6 else 0))
-		if enemy.get("elite", false) or enemy.kind == "boss": quality = maxi(1, quality)
-		var weapon: String = ["sword", "pistol", "smg", "rifle", "armor"][random.randi_range(0, 4)]
+		if enemy.get("elite", false) or enemy.kind in YinAbilities.BOSSES: quality = maxi(1, quality)
+		var weapon_roll: float = random.randf()
+		var weapon: String = "sword" if weapon_roll < 0.45 else ("armor" if weapon_roll < 0.90 else ("pistol" if weapon_roll < 0.97 else ("smg" if weapon_roll < 0.99 else "rifle")))
 		var gear := YinBalance.make_gear(next_gear_id, weapon, mini(20, level_value), quality)
+		if weapon != "armor" and (quality > 0 or random.randf() < 0.2):
+			gear.affixes.append({"id": "crit" if random.randf() < 0.5 else "bleed", "value": 8 + quality * 4})
+			if gear.affixes[0].id == "bleed": gear.affixes[0].value = 3 + mini(quality, 3)
+		if weapon != "armor" and quality >= 2:
+			gear.affixes.append({"id": "bleed" if gear.affixes[0].id == "crit" else "crit", "value": 4 if gear.affixes[0].id == "crit" else 16})
 		next_gear_id += 1
 		gear_drops.append({"id": next_id, "gear": gear, "zone": enemy.zone, "at": [at.x - 14, at.y + 10]})
 		next_id += 1
+
 func salvage(id: int) -> String:
-	if id in [equipped_gear, equipped_armor]: return "穿戴中的装备不可拆解。"
+	if id in [equipped_gear, equipped_armor] or id in weapon_slots.values(): return "穿戴中的装备不可拆解。"
 	for gear in equipment:
 		if gear.id != id: continue
 		var gain: int = 1 + int(gear.quality)
@@ -696,3 +812,135 @@ func craft_ammo(ammo: String) -> String:
 	bones -= 1
 	supplies[ammo] += amount
 	return "制成 %s ×%d。" % [YinItemCatalog.spec(ammo).display_name, amount]
+
+static func gear_slot(weapon: String) -> String:
+	return "melee" if weapon == "sword" else ("secondary" if weapon == "pistol" else "primary")
+func cycle_weapon(direction: int) -> String:
+	var names: Array = ["melee", "primary", "secondary"]
+	var index: int = names.find(active_slot)
+	for offset in range(1, 4):
+		var slot: String = names[posmod(index + offset * direction, 3)]
+		var id: int = int(weapon_slots[slot])
+		if id > 0 and equip(id): return slot
+	return active_slot
+static func skill_spent(ranks: Dictionary) -> int:
+	return int(ranks.get("seal", 1)) - 1 + int(ranks.get("fire", 0)) + int(ranks.get("breath", 0)) + int(ranks.get("command", 0))
+func skill_points() -> int:
+	return maxi(0, YinBalance.level(cultivation) - 1 - skill_spent(skill_ranks))
+func learn_skill(id: String) -> String:
+	if id not in YinAbilities.SKILLS: return "没有此技能。"
+	var spec: Dictionary = YinAbilities.SKILLS[id]
+	if skill_ranks[id] >= 3: return "技能已达三阶。"
+	if skill_points() < 1: return "需要技能点，提升角色等级获得。"
+	if YinBalance.level(cultivation) < spec.level or (spec.parent != "" and skill_ranks[spec.parent] == 0): return "等级不足或前置技能未学习。"
+	skill_ranks[id] += 1
+	return "已学习 %s 第 %d 阶。" % [spec.name, skill_ranks[id]]
+func update_combat(delta: float) -> void:
+	energy_fraction += delta * (0.5 + int(skill_ranks.breath) * 0.25)
+	if energy_fraction >= 1:
+		energy = mini(100, energy + int(energy_fraction))
+		energy_fraction -= int(energy_fraction)
+	for id in ["seal", "fire"]:
+		if skill_ranks[id] < 1 or skill_charges[id] >= 2: continue
+		var period: float = skill_recharge(id)
+		skill_timers[id] += delta
+		while skill_timers[id] >= period and skill_charges[id] < 2:
+			skill_charges[id] += 1
+			skill_timers[id] -= period
+		if skill_charges[id] == 2: skill_timers[id] = 0.0
+func skill_recharge(id: String) -> float:
+	return float(YinAbilities.SKILLS[id].recharge) * (1.0 - maxi(0, int(skill_ranks[id]) - 1) * 0.15)
+func spend_skill(id: String) -> bool:
+	if id not in ["seal", "fire"] or skill_ranks[id] < 1 or skill_charges[id] < 1 or energy < YinAbilities.SKILLS[id].cost: return false
+	energy -= int(YinAbilities.SKILLS[id].cost)
+	skill_charges[id] -= 1
+	return true
+func deployment_used() -> int:
+	var result: int = 0
+	for spirit in spirits:
+		if spirit.get("active", false) and spirit.get("hp", 1) > 0: result += YinAbilities.deployment_cost(spirit.get("source_kind", spirit.kind))
+	return result
+func deploy_spirit(id: int, active: bool) -> String:
+	for spirit in spirits:
+		if spirit.id != id: continue
+		if active and spirit.hp <= 0: return "役灵已倒下，先疗养。"
+		if active and not spirit.active and deployment_used() + YinAbilities.deployment_cost(spirit.source_kind) > 3: return "出战上限 3 点，首领占 2 点。先召回其他随从。"
+		spirit.active = active
+		return "已出战。" if active else "已召回义庄。"
+	return "没有这位役灵。"
+func dismiss_spirit(id: int) -> String:
+	for spirit in spirits:
+		if spirit.id == id:
+			spirits.erase(spirit)
+			return "已解除契约：" + spirit.name
+	return "役灵已不在册。"
+func gain_spirit_xp(spirit: Dictionary, amount: int) -> void:
+	if spirit.level >= 10: return
+	spirit.xp += amount
+	while spirit.level < 10 and spirit.xp >= spirit.level * 40:
+		spirit.xp -= spirit.level * 40
+		spirit.level += 1
+		spirit.max_hp = YinAbilities.spirit_hp(spirit.source_kind, spirit.level)
+		spirit.hp = mini(spirit.max_hp, spirit.hp + 12)
+	if spirit.level == 10: spirit.xp = 0
+func train_spirit(id: int) -> String:
+	for spirit in spirits:
+		if spirit.id != id: continue
+		if spirit.level >= 10: return "役灵已达十级。"
+		if bones < 2: return "训练需要 2 骨料。"
+		bones -= 2
+		gain_spirit_xp(spirit, int(spirit.level) * 40)
+		return "训练完成，技能强度随役灵等级成长。"
+	return "没有这位役灵。"
+func heal_spirit(id: int) -> String:
+	for spirit in spirits:
+		if spirit.id != id: continue
+		if spirit.hp == spirit.max_hp: return "生命已满。"
+		if oil < 3: return "疗养需要 3 灯油。"
+		oil -= 3
+		spirit.hp = spirit.max_hp
+		return "疗养完成，倒下的役灵可重新出战。"
+	return "没有这位役灵。"
+func update_raid() -> bool:
+	if raid_status == "warned" and day == raid_day and minutes >= 1080:
+		raid_status = "active"
+		for letter in letters:
+			if letter.day == raid_day: letter.status = "active"
+		for i in range(4 + mini(2, int(day / 6))):
+			var enemy: Dictionary = spawn_record(["water", "bone", "archer", "brute"][i % 4], "village", Vector2(1080, 230 + i * 100), 1 + int(day / 6))
+			enemy.raid = raid_day
+		add_log("青槐村夜袭开始，村民正受到威胁。")
+		return true
+	if raid_status == "active" and not enemies.any(func(e): return e.zone == "village" and int(e.get("raid", 0)) == raid_day and not e.dead):
+		raid_status = "success"
+		money += 30
+		reputation += 2
+		village_integrity = mini(100, village_integrity + 10)
+		for letter in letters:
+			if letter.day == raid_day: letter.status = "success"
+		add_log("青槐村守住了。村民赠予 30 文，声望 +2。")
+	return false
+func settle_raid() -> void:
+	if raid_status in ["warned", "active"] and day >= raid_day:
+		raid_status = "failed"
+		village_integrity = maxi(0, village_integrity - 20)
+		for villager in villagers: villager.hp = maxi(0, villager.hp - 30)
+		for enemy in enemies:
+			if enemy.zone == "village" and int(enemy.get("raid", 0)) == raid_day: enemy.dead = true
+		for letter in letters:
+			if letter.day == raid_day: letter.status = "failed"
+		add_log("未能守住青槐村：村庄完好度 -20，村民受伤。")
+
+func inscribe_gear(id: int, affix_id: String) -> String:
+	if affix_id not in YinAbilities.AFFIXES: return "没有此类词条。"
+	for gear in equipment:
+		if gear.id != id: continue
+		if gear.weapon == "armor": return "此符纹只用于武器。"
+		if gear.affixes.any(func(affix): return affix.id == affix_id): return "已有此词条，不能重复铭刻。"
+		if gear.affixes.size() >= 2: return "每件武器最多两个词条。"
+		if money < 20 or supplies.scrap < 2: return "铭刻需要 20 文与 2 零件。"
+		money -= 20
+		supplies.scrap -= 2
+		gear.affixes.append({"id": affix_id, "value": 12 if affix_id == "crit" else 4})
+		return "铭刻完成：" + YinAbilities.AFFIXES[affix_id]
+	return "没有这件武器。"

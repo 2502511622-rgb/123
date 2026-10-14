@@ -5,9 +5,9 @@ const LIMIT = 256
 var game: Node2D
 var world: Node2D
 var bullets: Array = []
-func spawn(at: Vector2, direction: Vector2, friendly: bool, damage: int, speed: float, distance: float, tint: Color) -> bool:
+func spawn(at: Vector2, direction: Vector2, friendly: bool, damage: int, speed: float, distance: float, tint: Color, payload: Dictionary = {}) -> bool:
  if bullets.size() >= LIMIT or direction == Vector2.ZERO: return false
- bullets.append({"at": at, "previous": at, "direction": direction.normalized(), "friendly": friendly, "damage": damage, "speed": speed, "remaining": distance, "color": tint})
+ bullets.append({"at": at, "previous": at, "direction": direction.normalized(), "friendly": friendly, "damage": damage, "speed": speed, "remaining": distance, "color": tint, "payload": payload})
  projectile_spawned.emit(friendly)
  return true
 func _physics_process(delta: float) -> void:
@@ -17,13 +17,16 @@ func _physics_process(delta: float) -> void:
   var bullet: Dictionary = bullets[index]
   var distance: float = minf(bullet.speed * delta, bullet.remaining)
   var end: Vector2 = bullet.at + bullet.direction * distance
-  var ray := PhysicsRayQueryParameters2D.create(bullet.at, end, 17 if bullet.friendly else 3)
-  ray.collide_with_areas = bool(bullet.friendly)
+  var ray := PhysicsRayQueryParameters2D.create(bullet.at, end, 17 if bullet.friendly else 35)
+  ray.collide_with_areas = true
   var hit: Dictionary = get_world_2d().direct_space_state.intersect_ray(ray)
   if not hit.is_empty():
    if bullet.friendly and hit.collider is YinHurtbox:
     var enemy: YinEnemy = hit.collider.actor as YinEnemy
     if is_instance_valid(enemy) and not enemy.record.dead: enemy.receive_hit(bullet.damage, "bullet")
+    if is_instance_valid(enemy) and bullet.payload.get("bleed", 0) > 0: enemy.apply_bleed(bullet.payload.bleed, 2)
+   elif not bullet.friendly and hit.collider is YinAllyHurtbox:
+    hit.collider.actor.receive_hit(bullet.damage)
    elif not bullet.friendly and hit.collider == game.player:
     game.take_damage(bullet.damage)
    if game.world != world: return

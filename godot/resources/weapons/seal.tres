@@ -6,6 +6,6 @@ id = "seal"
 display_name = "镇符"
 damage = 5
 reach = 145.0
-talisman_cost = 1
+talisman_cost = 0
 action_time = 0.35
 recovery = 0.65

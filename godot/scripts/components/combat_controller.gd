@@ -11,7 +11,8 @@ var pending: Dictionary = {}
 var reload_job: Dictionary = {}
 var random := RandomNumberGenerator.new()
 func _physics_process(delta: float) -> void:
-	if game.modal != null: return
+	if not is_instance_valid(game) or game.modal != null: return
+	game.state.update_combat(delta)
 	if not reload_job.is_empty():
 		if not is_instance_valid(reload_job.actor) or reload_job.actor != game.player or reload_job.id != game.state.equipped_gear:
 			reload_job.clear()
@@ -36,6 +37,7 @@ func _physics_process(delta: float) -> void:
 	pending.clear()
 	for target in game.player.hitbox.targets(strike.facing):
 		target.receive_hit(strike.damage, strike.get("method", "sword"))
+		if is_instance_valid(target) and strike.get("payload", {}).get("bleed", 0) > 0: target.apply_bleed(strike.payload.bleed, 2)
 	game.persist()
 func visible(target: YinEnemy) -> bool:
 	var ray := PhysicsRayQueryParameters2D.create(game.player.global_position + Vector2(0, -4), target.global_position + Vector2(0, -4), 1)
@@ -70,20 +72,24 @@ func trigger(method: String) -> bool:
 		game.player.attack_time = spec.action_time
 		game.action_cooldown = spec.recovery
 		game.player.hitbox.radius = spec.reach
-		pending = {"actor": game.player, "facing": game.player.facing, "damage": YinBalance.damage(spec.damage, YinBalance.level(game.state.cultivation), {} if using_tool else game.state.current_gear()), "delay": 0.06, "method": "tool" if using_tool else "sword"}
+		var rolled: Dictionary = roll_hit(spec.damage, {} if using_tool else game.state.current_gear())
+		pending = {"payload": rolled, "actor": game.player, "facing": game.player.facing, "damage": rolled.damage, "delay": 0.06, "method": "tool" if using_tool else "sword"}
 	else:
 		var target: YinEnemy = spell_target(spec.reach)
 		if target == null:
 			game.refresh("符术范围内没有目标。")
 			return false
-		if game.state.talismans < spec.talisman_cost:
-			game.refresh("符箓不足，回义庄制作。")
+		if game.state.skill_ranks[method] < 1:
+			game.refresh("尚未学习技能：I → 技能树。")
+			return false
+		if game.state.energy < YinAbilities.SKILLS[method].cost or game.state.skill_charges[method] < 1:
+			game.refresh("体力或充能不足，调息并等待自动充能。")
 			return false
 		if not game.player.state_machine.begin("spell", spec.action_time): return false
-		game.state.talismans -= spec.talisman_cost
+		game.state.spend_skill(method)
 		game.action_cooldown = spec.recovery
 		game.world.spell_trace(game.player.position + Vector2(0, -20), target.position + Vector2(0, -20), method)
-		target.receive_hit(spec.damage, method)
+		target.receive_hit(spec.damage + 5 * (int(game.state.skill_ranks[method]) - 1), method)
 		game.refresh("符火伤骸：完整度下降 35。" if method == "fire" else "镇符压制 3 秒，完整度保留。")
 	game.persist()
 	return true
@@ -101,7 +107,8 @@ func shoot() -> bool:
 	if aim == Vector2.ZERO: aim = game.player.facing
 	var direction: Vector2 = aim.rotated(random.randf_range(-spec.spread, spec.spread))
 	var start: Vector2 = game.player.position + Vector2(0, -4)
-	if not game.world.projectiles.spawn(start, direction, true, YinBalance.damage(spec.damage, YinBalance.level(game.state.cultivation), gear), spec.speed, spec.range, Color("f1d599")): return false
+	var rolled: Dictionary = roll_hit(spec.damage, gear)
+	if not game.world.projectiles.spawn(start, direction, true, rolled.damage, spec.speed, spec.range, Color("f1d599"), rolled): return false
 	gear.magazine -= 1
 	game.action_cooldown += spec.interval
 	game.player.recoil_time = 0.09
@@ -139,3 +146,14 @@ func cancel_reload() -> void:
 	if not reload_job.is_empty():
 		reload_job.clear()
 		game.player.state_machine.reset()
+
+func roll_hit(base: int, gear: Dictionary) -> Dictionary:
+	var damage: int = YinBalance.damage(base, YinBalance.level(game.state.cultivation), gear)
+	var bleed: int = 0
+	var critical: bool = false
+	for affix in gear.get("affixes", []):
+		if affix.id == "crit" and random.randf() < float(affix.value) / 100:
+			damage = roundi(damage * 1.65)
+			critical = true
+		if affix.id == "bleed" and random.randf() < 0.25: bleed = int(affix.value)
+	return {"damage": damage, "bleed": bleed, "critical": critical}

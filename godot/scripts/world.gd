@@ -40,7 +40,7 @@ func _ready() -> void:
 	feedback.z_index = 20
 	add_child(feedback)
 	add_child(actors)
-	level_size = Vector2(1920, 1280) if state.zone == "forest" else (Vector2(1280, 960) if state.zone in ["sunken", "theatre"] else SIZE)
+	level_size = Vector2(1920, 1280) if state.zone == "forest" else (Vector2(1280, 960) if state.zone in ["sunken", "theatre", "village"] else SIZE)
 	projectiles = YinProjectiles.new()
 	projectiles.name = "Projectiles"
 	projectiles.game = get_tree().get_first_node_in_group("yintian_game")
@@ -51,6 +51,9 @@ func _ready() -> void:
 	boundary(Rect2(-32, level_size.y, level_size.x + 64, 32))
 	boundary(Rect2(-32, 0, 32, level_size.y))
 	boundary(Rect2(level_size.x, 0, 32, level_size.y))
+	if state.zone == "village":
+		build_village()
+		return
 	if state.zone in ["sunken", "theatre"]:
 		build_branch()
 		return
@@ -63,6 +66,8 @@ func _ready() -> void:
 	if state.zone == "graveyard":
 		build_graveyard()
 		return
+	prop("lantern", Vector2(900, 350), Vector2(-16, -48), Rect2(-4, -6, 8, 6))
+	add_sign(Vector2(852, 365), "青槐村 → E")
 	# River is solid except the wooden bridge.
 	boundary(Rect2(640, 0, 64, 224))
 	boundary(Rect2(640, 288, 64, 352))
@@ -193,6 +198,12 @@ func front_plot() -> int:
 	return plot_at(player.position + Vector2(0, -6) + player.facing * 25)
 
 func nearest_interaction() -> String:
+	if state.zone == "village":
+		if player.position.distance_to(Vector2(155, 820)) < 47: return "village_return"
+		for villager in get_tree().get_nodes_in_group("villagers"):
+			if not villager.is_queued_for_deletion() and player.position.distance_to(villager.position) < 56: return "villager"
+		return ""
+	if state.zone == "farm" and player.position.distance_to(Vector2(900, 350)) < 47: return "village_gate"
 	if state.zone in ["hall", "shop"]:
 		if player.position.distance_to(Vector2(480, 461)) < 40: return "exit_interior"
 		if player.position.distance_to(Vector2(480, 267)) < 45: return "workbench" if state.zone == "hall" else "counter"
@@ -395,3 +406,40 @@ func build_branch() -> void:
 	else:
 		for at in [Vector2(940, 240), Vector2(1140, 240)]:
 			prop("grave", at, Vector2(-16, -48), Rect2(-12, -16, 24, 16))
+
+func build_village() -> void:
+	prop("lantern", Vector2(155, 820), Vector2(-16, -48), Rect2(-4, -6, 8, 6))
+	add_sign(Vector2(110, 842), "义庄田园 ↓ E")
+	add_sign(Vector2(280, 820), "青槐村 · 村民与求救书信")
+	for x in [260, 560, 860]:
+		prop("cottage", Vector2(x, 220), Vector2(-80, -132), Rect2(-65, -95, 130, 89))
+		prop("store", Vector2(x, 540), Vector2(-64, -116), Rect2(-54, -90, 108, 81))
+	for x in range(40, 1250, 80):
+		prop("tree", Vector2(x, 75), Vector2(-32, -88), Rect2(-8, -16, 16, 16))
+	for y in [300, 620]:
+		for x in [180, 470, 770, 1060]: prop("lantern", Vector2(x, y + 70), Vector2(-16, -48), Rect2(-4, -6, 8, 6))
+
+var combat_navigation: AStarGrid2D
+var navigation_obstacles: int = -1
+func path_to(start: Vector2, end: Vector2) -> PackedVector2Array:
+	if combat_navigation == null or navigation_obstacles != obstacles.size():
+		combat_navigation = AStarGrid2D.new()
+		combat_navigation.region = Rect2i(Vector2i.ZERO, Vector2i(level_size / 16))
+		combat_navigation.cell_size = Vector2(16, 16)
+		combat_navigation.offset = Vector2(8, 8)
+		combat_navigation.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_ONLY_IF_NO_OBSTACLES
+		combat_navigation.update()
+		for y in range(combat_navigation.region.size.y):
+			for x in range(combat_navigation.region.size.x):
+				combat_navigation.set_point_solid(Vector2i(x, y), not is_safe_position(Vector2(x * 16 + 8, y * 16 + 8)))
+		navigation_obstacles = obstacles.size()
+	var from_cell := Vector2i(start / 16)
+	var to_cell := Vector2i(end / 16)
+	if not combat_navigation.is_in_boundsv(from_cell) or not combat_navigation.is_in_boundsv(to_cell): return PackedVector2Array()
+	if combat_navigation.is_point_solid(from_cell):
+		for offset in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
+			var cell: Vector2i = from_cell + offset
+			if combat_navigation.is_in_boundsv(cell) and not combat_navigation.is_point_solid(cell):
+				from_cell = cell
+				break
+	return combat_navigation.get_point_path(from_cell, to_cell, true)

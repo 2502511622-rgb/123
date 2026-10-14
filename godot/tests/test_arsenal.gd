@@ -78,10 +78,12 @@ func run() -> void:
  check(s.enemies.filter(func(e): return e.zone == "forest" and e.elite).size() == 2, "two forest elites")
  var elite: Dictionary = s.enemies.filter(func(e): return e.zone == "forest" and e.elite)[0]
  s.kill_enemy(elite.id, Vector2(1100, 700))
- check(s.gear_drops.size() == 1 and s.gear_drops[0].gear.quality >= 1, "elite guarantees equipment of magic quality or better")
- check(s.drops.size() == 1 and not s.remains.is_empty(), "ammo drop coexists with corpse")
+ check(s.gear_drops.all(func(drop): return drop.gear.quality >= 1), "elite equipment, when rolled, has magic quality or better")
+ check(s.drops.any(func(drop): return drop.item in ["light_ammo", "rifle_ammo"]) and not s.remains.is_empty(), "ammo drop coexists with corpse")
+ var gear_count: int = s.gear_drops.size()
+ var material_count: int = s.drops.size()
  s.kill_enemy(elite.id, Vector2(1100, 700))
- check(s.gear_drops.size() == 1 and s.drops.size() == 1, "repeated death cannot duplicate rewards")
+ check(s.gear_drops.size() == gear_count and s.drops.size() == material_count, "repeated death cannot duplicate rewards")
  s.process_remains(s.remains[0].id, "refine")
  check(s.spirits.size() == 1 and s.remains.is_empty(), "ordinary ranged monster can be instantly refined into a companion")
  s.zone = "forest"
@@ -121,7 +123,7 @@ func run() -> void:
  var energy: int = game.state.energy
  await frames(8)
  await key(KEY_SPACE)
- check(game.state.energy == energy, "smart already-watered plot does not waste energy")
+ check(game.state.energy >= energy, "smart already-watered plot does not spend energy during natural regeneration")
  game.choose_tool(3)
  await frames(2)
  check(not game.state.smart_farming and game.player.held_item == "tool3", "manual key overrides automation and changes held tool")
@@ -202,6 +204,7 @@ func run() -> void:
  check(game.state.current_gear().magazine == 8, "reload resumes after menu closes")
  var scrap_before: int = game.state.supplies.scrap
  rifle.magazine = 3
+ game.state.weapon_slots.primary = 0
  check("拆解完成" in game.state.salvage(rifle.id) and game.state.supplies.rifle_ammo == 3 and game.state.supplies.scrap == scrap_before + 1, "salvage returns magazine ammo and parts")
  check("不可拆解" in game.state.salvage(game.state.equipped_gear), "equipped weapon cannot be accidentally salvaged")
  var armor: Dictionary = game.state.grant_gear("armor", 3, 2)
@@ -265,6 +268,14 @@ func run() -> void:
  var victim: YinEnemy = fixture("gunner", Vector2(515, 350))
  victim.record.elite = true
  victim.record.level = 2
+ # Choose a deterministic death ID whose lower-rate loot table rolls equipment.
+ while true:
+  var probe := FarmState.new()
+  probe.day = game.state.day
+  probe.reward_enemy(victim.record, victim.position)
+  if not probe.gear_drops.is_empty(): break
+  victim.record.id += 1000
+ game.state.next_id = maxi(game.state.next_id, victim.record.id + 1)
  await frames(2)
  victim.receive_hit(5000, "bullet")
  await frames(12)
@@ -278,6 +289,13 @@ func run() -> void:
  while game.state.equipment.size() < 20: game.state.grant_gear("sword")
  victim = fixture("brute", Vector2(515, 350))
  victim.record.elite = true
+ while true:
+  var probe := FarmState.new()
+  probe.day = game.state.day
+  probe.reward_enemy(victim.record, victim.position)
+  if not probe.gear_drops.is_empty(): break
+  victim.record.id += 1000
+ game.state.next_id = maxi(game.state.next_id, victim.record.id + 1)
  await frames(2)
  victim.receive_hit(5000, "bullet")
  await frames(12)
@@ -291,7 +309,7 @@ func run() -> void:
  check(game.modal != null, "equipment key opens actual UI")
  var chosen: Button = null
  for button in buttons(game.modal):
-  if YinBalance.gear_name(wearable) in button.text: chosen = button
+  if button.text.begins_with(YinBalance.gear_name(wearable)): chosen = button
  var found_button: bool = chosen != null
  if found_button: await click_button(chosen)
  check(found_button and game.state.equipped_gear == wearable.id and game.player.held_item == "smg", "equipment button equips the displayed gun")

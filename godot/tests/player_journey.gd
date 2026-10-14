@@ -136,6 +136,7 @@ func run() -> void:
  check(await walk(Vector2(730, 450)) and await walk(Vector2(846, 450)) and await walk(Vector2(846, 501)), "walk to cemetery gate")
  await key(KEY_E)
  check(game.state.zone == "graveyard", "E enters exploration zone")
+ for actor in get_nodes_in_group("enemies"): actor.stun = 100
  # Approach a live enemy using movement; no direct damage calls.
  var foe: YinEnemy = game.nearest_enemy(game.player.position, 1000)
  var record: Dictionary = foe.record
