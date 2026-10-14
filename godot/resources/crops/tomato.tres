@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="CropSpec" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/crop_spec.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "tomato"
+display_name = "番茄"
+growth_days = 5
+seed_price = 16
+sell_price = 80
+tint = Color(0.84, 0.29, 0.24, 1)

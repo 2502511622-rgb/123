@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="CropSpec" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/crop_spec.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "turnip"
+display_name = "萝卜"
+growth_days = 3
+seed_price = 8
+sell_price = 35
+tint = Color(0.93, 0.84, 0.74, 1)
