@@ -25,3 +25,7 @@
 - PNG 图块、角色、房屋、树木、工具、作物均为本项目原创程序化像素美术，生成源为 `scripts/generate_art.py`，没有引入 Sprout Lands 的美术。
 - 中文字体为 Noto Sans CJK SC 的字符子集，SIL Open Font License；署名与许可见 `godot/licenses/Noto-CJK-copyright.txt`。子集使用独立文件名 `mossfield-font.ttf`。
 - 改写的玩家控制器许可见 `godot/licenses/Farmworld-MIT.txt`。
+
+## 《阴田录》版本
+
+本版沿用已验证的 Godot 工程、改写后的 MIT 玩家移动模块与原创美术生成流程，重新设计四种阴植、遗骸、役灵与即时战斗。没有再次导入其他游戏的角色、场景、音轨或专有素材。原模板许可仍完整保留。

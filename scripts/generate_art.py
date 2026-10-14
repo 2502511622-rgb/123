@@ -1,4 +1,4 @@
-"""Generate original Mossfield pixel assets. No external art or dependencies at runtime."""
+"""Generate original Yintian pixel assets. No external art or dependencies at runtime."""
 from pathlib import Path
 from PIL import Image, ImageDraw
 import random
@@ -12,11 +12,11 @@ def save(im,name):im.save(OUT/name)
 im,d=image(16*16,16)
 for i in range(16):
  x=i*16
- color='#8eae62' if i<8 else ['#a27449','#74563d','#d9bd88','#679baf','#6fa4b5','#6697aa','#a9bb74','#759457'][i-8]
+ color='#7e8c69' if i<8 else ['#a27449','#74563d','#d9bd88','#679baf','#6fa4b5','#6697aa','#a9bb74','#759457'][i-8]
  d.rectangle((x,0,x+15,15),fill=color)
  if i<8:
   for j in range(7):
-   a=x+rng.randrange(1,14);b=rng.randrange(2,14);d.line((a,b,a+1,b-2),fill=rng.choice(['#7e9f56','#9cbb6a','#86a65a']))
+   a=x+rng.randrange(1,14);b=rng.randrange(2,14);d.line((a,b,a+1,b-2),fill=rng.choice(['#72825d','#8c9975','#82916b']))
  elif i in (8,9):
   for y in (3,7,11):d.line((x+2,y,x+13,y),fill='#88603f' if i==8 else '#654a36')
   d.point((x+4,14),fill='#b68956' if i==8 else '#85654c')
@@ -39,7 +39,7 @@ for x in (8,38,68):d.rectangle((x,22,x+3,56),fill='#9a7049')
 d.rectangle((5,52,73,60),fill='#b48a57')
 for y in range(24,52,7):d.line((9,y,69,y),fill='#dab580')
 for y in range(5,27):
- inset=max(0,(25-y)//2);d.line((3+inset,y,76-inset,y),fill=['#a45742','#b86c4b','#c97d55','#b56a49'][y%4])
+ inset=max(0,(25-y)//2);d.line((3+inset,y,76-inset,y),fill=['#414c50','#536061','#647071','#485455'][y%4])
 d.rectangle((2,25,77,28),fill='#794e39');d.rectangle((60,1,67,16),fill='#b8a38c');d.rectangle((59,1,68,3),fill='#867c70')
 for x in (17,53):
  d.rectangle((x-2,33,x+13,47),fill='#956d48');d.rectangle((x,34,x+11,44),fill='#8bb3ae');d.line((x+5,34,x+5,44),fill='#e8c490');d.line((x,39,x+11,39),fill='#e8c490');d.rectangle((x-3,46,x+14,49),fill='#ba8450')
@@ -51,7 +51,7 @@ im,d=image(64,58)
 d.rectangle((6,17,57,49),fill='#d9b78a');d.rectangle((4,46,59,51),fill='#9d7850')
 for y in range(18,46,5):d.line((7,y,56,y),fill='#c7a276')
 for y in range(2,19):
- inset=max(0,(17-y)//2);d.line((2+inset,y,61-inset,y),fill=['#597b6b','#678976','#74947d'][y%3])
+ inset=max(0,(17-y)//2);d.line((2+inset,y,61-inset,y),fill=['#414c50','#536061','#647071'][y%3])
 d.rectangle((1,17,62,20),fill='#465f53');d.rectangle((24,23,38,50),fill='#725b44');d.rectangle((27,26,35,40),fill='#8fb6b0')
 for x in (9,43):d.rectangle((x,24,x+10,35),fill='#8ab0aa');d.line((x+5,24,x+5,35),fill='#ebd2a6')
 for x in range(3,60,7):d.rectangle((x,20,x+6,25),fill='#dfb67e' if x%2 else '#f2ddad')
@@ -75,12 +75,12 @@ for row in range(4):
  for frame in range(4):
   x=frame*16;y=row*20;step=[0,1,0,-1][frame]
   def r(box,c):d.rectangle(tuple(v+(x if i%2==0 else y) for i,v in enumerate(box)),fill=c)
-  r((5,15,7,18+max(step,0)),'#5a4c42');r((9,15,11,18+max(-step,0)),'#5a4c42');r((4,10,12,15),'#587f86');r((5,10,6,14),'#8ab0a5');r((3,11,4,14),'#d6a576');r((12,11,13,14),'#d6a576')
+  r((5,15,7,18+max(step,0)),'#5a4c42');r((9,15,11,18+max(-step,0)),'#5a4c42');r((4,10,12,15),'#696a4c');r((5,10,6,14),'#c5ad74');r((3,11,4,14),'#d6a576');r((12,11,13,14),'#d6a576')
   r((5,5,11,10),'#edc18c');r((4,4,12,6),'#815536')
   if row==1:r((5,5,11,9),'#815536')
   elif row==0:r((6,7,6,7),'#41483a');r((10,7,10,7),'#41483a')
   else:r((5 if row==2 else 11,7,5 if row==2 else 11,7),'#41483a')
-  r((4,1,12,4),'#d8b66f');r((3,4,13,5),'#ecd093');r((5,2,11,2),'#e9ca86');r((4,3,12,3),'#b78b53')
+  r((4,1,12,4),'#393f49');r((3,4,13,5),'#4c5360');r((5,2,11,2),'#e9ca86');r((4,3,12,3),'#44484b')
 save(im,'farmer.png')
 # NPC in a green dress.
 im,d=image(16,22)
@@ -90,17 +90,24 @@ im,d=image(32,16)
 for frame in range(2):
  x=frame*16;d.rectangle((x+3,6,x+11,11),fill='#f1e3b7');d.rectangle((x+7,3,x+12,8),fill='#fff0cc');d.rectangle((x+8,2,x+11,3),fill='#bf6e50');d.rectangle((x+12,5,x+14,6),fill='#d4a45e');d.point((x+11,4),fill='#414b3d');d.rectangle((x+2,5,x+4,7),fill='#e1c994');d.line((x+5,12,x+5+frame,14),fill='#bc8c4d');d.line((x+10,12,x+10-frame,14),fill='#bc8c4d')
 save(im,'chicken.png')
-# Crops: 6 stages, 3 types.
-im,d=image(96,48)
-for row,color in enumerate(['#e5d6ac','#e79b48','#c9644f']):
+# Yin crops: candle millet, copper vine, spirit gourd, speaking rice.
+im,d=image(96,64)
+for row,color in enumerate(['#80b9a1','#a89755','#879c62','#c7c09b']):
  for stage in range(6):
   x=stage*16;y=row*16
-  if stage==0:d.rectangle((x+7,y+12,x+9,y+13),fill='#c5a76d');continue
-  h=min(9,stage*2);d.rectangle((x+7,y+12-h,x+8,y+13),fill='#4c7647');d.rectangle((x+3,y+10-h,x+6,y+12-h),fill='#759b50');d.rectangle((x+9,y+8-h,x+12,y+10-h),fill='#69904b')
+  if stage==0:d.rectangle((x+7,y+12,x+9,y+13),fill='#b4a27d');continue
+  h=min(9,stage*2);d.rectangle((x+7,y+12-h,x+8,y+13),fill='#526346');d.rectangle((x+3,y+10-h,x+6,y+12-h),fill='#819366');d.rectangle((x+9,y+8-h,x+12,y+10-h),fill='#657c56')
   if stage>=3:
-   d.rectangle((x+5,y+10,x+10,y+13),fill=color);d.rectangle((x+6,y+9,x+9,y+14),fill=color);d.point((x+6,y+10),fill='#f3d79c')
-  if stage>=5:
-   d.point((x+12,y+4),fill='#eedca0');d.point((x+13,y+3),fill='#eedca0')
+   if row==0:
+    d.rectangle((x+6,y+3,x+9,y+9),fill='#b4b886');d.rectangle((x+7,y+1,x+8,y+4),fill='#78c5bb');d.point((x+8,y),fill='#b5e3c3')
+   elif row==1:
+    for cx,cy in [(4,8),(10,6),(8,12)]:
+     d.rectangle((x+cx,y+cy,x+cx+3,y+cy+3),fill=color);d.point((x+cx+1,y+cy+1),fill='#556141')
+   elif row==2:
+    d.rectangle((x+5,y+6,x+10,y+9),fill=color);d.rectangle((x+4,y+10,x+11,y+14),fill=color);d.rectangle((x+6,y+11,x+9,y+13),fill='#465744');d.point((x+6,y+12),fill='#b8c49b')
+   else:
+    for cx in (4,7,10):d.line((x+cx,y+3,x+cx+1,y+13),fill=color);d.rectangle((x+cx-1,y+4,x+cx+1,y+7),fill='#d3c8a3')
+  if stage==5:d.point((x+13,y+3),fill='#83cabd')
 save(im,'crops.png')
 # Toolbar icons.
 im,d=image(64,16)
@@ -109,4 +116,30 @@ d.rectangle((20,3,28,13),fill='#d6bd83');d.rectangle((22,5,26,9),fill='#799452')
 d.rectangle((35,5,43,12),fill='#7eabb4');d.rectangle((37,3,42,5),outline='#527e8b');d.line((43,7,47,4),fill='#7eabb4',width=2);d.rectangle((34,7,35,10),fill='#a6c8cd')
 d.rectangle((53,7,59,12),fill='#e3cea1');d.rectangle((55,4,56,7),fill='#5e884b');d.rectangle((51,3,54,5),fill='#739956');d.rectangle((57,2,60,4),fill='#739956')
 save(im,'tools.png')
-print('Generated original pixel artwork:',len(list(OUT.glob('*.png'))),'sheets')
+
+
+# Corpses, spirit silhouettes, ritual altar, tablets and paper lantern.
+im,d=image(16,72)
+for row in range(3):
+ y=row*24
+ if row==0:
+  d.rectangle((4,y+7,12,y+18),fill='#50666a');d.rectangle((5,y+2,11,y+8),fill='#a9b7a2');d.rectangle((4,y+1,12,y+3),fill='#43505b');d.point((6,y+5),fill='#705c55');d.point((10,y+5),fill='#705c55');d.rectangle((2,y+9,4,y+15),fill='#768b79');d.rectangle((12,y+9,14,y+15),fill='#768b79');d.rectangle((6,y+18,7,y+22),fill='#4c534c');d.rectangle((10,y+18,11,y+22),fill='#4c534c')
+ elif row==1:
+  d.rectangle((5,y+3,11,y+9),fill='#c4c0a2');d.rectangle((4,y+4,12,y+7),fill='#c4c0a2');d.rectangle((5,y+5,7,y+6),fill='#414b46');d.rectangle((9,y+5,11,y+6),fill='#414b46');d.line((8,y+9,8,y+17),fill='#b1ad90');d.line((4,y+11,12,y+11),fill='#b1ad90');d.line((5,y+14,11,y+14),fill='#b1ad90');d.line((4,y+11,2,y+16),fill='#b1ad90');d.line((12,y+11,14,y+16),fill='#b1ad90');d.line((8,y+17,4,y+22),fill='#b1ad90');d.line((8,y+17,12,y+22),fill='#b1ad90')
+ else:
+  d.rectangle((2,y+2,14,y+22),fill='#423f49');d.rectangle((3,y+4,13,y+20),fill='#63534f');d.line((5,y+4,5,y+20),fill='#81715b');d.line((11,y+4,11,y+20),fill='#81715b');d.rectangle((6,y+6,10,y+12),fill='#b49a69');d.line((8,y+7,8,y+11),fill='#985a4e');d.rectangle((0,y+10,2,y+18),fill='#707060');d.rectangle((14,y+10,15,y+18),fill='#707060')
+save(im,'enemies.png')
+im,d=image(16,60)
+for row in range(3):
+ y=row*20
+ if row<2:
+  d.rectangle((5,y+2,11,y+8),fill='#a5b39b' if row==0 else '#c5bea0');d.rectangle((4,y+8,12,y+16),fill='#607578' if row==0 else '#a6a88a');d.rectangle((5,y+17,7,y+19),fill='#687165');d.rectangle((9,y+17,11,y+19),fill='#687165');d.point((6,y+5),fill='#48594f');d.point((10,y+5),fill='#48594f');d.rectangle((6,y+9,9,y+12),fill='#c2b686')
+ else:
+  d.rectangle((5,y+6,11,y+11),fill='#b3b7a0');d.rectangle((4,y+11,12,y+18),fill='#565f57');d.rectangle((6,y+3,10,y+6),fill='#525c54');d.rectangle((2,y+12,4,y+17),fill='#b99c65');d.point((6,y+9),fill='#4d5b4e');d.point((10,y+9),fill='#4d5b4e')
+save(im,'spirits.png')
+im,d=image(32,32);d.rectangle((2,24,29,29),fill='#6e7168');d.rectangle((6,16,25,24),fill='#4d5c59');d.rectangle((9,10,22,15),fill='#665f54');d.rectangle((10,4,12,10),fill='#c7b895');d.rectangle((20,4,22,10),fill='#c7b895');d.rectangle((10,1,12,4),fill='#89c5ab');d.rectangle((20,1,22,4),fill='#c38970');d.line((15,5,15,12),fill='#b1a682');save(im,'altar.png')
+im,d=image(16,24);d.rectangle((3,8,13,21),fill='#797e6c');d.rectangle((4,3,12,8),fill='#8e947f');d.rectangle((6,7,10,17),fill='#646b5f');d.line((8,8,8,15),fill='#b7b59a');d.rectangle((1,20,15,23),fill='#626d61');save(im,'grave.png')
+im,d=image(16,24);d.rectangle((7,0,8,22),fill='#6e6650');d.rectangle((3,3,12,12),fill='#b09d6b');d.rectangle((5,4,10,11),fill='#ccbb84');d.line((7,5,7,10),fill='#955f51');d.rectangle((5,2,10,3),fill='#776a53');d.rectangle((5,12,10,13),fill='#776a53');save(im,'lantern.png')
+im,d=image(24,14);d.rectangle((2,3,21,11),fill='#72634f');d.rectangle((3,4,20,10),fill='#9da28a');d.rectangle((6,5,9,8),fill='#d0c8a2');d.rectangle((14,5,16,8),fill='#4f6158');save(im,'remains.png')
+
+print('Generated original Yintian artwork:',len(list(OUT.glob('*.png'))),'sheets')

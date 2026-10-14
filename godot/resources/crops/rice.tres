@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="CropSpec" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/crop_spec.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "rice"
+display_name = "返魂稻"
+growth_days = 4
+seed_price = 16
+sell_price = 90
+tint = Color(0.82, 0.77, 0.62, 1)

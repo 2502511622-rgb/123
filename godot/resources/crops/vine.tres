@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="CropSpec" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/crop_spec.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "vine"
+display_name = "铜钱藤"
+growth_days = 3
+seed_price = 10
+sell_price = 38
+tint = Color(0.72, 0.62, 0.3, 1)

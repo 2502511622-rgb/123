@@ -1,5 +1,5 @@
 extends RefCounted
-const PATH = "user://farm-save.json"
+const PATH = "user://yintian-save.json"
 
 static func save_game(state: FarmState) -> bool:
 	var file := FileAccess.open(PATH + ".tmp", FileAccess.WRITE)

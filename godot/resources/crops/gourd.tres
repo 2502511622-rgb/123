@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="CropSpec" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/crop_spec.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "gourd"
+display_name = "童影葫芦"
+growth_days = 4
+seed_price = 18
+sell_price = 65
+tint = Color(0.5, 0.65, 0.45, 1)
