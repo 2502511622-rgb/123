@@ -5,6 +5,9 @@ extends CharacterBody2D
 
 const SPEED: float = 92.0
 var facing := Vector2.DOWN
+var aim_direction := Vector2.RIGHT
+var held_item: String = "tool0"
+var recoil_time: float = 0
 var animation_time: float = 0.0
 var frozen: bool = false
 var burden: bool = false
@@ -41,6 +44,7 @@ func _physics_process(delta: float) -> void:
 		return
 	var input_direction := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	var direction: Vector2 = state_machine.update(delta, input_direction, false)
+	recoil_time = maxf(0, recoil_time - delta)
 	hit_feedback = maxf(0, hit_feedback - delta)
 	for ghost in ghosts: ghost.age += delta
 	ghosts = ghosts.filter(func(g): return g.age < 0.18)
@@ -77,7 +81,8 @@ func _draw() -> void:
 		row = 3
 	var frame: int = int(animation_time * 9) % 4
 	draw_texture_rect_region(texture, Rect2(-16, -40, 32, 40), Rect2(frame * 16, row * 20, 16, 20), Color("ef9a82") if hit_feedback > 0 else (Color(1, 1, 1, 0.55 if int(invincible * 20) % 2 == 0 else 1.0) if invincible > 0 else Color.WHITE))
-	if attack_time > 0:
+	draw_held_item()
+	if attack_time > 0 and held_item == "sword":
 		var sweep: float = 1 - attack_time / 0.22
 		draw_arc(Vector2.ZERO, hitbox.radius, facing.angle() - 0.85, facing.angle() + 0.85, 12, Color("dcd7b0"), 2)
 		var tip := Vector2.from_angle(facing.angle() - 0.85 + sweep * 1.7) * (hitbox.radius - 2)
@@ -95,3 +100,22 @@ func dodge() -> void:
 	dodge_time = 0.18
 	invincible = 0.35
 	dodge_cooldown = 1.2
+
+func draw_held_item() -> void:
+	var direction: Vector2 = aim_direction if held_item in ["pistol", "smg", "rifle"] else facing
+	var hand := direction * 6 + Vector2(0, -17)
+	if held_item.begins_with("tool"):
+		var index: int = int(held_item.substr(4))
+		var swing: float = sin((0.2 - attack_time) * 18) * 0.4 if attack_time > 0 else 0.0
+		draw_set_transform(hand, direction.angle() + swing, Vector2(1.25, 1.25))
+		draw_texture_rect_region(preload("res://assets/tools.png"), Rect2(-6, -6, 16, 16), Rect2(index * 16, 0, 16, 16))
+	else:
+		var index: int = ["sword", "pistol", "smg", "rifle"].find(held_item)
+		if index < 0: return
+		var recoil: float = recoil_time / 0.09 * 3
+		draw_set_transform(hand - direction * recoil, direction.angle(), Vector2(1.4, 1.4))
+		draw_texture_rect_region(preload("res://assets/weapons.png"), Rect2(-6, -7, 24, 16), Rect2(index * 24, 0, 24, 16))
+		if recoil_time > 0:
+			draw_rect(Rect2(18, -3, 5, 4), Color("f7df9c"))
+			draw_rect(Rect2(21, -5, 3, 8), Color("db9c63"))
+	draw_set_transform(Vector2.ZERO)

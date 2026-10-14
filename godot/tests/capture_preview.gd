@@ -26,11 +26,11 @@ func capture() -> void:
 			game.state.plots[i].crop = ["candle", "vine", "gourd", "rice"][int(i / 8)]
 			game.state.plots[i].growth = FarmState.CROPS[game.state.plots[i].crop].growth_days
 			game.state.plots[i].watered = i % 3 == 0
-		var zone: String = "graveyard" if "--cemetery" in args or "--combat" in args else ("hall" if "--hall" in args or "--warehouse" in args else "farm")
+		var zone: String = "forest" if "--firearms" in args or "--equipment" in args else "graveyard" if "--cemetery" in args or "--combat" in args else ("hall" if "--hall" in args or "--warehouse" in args else "farm")
 		game.state.supplies.wood = 8
 		game.state.supplies.stone = 6
 		game.state.supplies.paper_lamp = 2
-		game.build_zone(zone, Vector2(480, 340) if zone == "hall" else Vector2(450, 310))
+		game.build_zone(zone, Vector2(690, 590) if zone == "forest" else (Vector2(480, 340) if zone == "hall" else Vector2(450, 310)))
 		var camera: Camera2D = game.player.get_node("Camera2D")
 		camera.zoom = Vector2(0.75, 0.75)
 		camera.position_smoothing_enabled = false
@@ -51,8 +51,29 @@ func capture() -> void:
 			warning.windup = 0.7
 		game.attack("sword")
 		game.refresh("前方剑弧命中 · 伤害数字 · 躲开地面蓄力圈")
+	if "--firearms" in args or "--equipment" in args:
+		for companion in get_nodes_in_group("companions"): companion.queue_free()
+		game.state.supplies.light_ammo = 64
+		game.state.supplies.rifle_ammo = 24
+		game.state.supplies.scrap = 5
+		var smg: Dictionary = game.state.grant_gear("smg", 2, 1)
+		smg.magazine = 24
+		var rifle: Dictionary = game.state.grant_gear("rifle", 3, 2)
+		rifle.magazine = 12
+		var armor: Dictionary = game.state.grant_gear("armor", 2, 1)
+		game.state.equip(armor.id)
+		var weapon: String = "pistol" if "--pistol" in args else ("smg" if "--smg" in args else "rifle")
+		game.combat.select_weapon(weapon)
+		game.state.current_gear().magazine = YinBalance.WEAPONS[weapon].magazine
+		game.player.held_item = weapon
+		game.player.aim_direction = Vector2(150, -110).normalized()
+		var lantern: YinEnemy = game.nearest_enemy(Vector2(840, 480), 80)
+		if lantern != null: lantern.volley("ring")
+		game.attack("sword")
+		game.refresh("后山铳林 · 手持%s射击 · 远程弹幕与装备品质" % YinBalance.WEAPONS[weapon].name)
+		if "--equipment" in args: game.show_equipment()
 	game.player.frozen = true
-	if "--combat" in args:
+	if "--combat" in args or "--firearms" in args:
 		for i in range(6): await physics_frame
 		Engine.time_scale = 0
 	for i in range(12): await process_frame

@@ -14,6 +14,8 @@ const GATE = Vector2(846, 531)
 const RETURN_GATE = Vector2(155, 547)
 const TILE_TEXTURE = preload("res://assets/tiles.png")
 const CROP_TEXTURE = preload("res://assets/crops.png")
+var level_size := Vector2(960, 640)
+var projectiles: YinProjectiles
 var state: FarmState
 var tile_farm: YinTileFarm
 var player: FarmPlayer
@@ -38,10 +40,20 @@ func _ready() -> void:
 	feedback.z_index = 20
 	add_child(feedback)
 	add_child(actors)
-	boundary(Rect2(-32, -32, 1024, 32))
-	boundary(Rect2(-32, 640, 1024, 32))
-	boundary(Rect2(-32, 0, 32, 640))
-	boundary(Rect2(960, 0, 32, 640))
+	level_size = Vector2(1920, 1280) if state.zone == "forest" else SIZE
+	projectiles = YinProjectiles.new()
+	projectiles.name = "Projectiles"
+	projectiles.game = get_tree().get_first_node_in_group("yintian_game")
+	projectiles.world = self
+	projectiles.z_index = 18
+	add_child(projectiles)
+	boundary(Rect2(-32, -32, level_size.x + 64, 32))
+	boundary(Rect2(-32, level_size.y, level_size.x + 64, 32))
+	boundary(Rect2(-32, 0, 32, level_size.y))
+	boundary(Rect2(level_size.x, 0, 32, level_size.y))
+	if state.zone == "forest":
+		build_forest()
+		return
 	if state.zone in ["hall", "shop"]:
 		build_interior()
 		return
@@ -100,6 +112,8 @@ func build_graveyard() -> void:
 	prop("lantern", RETURN_GATE, Vector2(-16, -48), Rect2(-4, -6, 8, 6))
 	add_sign(RETURN_GATE + Vector2(-34, 8), "返回义庄 ↓")
 	add_sign(Vector2(410, 130), "乱葬坡 · 白天也不要久留")
+	prop("lantern", Vector2(850, 550), Vector2(-16, -48), Rect2(-4, -6, 8, 6))
+	add_sign(Vector2(816, 564), "后山铳林 ↑")
 
 func boundary(rect: Rect2) -> void:
 	obstacles.append(rect)
@@ -155,7 +169,7 @@ func add_sign(at: Vector2, text: String) -> void:
 
 func is_safe_position(at: Vector2) -> bool:
 	if state.zone in ["hall", "shop"] and not Rect2(200, 140, 560, 330).has_point(at): return false
-	if at.x < 16 or at.x > 944 or at.y < 20 or at.y > 624:
+	if at.x < 16 or at.x > level_size.x - 16 or at.y < 20 or at.y > level_size.y - 16:
 		return false
 	var body_rect := Rect2(at + Vector2(-7, -9), Vector2(14, 10))
 	for obstacle in obstacles:
@@ -182,7 +196,10 @@ func nearest_interaction() -> String:
 		if state.zone == "hall" and player.position.distance_to(Vector2(306, 361)) < 45: return "storage"
 		if state.zone == "hall" and player.position.distance_to(Vector2(666, 327)) < 45: return "bed"
 		return ""
+	if state.zone == "forest":
+		return "forest_return" if player.position.distance_to(Vector2(155, 1140)) < 47 else ""
 	if state.zone == "graveyard":
+		if player.position.distance_to(Vector2(850, 530)) < 47: return "forest_gate"
 		return "return" if player.position.distance_to(RETURN_GATE) < 47 else ""
 	for pair in [["home", HOME], ["shipping", SHIPPING], ["shop", SHOP], ["npc", NPC], ["altar", ALTAR], ["gate", GATE]]:
 		if player.position.distance_to(pair[1]) < 45:
@@ -228,6 +245,10 @@ func _draw() -> void:
 		draw_rect(Rect2(420, 278, 120, 74), Color("7e6a4f"))
 		draw_rect(Rect2(424, 282, 112, 66), Color("a5946d"), false, 2)
 		for x in range(432, 532, 12): draw_rect(Rect2(x, 288, 4, 54), Color("8b7959"))
+		return
+	if state.zone == "forest":
+		draw_rect(Rect2(948, 544, 88, 96), Color("806a4d"))
+		for y in range(546, 638, 8): draw_rect(Rect2(950, y, 84, 5), Color("b19768"))
 		return
 	if state.zone == "graveyard":
 		draw_rect(Rect2(0, 0, 960, 640), Color(0.15, 0.21, 0.23, 0.24))
@@ -329,3 +350,22 @@ func spell_trace(start: Vector2, end: Vector2, method: String) -> void:
 	tween.tween_property(line, "modulate:a", 0.0, 0.22)
 	tween.tween_callback(line.queue_free)
 	effect(end, line.default_color)
+
+func build_forest() -> void:
+	boundary(Rect2(960, 0, 64, 544))
+	boundary(Rect2(960, 640, 64, 640))
+	for x in range(40, 1900, 64):
+		prop("tree", Vector2(x, 55), Vector2(-32, -88), Rect2(-8, -16, 16, 16))
+		prop("tree", Vector2(x, 1258), Vector2(-32, -88), Rect2(-8, -16, 16, 16))
+	for y in range(160, 1200, 112):
+		prop("tree", Vector2(40, y), Vector2(-32, -88), Rect2(-8, -16, 16, 16))
+		prop("tree", Vector2(1880, y), Vector2(-32, -88), Rect2(-8, -16, 16, 16))
+	for at in [Vector2(350, 320), Vector2(620, 680), Vector2(780, 950), Vector2(1120, 370), Vector2(1380, 660), Vector2(1720, 1090)]:
+		for offset in [Vector2.ZERO, Vector2(34, -18), Vector2(-30, 18)]: prop("tree", at + offset, Vector2(-32, -88), Rect2(-8, -16, 16, 16))
+	for at in [Vector2(700, 180), Vector2(1400, 880), Vector2(1520, 440), Vector2(300, 400)]:
+		prop("grave", at, Vector2(-16, -48), Rect2(-12, -16, 24, 16))
+	prop("lantern", Vector2(155, 1140), Vector2(-16, -48), Rect2(-4, -6, 8, 6))
+	add_sign(Vector2(125, 1152), "返回乱葬坡 ↓")
+	add_sign(Vector2(160, 1070), "后山铳林 · T2–T5 · 远程弹幕与精英")
+	for placed in state.placements:
+		if placed.zone == "forest": install_placement(placed)

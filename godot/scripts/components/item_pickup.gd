@@ -19,6 +19,7 @@ func _process(delta: float) -> void:
 	queue_redraw()
 func _draw() -> void:
 	var offset: float = sin(age * 4) * 2
-	draw_rect(Rect2(-6, -6 + offset, 12, 10), Color("b4b899"))
-	draw_rect(Rect2(-3, -4 + offset, 6, 6), Color("677b6b"))
+	var index: int = YinItemCatalog.IDS.find(record.item)
+	draw_texture_rect_region(preload("res://assets/items.png"), Rect2(-8, -14 + offset, 16, 16), Rect2(index * 16, 0, 16, 16))
 	draw_rect(Rect2(-7, 5, 14, 2), Color(0.1, 0.2, 0.2, 0.2))
+	draw_string(ThemeDB.fallback_font, Vector2(-24, -18), YinItemCatalog.spec(record.item).display_name, HORIZONTAL_ALIGNMENT_LEFT, -1, 9, Color("dfd1ac"))

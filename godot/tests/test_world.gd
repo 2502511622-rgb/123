@@ -91,7 +91,7 @@ func run() -> void:
 	var burnt: Dictionary = game.state.remains[1]
 	game.state.pickup(burnt.id)
 	game.spawn_tracker()
-	check(game.state.enemies.size() == 6, "loaded cart can attract actual pursuer")
+	check(game.state.enemies.filter(func(e): return e.zone == "graveyard").size() == 6, "loaded cart can attract actual pursuer")
 	game.player.burden = true
 	var carrying: int = game.state.cargo.size()
 	game.travel("farm")

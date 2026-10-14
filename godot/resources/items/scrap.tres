@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="YinItemSpec" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/inventory/item_spec.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "scrap"
+display_name = "铳器零件"
+category = "军需"
+description = "制作弹药、拆解装备所得。"
+max_stack = 99

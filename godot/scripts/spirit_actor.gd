@@ -15,7 +15,7 @@ func _process(delta: float) -> void:
 		target = Vector2(180 + int(record.id) % 3 * 28, 275) if game.state.zone == "farm" else Vector2(180, 525)
 	position = position.move_toward(target, delta * 70)
 	var enemy: YinEnemy = game.nearest_enemy(position, 110 if game.state.order == "focus" else 60)
-	if enemy != null and cooldown <= 0:
+	if enemy != null and cooldown <= 0 and game.combat.visible(enemy):
 		enemy.receive_hit(9 + int(record.affinity / 25) + (5 if record.kind == "child" and record.branch == "shadow" else 0), "spirit")
 		game.world.effect(enemy.position, Color("91aaa8"))
 		cooldown = 1.8

@@ -199,4 +199,42 @@ for index in range(8,16):
  else:
   d.rectangle((x+5,3,x+10,13),fill='#788880');d.polygon([(x+5,3),(x+7,1),(x+10,3)],fill='#adb39c');d.line((x+7,5,x+7,11),fill='#d4c092')
 save(im,'items.png')
+# Original weapon silhouettes point right; actors rotate them toward their aim.
+im,d=image(120,16)
+for index in range(5):
+ x=index*24
+ if index==0:
+  d.rectangle((x+5,7,x+20,8),fill='#b88e62');d.rectangle((x+17,6,x+22,9),fill='#e3cc91');d.line((x+7,4,x+7,11),fill='#927650')
+ elif index==1:
+  d.rectangle((x+6,5,x+18,8),fill='#b5b9a8');d.rectangle((x+7,8,x+10,13),fill='#785d48');d.line((x+7,5,x+17,5),fill='#e3dcc0');d.rectangle((x+17,6,x+20,7),fill='#465951')
+ elif index==2:
+  d.rectangle((x+2,5,x+18,9),fill='#5a7065');d.rectangle((x+11,9,x+14,14),fill='#819080');d.rectangle((x+6,9,x+8,13),fill='#826a4a');d.rectangle((x+18,6,x+22,7),fill='#c4c8ac');d.line((x+4,5,x+17,5),fill='#aab599')
+ elif index==3:
+  d.rectangle((x+1,6,x+19,8),fill='#a68b62');d.rectangle((x+12,4,x+17,5),fill='#697f73');d.rectangle((x+18,6,x+23,7),fill='#c3c7ad');d.line((x+8,9,x+10,12),fill='#56675d',width=2)
+ else:
+  d.polygon([(x+6,2),(x+10,1),(x+14,2),(x+19,5),(x+16,8),(x+14,6),(x+15,14),(x+5,14),(x+6,6),(x+3,8),(x,5)],fill='#6e8b7c');d.line((x+10,3,x+10,12),fill='#c6b780');d.line((x+5,12,x+15,12),fill='#b5ac83')
+save(im,'weapons.png')
+# Four new monsters each have a distinct silhouette, palette and ranged prop.
+im=Image.new('RGBA',(16,168));im.alpha_composite(Image.open(OUT/'enemies.png'),(0,0));d=ImageDraw.Draw(im)
+for row in range(3,7):
+ y=row*24
+ if row==3:
+  d.rectangle((5,y+3,11,y+9),fill='#c9c2a0');d.rectangle((6,y+5,7,y+6),fill='#3d4943');d.rectangle((9,y+5,10,y+6),fill='#3d4943');d.line((8,y+9,8,y+18),fill='#b6b298');d.line((4,y+12,11,y+12),fill='#b6b298');d.line((8,y+17,4,y+22),fill='#b6b298');d.line((8,y+17,11,y+22),fill='#b6b298');d.line((13,y+7,15,y+12),fill='#927753');d.line((15,y+12,13,y+18),fill='#927753');d.line((13,y+7,13,y+18),fill='#d7c79d')
+ elif row==4:
+  d.polygon([(6,y+2),(11,y+2),(13,y+10),(12,y+19),(9,y+22),(6,y+20),(3,y+23),(4,y+9)],fill='#4f8e84');d.rectangle((5,y+4,11,y+9),fill='#93c6a3');d.point((7,y+6),fill='#304c4a');d.point((10,y+6),fill='#304c4a');d.rectangle((11,y+12,15,y+17),fill='#e2bc7e');d.line((12,y+10,14,y+10),fill='#577364');d.rectangle((13,y+14,14,y+15),fill='#bc8261')
+ elif row==5:
+  d.polygon([(3,y+6),(8,y+1),(13,y+6)],fill='#d8caa0');d.rectangle((5,y+6,11,y+10),fill='#ddceab');d.line((8,y+4,8,y+9),fill='#a46950');d.rectangle((4,y+10,12,y+19),fill='#a6b09a');d.rectangle((5,y+19,7,y+22),fill='#697768');d.rectangle((9,y+19,11,y+22),fill='#697768');d.rectangle((9,y+12,15,y+14),fill='#5b6860');d.rectangle((8,y+14,10,y+17),fill='#937957')
+ else:
+  d.polygon([(2,y+2),(5,y+6),(10,y+6),(14,y+2),(12,y+10),(13,y+18),(10,y+22),(8,y+18),(5,y+22),(3,y+17),(2,y+10)],fill='#8d7053');d.rectangle((5,y+5,10,y+10),fill='#b99c70');d.point((6,y+7),fill='#393f36');d.point((9,y+7),fill='#393f36');d.rectangle((4,y+12,11,y+17),fill='#576d52');d.line((6,y+13,9,y+13),fill='#b9b08a')
+save(im,'enemies.png')
+# Extend material icons for the two ammunition types and salvage parts.
+im=Image.new('RGBA',(304,16));im.alpha_composite(Image.open(OUT/'items.png'),(0,0));d=ImageDraw.Draw(im)
+for index in range(16,19):
+ x=index*16
+ if index in [16,17]:
+  for dx in [4,8,12]:
+   d.rectangle((x+dx-1,5,x+dx+1,13),fill='#c6a76a' if index==16 else '#a7b69f');d.polygon([(x+dx-1,5),(x+dx,2 if index==17 else 4),(x+dx+1,5)],fill='#e5d5a2');d.line((x+dx-1,11,x+dx+1,11),fill='#826948')
+ else:
+  d.rectangle((x+3,3,x+12,12),outline='#9dad9e',width=2);d.line((x+2,10,x+13,5),fill='#e1c38b',width=2);d.rectangle((x+6,6,x+9,9),fill='#536b60')
+save(im,'items.png')
 print('Generated original Yintian artwork:',len(list(OUT.glob('*.png'))),'sheets')

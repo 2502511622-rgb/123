@@ -19,7 +19,13 @@ var minutes: float = 360
 var weather: String = "sun"
 var selected_crop: String = "candle"
 var inventory: Dictionary = {"candle_seeds": 8, "vine_seeds": 5, "gourd_seeds": 2, "rice_seeds": 1, "candle": 0, "vine": 0, "gourd": 0, "rice": 0}
-var supplies: Dictionary = {"wood": 0, "stone": 0, "paper_lamp": 0, "ward_stake": 0}
+var supplies: Dictionary = {"wood": 0, "stone": 0, "paper_lamp": 0, "ward_stake": 0, "light_ammo": 36, "rifle_ammo": 0, "scrap": 0}
+var equipment: Array = [YinBalance.make_gear(1, "sword"), YinBalance.make_gear(2, "pistol")]
+var gear_drops: Array = []
+var equipped_gear: int = 1
+var equipped_armor: int = 0
+var next_gear_id: int = 3
+var smart_farming: bool = true
 var storage: Dictionary = {}
 var bag_slots: Array = []
 var chest_slots: Array = []
@@ -304,17 +310,32 @@ func prepare_enemies() -> void:
 	enemies = enemies.filter(func(e): return e.zone == "farm" and not e.dead)
 	for i in range(5):
 		var kind: String = "water" if i % 2 == 0 else "bone"
-		enemies.append({"id": next_id, "kind": kind, "zone": "graveyard", "at": [float(280 + i * 100), float(240 + (i % 2) * 150)], "hp": 50 if kind == "water" else 42, "max_hp": 50 if kind == "water" else 42, "integrity": 100, "suppressed": false, "dead": false})
-		next_id += 1
+		spawn_record(kind, "graveyard", Vector2(280 + i * 100, 240 + (i % 2) * 150), 1 + int((day - 1) / 4))
+	if day >= 3:
+		spawn_record("archer", "graveyard", Vector2(730, 425), 2)
+		spawn_record("lantern", "graveyard", Vector2(820, 290), 2)
+	for i in range(16):
+		var kind: String = ["archer", "lantern", "gunner", "brute"][i % 4]
+		var at := Vector2(480 + (i % 4) * 360, 240 + int(i / 4) * 240)
+		spawn_record(kind, "forest", at, 2 + int(i / 8) + int((day - 1) / 4), i in [6, 15])
+
+func spawn_record(kind: String, zone_name: String, at: Vector2, level_value: int, elite: bool = false) -> Dictionary:
+	var stats: Dictionary = YinBalance.enemy(kind, level_value, elite)
+	var record: Dictionary = {"id": next_id, "kind": kind, "zone": zone_name, "at": [at.x, at.y], "hp": stats.hp, "max_hp": stats.hp, "integrity": 100, "suppressed": false, "dead": false}
+	record.merge(stats)
+	enemies.append(record)
+	next_id += 1
+	return record
 
 func kill_enemy(id: int, at: Vector2) -> void:
 	for e in enemies:
 		if e.id != id or e.dead: continue
 		e.dead = true
 		var boss: bool = e.kind == "boss"
-		remains.append({"id": next_id, "kind": e.kind, "name": "棺将遗骸" if boss else ("担水尸骸" if e.kind == "water" else "掘土骨骸"), "integrity": e.integrity, "regret": "守门" if boss else ("生前担水" if e.kind == "water" else "替人掘墓"), "fierceness": 50 if boss else (12 if e.suppressed else 30), "yin": "山煞" if boss else ("水阴" if e.kind == "water" else "土阴"), "at": [at.x, at.y], "zone": e.zone})
+		remains.append({"id": next_id, "kind": e.kind, "name": "棺将遗骸" if boss else ("担水尸骸" if e.kind == "water" else YinBalance.MONSTERS[e.kind].name + "遗骸"), "integrity": e.integrity, "regret": "守门" if boss else ("生前担水" if e.kind == "water" else {"bone": "替人掘墓", "archer": "守山残念", "lantern": "不肯熄灭的旧灯", "gunner": "未传到的军令", "brute": "山中猎食"}.get(e.kind, "未散残念")), "fierceness": 50 if boss else (12 if e.suppressed else 30), "yin": "山煞" if boss else ("水阴" if e.kind == "water" else "土阴"), "at": [at.x, at.y], "zone": e.zone})
 		next_id += 1
-		cultivation += 8 if not boss else 30
+		cultivation += (8 * int(e.get("level", 1))) if not boss else 30
+		reward_enemy(e, at)
 		if boss:
 			boss_defeated = true
 			add_log("棺中客倒下。它的棺盖内刻着与你师父相同的名字。")
@@ -338,7 +359,7 @@ func process_remains(id: int, method: String, plot_index: int = -1) -> String:
 	if r.is_empty(): return "没有这具遗骸。"
 	match method:
 		"refine":
-			if r.kind == "boss": return "棺将尚不可收役，本版可拆解、埋田或超度。"
+			if r.kind not in ["water", "bone"]: return "此类遗骸尚不可收役，可拆解、埋田或超度。"
 			if r.integrity < 60: return "完整度不足 60，不能炼成完整役灵。"
 			if spirits.size() >= capacity(): return "安置位不足。可先扩建或选择其他用途。"
 			if oil < 2: return "炼化需要 2 灯油。"
@@ -424,29 +445,39 @@ func choose_ending(choice: String) -> String:
 func snapshot() -> Dictionary:
 	YinInventoryModel.new(self, "bag").sync()
 	YinInventoryModel.new(self, "chest").sync()
-	var data: Dictionary = {"version": 4}
+	var data: Dictionary = {"version": 5}
 	for key in save_keys(): data[key] = get(key)
 	data.player_position = [player_position.x, player_position.y]
 	data.saved_facing = [saved_facing.x, saved_facing.y]
 	return data.duplicate(true)
 
 static func save_keys() -> Array:
-	return ["day", "money", "energy", "health", "minutes", "weather", "selected_crop", "inventory", "supplies", "storage", "bag_slots", "chest_slots", "terrain", "drops", "placements", "plots", "oil", "talismans", "bones", "ash", "reputation", "cultivation", "pollution", "ward", "hall_level", "spirits", "remains", "cargo", "enemies", "enemy_day", "next_id", "total_harvest", "called_day", "ritual_count", "ritual_path", "boss_spawned", "boss_defeated", "ending", "intro_seen", "zone", "journal", "last_report", "order"]
+	return ["equipment", "gear_drops", "equipped_gear", "equipped_armor", "next_gear_id", "smart_farming", "day", "money", "energy", "health", "minutes", "weather", "selected_crop", "inventory", "supplies", "storage", "bag_slots", "chest_slots", "terrain", "drops", "placements", "plots", "oil", "talismans", "bones", "ash", "reputation", "cultivation", "pollution", "ward", "hall_level", "spirits", "remains", "cargo", "enemies", "enemy_day", "next_id", "total_harvest", "called_day", "ritual_count", "ritual_path", "boss_spawned", "boss_defeated", "ending", "intro_seen", "zone", "journal", "last_report", "order"]
 
 static func valid_int(value: Variant, minimum: int, maximum: int = 100000000) -> bool:
 	return (value is int or value is float) and is_finite(float(value)) and float(value) == floor(float(value)) and value >= minimum and value <= maximum
 
 static func valid_point(value: Variant) -> bool:
-	return value is Array and value.size() == 2 and (value[0] is float or value[0] is int) and (value[1] is float or value[1] is int) and is_finite(float(value[0])) and is_finite(float(value[1])) and value[0] >= 0 and value[0] <= 960 and value[1] >= 0 and value[1] <= 640
+	return value is Array and value.size() == 2 and (value[0] is float or value[0] is int) and (value[1] is float or value[1] is int) and is_finite(float(value[0])) and is_finite(float(value[1])) and value[0] >= 0 and value[0] <= 1920 and value[1] >= 0 and value[1] <= 1280
 
 func restore(data: Dictionary) -> bool:
-	if not valid_int(data.get("version"), 3, 4): return false
+	if not valid_int(data.get("version"), 3, 5): return false
 	var defaults := FarmState.new()
 	if int(data.version) == 3:
 		data = data.duplicate(true)
 		data.version = 4
 		for key in ["supplies", "storage", "bag_slots", "chest_slots", "terrain", "drops", "placements"]:
 			data[key] = defaults.get(key).duplicate(true)
+	if int(data.version) == 4:
+		data = data.duplicate(true)
+		data.version = 5
+		for key in ["equipment", "gear_drops", "equipped_gear", "equipped_armor", "next_gear_id", "smart_farming"]:
+			var value: Variant = defaults.get(key)
+			data[key] = value.duplicate(true) if value is Array else value
+		for key in defaults.supplies:
+			if not data.supplies.has(key): data.supplies[key] = defaults.supplies[key]
+		for id in YinItemCatalog.IDS:
+			if not data.storage.has(id): data.storage[id] = 0
 	for key in save_keys():
 		if not data.has(key): return false
 		var expected: Variant = defaults.get(key)
@@ -457,7 +488,7 @@ func restore(data: Dictionary) -> bool:
 		if expected is Dictionary and not data[key] is Dictionary: return false
 	if data.day < 1 or data.health > 100 or data.energy > 100 or data.ward > 100 or data.pollution > 100 or not valid_int(data.hall_level, 1, 2): return false
 	if (not data.minutes is float and not data.minutes is int) or not is_finite(float(data.minutes)) or data.minutes < 360 or data.minutes > 1440: return false
-	if data.zone not in ["farm", "graveyard", "hall", "shop"] or data.weather not in ["sun", "rain"] or data.order not in ["follow", "guard", "focus"]: return false
+	if data.zone not in ["farm", "graveyard", "forest", "hall", "shop"] or data.weather not in ["sun", "rain"] or data.order not in ["follow", "guard", "focus"]: return false
 	if data.selected_crop not in CROPS or data.plots.size() != WIDTH * HEIGHT or data.spirits.size() > (2 if int(data.hall_level) == 1 else 3) or data.cargo.size() > 2: return false
 	for key in INVENTORY_KEYS:
 		if not valid_int(data.inventory.get(key), 0): return false
@@ -476,7 +507,7 @@ func restore(data: Dictionary) -> bool:
 		if not key is String or not record is Dictionary or not valid_int(record.get("hp"), 0, 3): return false
 	for collection in [data.drops, data.placements]:
 		for record in collection:
-			if not record is Dictionary or not valid_int(record.get("id"), 1) or record.get("zone") not in ["farm", "graveyard", "hall", "shop"] or not valid_point(record.get("at")): return false
+			if not record is Dictionary or not valid_int(record.get("id"), 1) or record.get("zone") not in ["farm", "graveyard", "forest", "hall", "shop"] or not valid_point(record.get("at")): return false
 	for drop in data.drops:
 		if drop.get("item") not in YinItemCatalog.IDS or not valid_int(drop.get("count"), 1, 99): return false
 	for placed in data.placements:
@@ -490,15 +521,19 @@ func restore(data: Dictionary) -> bool:
 		for key in ["id", "risk", "affinity", "level"]:
 			if not valid_int(s.get(key), 0, 100000): return false
 	for r in data.remains:
-		if not r is Dictionary or r.get("kind") not in ["water", "bone", "boss"] or r.get("zone") not in ["farm", "graveyard", "cargo"] or not valid_point(r.get("at")): return false
+		if not r is Dictionary or r.get("kind") not in YinBalance.MONSTERS.keys() or r.get("zone") not in ["farm", "graveyard", "forest", "cargo"] or not valid_point(r.get("at")): return false
 		for key in ["id", "integrity", "fierceness"]:
 			if not valid_int(r.get(key), 0, 100000): return false
 		for key in ["name", "regret", "yin"]:
 			if not r.get(key) is String: return false
 	for e in data.enemies:
-		if not e is Dictionary or e.get("kind") not in ["water", "bone", "boss"] or e.get("zone") not in ["farm", "graveyard"] or not valid_point(e.get("at")) or not e.get("dead") is bool or not e.get("suppressed") is bool: return false
+		if not e is Dictionary or e.get("kind") not in YinBalance.MONSTERS.keys() or e.get("zone") not in ["farm", "graveyard", "forest"] or not valid_point(e.get("at")) or not e.get("dead") is bool or not e.get("suppressed") is bool: return false
 		for key in ["id", "hp", "max_hp", "integrity"]:
 			if not valid_int(e.get(key), 0, 100000): return false
+		for key in ["level", "damage", "armor"]:
+			if e.has(key) and not valid_int(e[key], 0, 10000): return false
+		if e.has("level") and not valid_int(e.level, 1, 20): return false
+		if e.has("elite") and not e.elite is bool: return false
 		if e.max_hp < 1 or e.hp > e.max_hp or e.integrity > 100: return false
 	for id in data.cargo:
 		if not valid_int(id, 1) or not data.remains.any(func(r): return r.id == id and r.zone == "cargo"): return false
@@ -509,7 +544,19 @@ func restore(data: Dictionary) -> bool:
 	for value in data.saved_facing:
 		if (not value is float and not value is int) or not is_finite(float(value)): return false
 	var face: Array = data.get("saved_facing", [])
-	if face.size() != 2 or Vector2(face[0], face[1]) not in [Vector2.DOWN, Vector2.UP, Vector2.LEFT, Vector2.RIGHT]: return false
+	if face.size() != 2 or absf(Vector2(face[0], face[1]).length() - 1.0) > 0.01: return false
+	if data.equipment.size() < 1 or data.equipment.size() > 20 or data.gear_drops.size() > 200: return false
+	var gear_ids: Array = []
+	for gear in data.equipment:
+		if not valid_gear(gear) or gear.id in gear_ids: return false
+		gear_ids.append(gear.id)
+	if not data.equipment.any(func(g): return g.id == data.equipped_gear and g.weapon != "armor"): return false
+	if data.equipped_armor != 0 and not data.equipment.any(func(g): return g.id == data.equipped_armor and g.weapon == "armor"): return false
+	for drop in data.gear_drops:
+		if not drop is Dictionary or not valid_int(drop.get("id"), 1) or drop.get("zone") not in ["farm", "graveyard", "forest", "hall", "shop"] or not valid_point(drop.get("at")) or not valid_gear(drop.get("gear")): return false
+		if drop.gear.id in gear_ids: return false
+		gear_ids.append(drop.gear.id)
+	if gear_ids.any(func(id): return id >= data.next_gear_id): return false
 	var normalized: Dictionary = data.duplicate(true)
 	for key in save_keys():
 		if defaults.get(key) is int: normalized[key] = int(normalized[key])
@@ -533,7 +580,14 @@ func restore(data: Dictionary) -> bool:
 		item.at = [float(item.at[0]), float(item.at[1])]
 	for item in normalized.enemies:
 		for key in ["id", "hp", "max_hp", "integrity"]: item[key] = int(item[key])
+		for key in ["level", "damage", "armor"]:
+			if item.has(key): item[key] = int(item[key])
 		item.at = [float(item.at[0]), float(item.at[1])]
+	for gear in normalized.equipment:
+		for key in ["id", "tier", "quality", "bonus", "magazine"]: gear[key] = int(gear[key])
+	for drop in normalized.gear_drops:
+		drop.id = int(drop.id)
+		for key in ["id", "tier", "quality", "bonus", "magazine"]: drop.gear[key] = int(drop.gear[key])
 	normalized.cargo = normalized.cargo.map(func(id): return int(id))
 	for key in save_keys(): set(key, normalized[key])
 	player_position = Vector2(data.player_position[0], data.player_position[1])
@@ -559,3 +613,69 @@ func can_gain_many(additions: Dictionary) -> bool:
 	var values: Dictionary = {}
 	for id in YinItemCatalog.IDS: values[id] = container_count("bag", id) + int(additions.get(id, 0))
 	return YinInventoryModel.fits(values)
+
+static func valid_gear(gear: Variant) -> bool:
+	if not gear is Dictionary or gear.get("weapon") not in YinBalance.WEAPONS: return false
+	for key in ["id", "tier", "quality", "bonus", "magazine"]:
+		if not valid_int(gear.get(key), 0): return false
+	return gear.id >= 1 and gear.tier >= 1 and gear.tier <= 20 and gear.quality <= 3 and gear.bonus == gear.quality * 8 and gear.magazine <= YinBalance.WEAPONS[gear.weapon].magazine
+func current_gear() -> Dictionary:
+	for gear in equipment:
+		if gear.id == equipped_gear: return gear
+	return {}
+func armor_gear() -> Dictionary:
+	for gear in equipment:
+		if gear.id == equipped_armor: return gear
+	return {}
+func equip(id: int) -> bool:
+	for gear in equipment:
+		if gear.id != id: continue
+		if gear.weapon == "armor": equipped_armor = id
+		else: equipped_gear = id
+		return true
+	return false
+func grant_gear(weapon: String, tier: int = 1, quality: int = 0) -> Dictionary:
+	if equipment.size() >= 20 or weapon not in YinBalance.WEAPONS: return {}
+	var gear := YinBalance.make_gear(next_gear_id, weapon, tier, quality)
+	next_gear_id += 1
+	equipment.append(gear)
+	return gear
+func add_drop(item: String, count: int, zone_name: String, at: Vector2) -> void:
+	drops.append({"id": next_id, "item": item, "count": count, "zone": zone_name, "at": [at.x, at.y]})
+	next_id += 1
+func reward_enemy(enemy: Dictionary, at: Vector2) -> void:
+	var random := RandomNumberGenerator.new()
+	random.seed = int(enemy.id) * 92821 + day * 193
+	var level_value: int = int(enemy.get("level", 1))
+	add_drop("rifle_ammo" if enemy.kind in ["archer", "brute"] else "light_ammo", 3 + level_value, enemy.zone, at + Vector2(14, 10))
+	if gear_drops.size() < 200 and (random.randf() < 0.35 or enemy.get("elite", false) or enemy.kind == "boss"):
+		var roll: float = random.randf()
+		var quality: int = 3 if roll > 0.98 else (2 if roll > 0.88 else (1 if roll > 0.6 else 0))
+		if enemy.get("elite", false) or enemy.kind == "boss": quality = maxi(1, quality)
+		var weapon: String = ["sword", "pistol", "smg", "rifle", "armor"][random.randi_range(0, 4)]
+		var gear := YinBalance.make_gear(next_gear_id, weapon, mini(20, level_value), quality)
+		next_gear_id += 1
+		gear_drops.append({"id": next_id, "gear": gear, "zone": enemy.zone, "at": [at.x - 14, at.y + 10]})
+		next_id += 1
+func salvage(id: int) -> String:
+	if id in [equipped_gear, equipped_armor]: return "穿戴中的装备不可拆解。"
+	for gear in equipment:
+		if gear.id != id: continue
+		var gain: int = 1 + int(gear.quality)
+		var ammo: String = YinBalance.WEAPONS[gear.weapon].ammo
+		var additions: Dictionary = {"scrap": gain}
+		if ammo != "" and gear.magazine > 0: additions[ammo] = gear.magazine
+		if not can_gain_many(additions): return "行囊已满，装备未拆解。"
+		for item in additions: set_container_count("bag", item, container_count("bag", item) + int(additions[item]))
+		equipment.erase(gear)
+		return "拆解完成，零件和未用弹药已回收入行囊。"
+	return "没有这件装备。"
+func craft_ammo(ammo: String) -> String:
+	if ammo not in ["light_ammo", "rifle_ammo"]: return "无效弹种。"
+	var amount: int = 12 if ammo == "light_ammo" else 6
+	if supplies.scrap < 1 or bones < 1: return "弹药需要 1 铳器零件和 1 骨料。"
+	if not can_gain(ammo, amount): return "行囊已满。"
+	supplies.scrap -= 1
+	bones -= 1
+	supplies[ammo] += amount
+	return "制成 %s ×%d。" % [YinItemCatalog.spec(ammo).display_name, amount]

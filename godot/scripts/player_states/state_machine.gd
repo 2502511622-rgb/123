@@ -12,7 +12,7 @@ func change(next: String) -> void:
 	current = next
 	changed.emit(previous, current)
 func begin(kind: String, seconds: float, effect: Callable = Callable()) -> bool:
-	if current in ["tool", "attack", "spell", "dodge", "paused"]: return false
+	if current in ["tool", "attack", "spell", "dodge", "reload", "paused"]: return false
 	action = YinActionState.new(kind, seconds, effect)
 	change(kind)
 	action.enter()

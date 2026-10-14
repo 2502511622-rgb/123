@@ -31,13 +31,17 @@ func build(zone_name: String) -> void:
 	ground = layer("Ground", terrain, -3, Vector2.ZERO)
 	soil = layer("TilledAndWatered", terrain, -2, FIELD)
 	crops = layer("CropStages", tileset(preload("res://assets/crops.png"), 6, 4), -1, FIELD - Vector2(0, 4))
-	for y in range(20):
-		for x in range(30):
+	for y in range(40 if zone == "forest" else 20):
+		for x in range(60 if zone == "forest" else 30):
 			var id: int = (x * 7 + y * 11) % 8
 			if y in [7, 8] or (x == 8 and y >= 6 and y <= 17) or (x >= 22 and x <= 25 and y >= 6 and y <= 11): id = 10
 			if x in [20, 21]: id = 11 if zone == "farm" else 8
 			if (x * 13 + y * 7) % 31 == 0 and id < 8: id = 14
 			if zone in ["hall", "shop"]: id = 10
+			if zone == "forest":
+				id = (x * 7 + y * 11) % 8
+				if x == 10 or y == 32 or y in [17, 18]: id = 10
+				if x in [30, 31]: id = 11
 			ground.set_cell(Vector2i(x, y), 0, Vector2i(id, 0))
 func refresh(state: FarmState, time: float) -> void:
 	if zone != "farm": return

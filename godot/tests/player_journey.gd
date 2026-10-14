@@ -23,12 +23,14 @@ func key(code: int) -> void:
  event.keycode = code
  event.pressed = true
  Input.parse_input_event(event)
+ Input.flush_buffered_events()
  await frames(2)
  event = InputEventKey.new()
  event.physical_keycode = code
  event.keycode = code
  event.pressed = false
  Input.parse_input_event(event)
+ Input.flush_buffered_events()
  await frames(2)
 func click(node: Control) -> void:
  await process_frame
@@ -169,7 +171,8 @@ func run() -> void:
   check(await choose("处理运输车"), "workbench exposes transported corpse")
   check(await choose("炼为役灵"), "refinement activated through scrollable UI")
   check(game.state.spirits.size() == 1 and game.state.cargo.is_empty(), "full fight-transport-refine loop creates a worker")
-  await key(KEY_ESCAPE)
+  if game.modal != null: await key(KEY_ESCAPE)
+  check(game.modal == null and not game.player.frozen, "refinement returns to active play")
  # Focused adversarial collision case, with explicit test fixture.
  game.state = FarmState.new()
  game.build_zone("farm", Vector2(618, 180))
@@ -204,6 +207,7 @@ func run() -> void:
  enemy.record.hp = 100
  game.action_cooldown = 0
  await frames(2)
+ await key(KEY_7)
  game.attack("sword")
  check(enemy.record.hp == 100 and not game.combat.pending.is_empty(), "sword damage occurs on contact frame rather than key-down")
  game.show_inventory()

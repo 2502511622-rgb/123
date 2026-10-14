@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="YinItemSpec" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/inventory/item_spec.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "rifle_ammo"
+display_name = "步枪弹药"
+category = "军需"
+description = "步枪独立弹种。"
+max_stack = 99
