@@ -1,0 +1,14 @@
+config_version=5
+
+[application]
+config/name="青苔牧场 Mossfield"
+run/main_scene="res://scenes/main.tscn"
+
+[display]
+window/size/viewport_width=1100
+window/size/viewport_height=720
+window/stretch/mode="canvas_items"
+
+[rendering]
+renderer/rendering_method="gl_compatibility"
+textures/default_filters/use_nearest_mipmap_filter=false
