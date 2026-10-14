@@ -4,6 +4,7 @@ var hint: Label
 var confirmation: ConfirmationDialog
 var existing_valid: bool = false
 func _ready() -> void:
+	YinDisplaySettings.load_settings()
 	theme = YinPixelTheme.install()
 	ThemeDB.fallback_font = preload("res://assets/mossfield-font.ttf")
 	var title := Label.new()
@@ -30,6 +31,15 @@ func _ready() -> void:
 	continue_button.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/main.tscn"))
 	var exit := make_button("退出", Vector2(242, 247))
 	exit.pressed.connect(func(): get_tree().quit())
+	var settings := make_button("画面设置", Vector2(410, 247))
+	settings.pressed.connect(func():
+		var dialog := AcceptDialog.new()
+		dialog.title = "分辨率与像素显示"
+		add_child(dialog)
+		dialog.add_child(YinDisplaySettings.panel())
+		dialog.popup_centered(Vector2i(440, 190))
+		dialog.confirmed.connect(dialog.queue_free)
+	)
 	hint = Label.new()
 	hint.text = "种田谋生。杀鬼留骸。每夜点名。"
 	hint.position = Vector2(194, 304)

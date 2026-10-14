@@ -12,7 +12,7 @@
 | Player/player | `scenes/actors/player.tscn` + `scripts/player.gd` | 可编辑身体碰撞、摄像机，接入状态机与攻击组件 |
 | Bag/Item、InventorySystem | `resources/items/` + `scripts/inventory/` | 不共享可变数量的物品定义、24 格行囊和仓箱、99 堆叠上限 |
 | Bag/slot、bag_ui、box_ui | `scripts/ui/inventory_slot.gd`、`inventory_panel.gd` | 交换、拆半、堆叠、拖拽、跨容器移动、整理、物品提示 |
-| Bag/tool_bar | `main.gd` 工具栏 | 六种工具、1–6 选择、鼠标滚轮切换，Q 换阴种 |
+| Bag/tool_bar | `main.gd` 角色背包 | 六种工具整合到角色背包，名称与图标、点击手持；旧 1–6 栏和绑定删除，Q 换阴种 |
 | Global/SceneManager、SpawnPosition | `scripts/core/scene_router.gd` + `scenes/maps/` | PackedScene 注册、命名出生点、切换时停用和释放旧地图 |
 | Farm/MyHouse/Town/Store | farm / hall / shop / graveyard 四场景 | 院落、可进入义庄、可进入杂货铺、战斗区域；村民仍在院落东侧 |
 | TimeSystem | `scripts/core/game_clock.gd` | 分钟 / 日结信号、菜单暂停；保留《阴田录》十日与夜袭规则 |

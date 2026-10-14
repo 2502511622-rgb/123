@@ -39,7 +39,7 @@ func _physics_process(delta: float) -> void:
 	cooldown = maxf(0, cooldown - delta)
 	var spec: Dictionary = YinBalance.MONSTERS[record.kind]
 	var boss: bool = record.kind == "boss"
-	var ranged: bool = spec.pattern in ["fan", "ring", "burst"]
+	var ranged: bool = spec.pattern in ["fan", "ring", "burst", "tide", "opera"]
 	var distance: float = position.distance_to(game.player.position)
 	if stun > 0:
 		windup = 0
@@ -85,6 +85,12 @@ func volley(pattern: String) -> void:
 		"fan":
 			var count: int = 5 if record.get("elite", false) else 3
 			for i in range(count): fire_bullet(aim.rotated((i - (count - 1) / 2.0) * 0.24), 185)
+		"tide":
+			for i in range(18): fire_bullet(Vector2.from_angle(TAU * i / 18 + float(record.hp) / record.max_hp), 100 if i % 2 == 0 else 180)
+		"opera":
+			for i in range(7): fire_bullet(aim.rotated((i - 3) * 0.14), 220)
+			burst_remaining = 4 if record.hp < record.max_hp * 0.5 else 2
+			burst_timer = 0.2
 		"ring", "boss":
 			var count: int = (16 if record.get("elite", false) else 12) if pattern == "ring" else 8
 			for i in range(count): fire_bullet(Vector2.from_angle(TAU * i / count + 0.15), 135 if pattern == "ring" else 155)
@@ -128,15 +134,22 @@ func receive_hit(damage: int, method: String = "sword") -> void:
 func _draw() -> void:
 	if record.is_empty(): return
 	draw_rect(Rect2(-12, -3, 24, 5), Color("253b3a66"))
-	var row: int = {"water": 0, "bone": 1, "boss": 2, "archer": 3, "lantern": 4, "gunner": 5, "brute": 6}.get(record.kind, 0)
-	var scale_value: float = 3 if row == 2 else 2
+	var row: int = {"water": 0, "bone": 1, "boss": 2, "archer": 3, "lantern": 4, "gunner": 5, "brute": 6, "well_boss": 0, "opera_boss": 5}.get(record.kind, 0)
+	var scale_value: float = 3 if record.kind in ["boss", "well_boss", "opera_boss"] else 2
 	var tint := Color("eab498") if hit_flash > 0 else (Color("8eafd0") if stun > 0.3 else Color.WHITE)
 	draw_texture_rect_region(TEXTURE, Rect2(-8 * scale_value, -22 * scale_value, 16 * scale_value, 24 * scale_value), Rect2(0, row * 24, 16, 24), tint)
+	if record.kind == "well_boss":
+		draw_arc(Vector2(0, -18), 24, 0, TAU, 16, Color("85c9ce"), 3)
+		draw_rect(Rect2(-20, -70, 40, 8), Color("366777"))
+	if record.kind == "opera_boss":
+		draw_rect(Rect2(-12, -62, 24, 16), Color("e7d6b9"))
+		draw_rect(Rect2(-9, -56, 18, 4), Color("9d495c"))
+		for side in [-1, 1]: draw_line(Vector2(side * 15, -38), Vector2(side * 31, -7), Color("c26f85"), 4)
 	draw_rect(Rect2(-16, -50 * (1.4 if row == 2 else 1), 32, 3), Color("413e3e"))
 	draw_rect(Rect2(-16, -50 * (1.4 if row == 2 else 1), 32 * float(record.hp) / record.max_hp, 3), Color("aa7164"))
 	var caption: String = YinBalance.MONSTERS[record.kind].name + " Lv%d" % int(record.get("level", 1)) + (" · 精英" if record.get("elite", false) else "")
 	draw_string(ThemeDB.fallback_font, Vector2(-24, -56 * (1.4 if row == 2 else 1)), caption, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color("e6c485") if record.get("elite", false) else Color("c8c9ae"))
-	if windup > 0 and YinBalance.MONSTERS[record.kind].pattern in ["fan", "ring", "burst"]:
+	if windup > 0 and YinBalance.MONSTERS[record.kind].pattern in ["fan", "ring", "burst", "tide", "opera"]:
 		var direction: Vector2 = position.direction_to(attack_center)
 		draw_line(Vector2(0, -14), direction * 120 - Vector2(0, 14), Color("e0a27b99"), 1)
 		draw_arc(Vector2(0, -14), 26, 0, TAU * (1 - windup / 0.85), 24, Color("e6b17c"), 2)

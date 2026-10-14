@@ -67,7 +67,7 @@ func reset_world(at: Vector2) -> void:
  game.action_cooldown = 0
 func run() -> void:
  Engine.time_scale = 3
- check(YinBalance.MONSTERS.size() == 7, "seven independent monster archetypes")
+ check(YinBalance.MONSTERS.size() == 9, "nine independent monster archetypes")
  check(YinBalance.damage(15, 1) == 15 and YinBalance.damage(0, 1) == 0, "baseline and zero damage")
  check(YinBalance.damage(20, 1, {}, 100) == 10, "armor uses diminishing returns")
  check(YinBalance.damage(20, 3, YinBalance.make_gear(1, "rifle", 4, 2)) > 20, "level tier and quality increase damage")
@@ -82,7 +82,8 @@ func run() -> void:
  check(s.drops.size() == 1 and not s.remains.is_empty(), "ammo drop coexists with corpse")
  s.kill_enemy(elite.id, Vector2(1100, 700))
  check(s.gear_drops.size() == 1 and s.drops.size() == 1, "repeated death cannot duplicate rewards")
- check("不可收役" in s.process_remains(s.remains[0].id, "refine"), "new monster remains keep supported refinement scope explicit")
+ s.process_remains(s.remains[0].id, "refine")
+ check(s.spirits.size() == 1 and s.remains.is_empty(), "ordinary ranged monster can be instantly refined into a companion")
  s.zone = "forest"
  s.player_position = Vector2(1500, 800)
  s.saved_facing = Vector2(1, 1).normalized()
@@ -121,7 +122,8 @@ func run() -> void:
  await frames(8)
  await key(KEY_SPACE)
  check(game.state.energy == energy, "smart already-watered plot does not waste energy")
- await key(KEY_4)
+ game.choose_tool(3)
+ await frames(2)
  check(not game.state.smart_farming and game.player.held_item == "tool3", "manual key overrides automation and changes held tool")
  await key(KEY_Z)
  check(game.state.smart_farming, "automation can be re-enabled")
@@ -129,13 +131,15 @@ func run() -> void:
  var target: YinEnemy = fixture("bone", Vector2(515, 350), 100)
  game.player.facing = Vector2.RIGHT
  await frames(3)
- await key(KEY_5)
+ game.choose_tool(4)
+ await frames(2)
  await key(KEY_J)
  await frames(10)
  check(target.record.hp == 76 and game.player.held_item == "tool4", "held axe is the actual melee weapon")
  target.record.hp = 100
  target.position = Vector2(560, 350)
- await key(KEY_2)
+ game.choose_tool(1)
+ await frames(2)
  await key(KEY_J)
  check(target.record.hp == 100, "seed packet does not silently attack as a sword")
  await key(KEY_8)

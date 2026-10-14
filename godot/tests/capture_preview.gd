@@ -26,13 +26,13 @@ func capture() -> void:
 			game.state.plots[i].crop = ["candle", "vine", "gourd", "rice"][int(i / 8)]
 			game.state.plots[i].growth = FarmState.CROPS[game.state.plots[i].crop].growth_days
 			game.state.plots[i].watered = i % 3 == 0
-		var zone: String = "forest" if "--firearms" in args or "--equipment" in args else "graveyard" if "--cemetery" in args or "--combat" in args else ("hall" if "--hall" in args or "--warehouse" in args else "farm")
+		var zone: String = "sunken" if "--sunken" in args else "theatre" if "--theatre" in args else "forest" if "--firearms" in args or "--equipment" in args else "graveyard" if "--cemetery" in args or "--combat" in args else ("hall" if "--hall" in args or "--warehouse" in args else "farm")
 		game.state.supplies.wood = 8
 		game.state.supplies.stone = 6
 		game.state.supplies.paper_lamp = 2
-		game.build_zone(zone, Vector2(690, 590) if zone == "forest" else (Vector2(480, 340) if zone == "hall" else Vector2(450, 310)))
+		game.build_zone(zone, Vector2(970, 430) if zone in ["sunken", "theatre"] else Vector2(690, 590) if zone == "forest" else (Vector2(480, 340) if zone == "hall" else Vector2(450, 310)))
 		var camera: Camera2D = game.player.get_node("Camera2D")
-		camera.zoom = Vector2(0.75, 0.75)
+		camera.zoom = Vector2.ONE
 		camera.position_smoothing_enabled = false
 		game.refresh("乱葬坡：杀鬼留骸，带回义庄炼化。" if "--cemetery" in args else "义庄与阴植：白天经营，夜晚点名。")
 		if "--warehouse" in args: game.show_storage()
@@ -72,8 +72,17 @@ func capture() -> void:
 		game.attack("sword")
 		game.refresh("后山铳林 · 手持%s射击 · 远程弹幕与装备品质" % YinBalance.WEAPONS[weapon].name)
 		if "--equipment" in args: game.show_equipment()
+	if "--settings" in args: game.show_character("设置")
+	if "--skills" in args: game.show_character("技能")
+	if "--map" in args: game.show_character("地图")
+	if "--sunken" in args or "--theatre" in args:
+		for enemy in get_nodes_in_group("enemies"):
+			if enemy.record.kind in ["well_boss", "opera_boss"]:
+				enemy.stun = 100
+				enemy.attack_center = game.player.position
+				enemy.volley("tide" if enemy.record.kind == "well_boss" else "opera")
 	game.player.frozen = true
-	if "--combat" in args or "--firearms" in args:
+	if "--combat" in args or "--firearms" in args or "--sunken" in args or "--theatre" in args:
 		for i in range(6): await physics_frame
 		Engine.time_scale = 0
 	for i in range(12): await process_frame

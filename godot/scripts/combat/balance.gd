@@ -16,6 +16,8 @@ const MONSTERS = {
  "lantern": {"name": "追灯鬼", "hp": 65, "damage": 8, "speed": 32, "pattern": "ring", "armor": 2},
  "gunner": {"name": "纸铳兵", "hp": 72, "damage": 11, "speed": 25, "pattern": "burst", "armor": 5},
  "brute": {"name": "山魈", "hp": 110, "damage": 16, "speed": 46, "pattern": "melee", "armor": 8},
+ "well_boss": {"name": "井中龙婆", "hp": 280, "damage": 14, "speed": 30, "pattern": "tide", "armor": 12},
+ "opera_boss": {"name": "无面伶王", "hp": 250, "damage": 13, "speed": 44, "pattern": "opera", "armor": 8},
  "boss": {"name": "棺中客", "hp": 220, "damage": 18, "speed": 39, "pattern": "boss", "armor": 0}
 }
 static func level(cultivation: int) -> int:

@@ -23,4 +23,4 @@ func publish() -> void:
 	var whole: int = int(state.minutes)
 	if last_minute != whole:
 		last_minute = whole
-		minute_changed.emit(state.day, int(whole / 60), whole % 60)
+		minute_changed.emit(state.day, int((whole % 1440) / 60), whole % 60)

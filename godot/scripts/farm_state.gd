@@ -121,7 +121,7 @@ func use_tool(index: int, tool: int) -> String:
 		_:
 			return "选择一种工具。"
 	energy -= 4
-	minutes = minf(1439, minutes + 2)
+	minutes = minf(1799.99, minutes + 2)
 	return ["土下隐约有叩门声。翻土完成。", "播下 %s。" % CROPS[selected_crop].display_name, "浇灌完成。"][tool]
 
 func seal_plot(index: int) -> String:
@@ -137,7 +137,7 @@ func seal_plot(index: int) -> String:
 	return "符纸贴上稻穗，声音停了。现在可以安全收获。"
 
 func capacity() -> int:
-	return 2 if hall_level == 1 else 3
+	return (2 if hall_level == 1 else 3) + int((YinBalance.level(cultivation) - 1) / 3)
 
 func release_gourd(index: int) -> String:
 	if spirits.size() >= capacity():
@@ -240,7 +240,16 @@ func story_line() -> String:
 	return ["", "师父将义庄与三亩荒田留给了你。", "井里传出担水声。桥边阿婆说：这是它生前的差事。", "棺盖内侧有师父刻下的阵图。炼骸前先看完整度。", "雨中铜钱藤的果实同时朝祠堂转去。", "祠堂祭帖写着你的名字，今年祭司已经选定。", "义庄的阵线松了。修阵、点名，也可以预览虚构祭祀的收益。", "田里说话的声音越来越像师父。不要答应。", "阿婆承认：灵田既是封印，也是地下之物的食盆。", "无论是否祭祀，今夜棺中客都将叩门。守住义庄。", "师父的最后一页：镇住它，或为共处立下新的契约。"] [mini(day, 10)]
 
 func tick(delta: float) -> void:
-	minutes = minf(1440, minutes + delta * 4)
+	minutes += delta * 4
+	# Dawn settles the farm, but never moves or heals an exploring player.
+	while minutes >= 1800:
+		var overflow: float = minutes - 1800
+		var old_health: int = health
+		var old_energy: int = energy
+		next_day()
+		minutes = 360 + overflow
+		health = old_health
+		energy = old_energy
 
 func buy_seeds(id: String = "", count: int = 5) -> String:
 	if id == "": id = selected_crop
@@ -307,13 +316,18 @@ func craft(which: String) -> String:
 func prepare_enemies() -> void:
 	if enemy_day == day: return
 	enemy_day = day
-	enemies = enemies.filter(func(e): return e.zone == "farm" and not e.dead)
+	enemies = enemies.filter(func(e): return (e.zone == "farm" and not e.dead) or e.kind in ["well_boss", "opera_boss"])
 	for i in range(5):
 		var kind: String = "water" if i % 2 == 0 else "bone"
 		spawn_record(kind, "graveyard", Vector2(280 + i * 100, 240 + (i % 2) * 150), 1 + int((day - 1) / 4))
 	if day >= 3:
 		spawn_record("archer", "graveyard", Vector2(730, 425), 2)
 		spawn_record("lantern", "graveyard", Vector2(820, 290), 2)
+	for branch in ["sunken", "theatre"]:
+		for i in range(8):
+			spawn_record(["water", "lantern", "archer", "gunner"][i % 4], branch, Vector2(360 + (i % 4) * 190, 300 + int(i / 4) * 280), 3 + int((day - 1) / 4))
+		if not enemies.any(func(e): return e.zone == branch and e.kind in ["well_boss", "opera_boss"]):
+			spawn_record("well_boss" if branch == "sunken" else "opera_boss", branch, Vector2(1040, 360), 4, true)
 	for i in range(16):
 		var kind: String = ["archer", "lantern", "gunner", "brute"][i % 4]
 		var at := Vector2(480 + (i % 4) * 360, 240 + int(i / 4) * 240)
@@ -336,6 +350,8 @@ func kill_enemy(id: int, at: Vector2) -> void:
 		next_id += 1
 		cultivation += (8 * int(e.get("level", 1))) if not boss else 30
 		reward_enemy(e, at)
+		if e.kind in ["well_boss", "opera_boss"]:
+			add_log("支线首领已超克：" + YinBalance.MONSTERS[e.kind].name)
 		if boss:
 			boss_defeated = true
 			add_log("棺中客倒下。它的棺盖内刻着与你师父相同的名字。")
@@ -359,12 +375,13 @@ func process_remains(id: int, method: String, plot_index: int = -1) -> String:
 	if r.is_empty(): return "没有这具遗骸。"
 	match method:
 		"refine":
-			if r.kind not in ["water", "bone"]: return "此类遗骸尚不可收役，可拆解、埋田或超度。"
+			if r.kind in ["boss", "well_boss", "opera_boss"]: return "首领残念不可收役，可拆解、埋田或超度。"
 			if r.integrity < 60: return "完整度不足 60，不能炼成完整役灵。"
 			if spirits.size() >= capacity(): return "安置位不足。可先扩建或选择其他用途。"
 			if oil < 2: return "炼化需要 2 灯油。"
 			oil -= 2
-			spirits.append(make_spirit(r.kind, r.fierceness))
+			var kind: String = "water" if r.kind == "water" else ("child" if r.kind == "lantern" else "bone")
+			spirits.append(make_spirit(kind, r.fierceness, "shadow" if r.kind == "lantern" else "eat"))
 		"dismantle":
 			if not can_gain_many({"bone": 2 if r.integrity >= 60 else 1, "ash": 2 if r.kind == "boss" else 1}): return "行囊已满，遗骸保持原状。"
 			bones += 2 if r.integrity >= 60 else 1
@@ -487,9 +504,9 @@ func restore(data: Dictionary) -> bool:
 		if expected is Array and not data[key] is Array: return false
 		if expected is Dictionary and not data[key] is Dictionary: return false
 	if data.day < 1 or data.health > 100 or data.energy > 100 or data.ward > 100 or data.pollution > 100 or not valid_int(data.hall_level, 1, 2): return false
-	if (not data.minutes is float and not data.minutes is int) or not is_finite(float(data.minutes)) or data.minutes < 360 or data.minutes > 1440: return false
-	if data.zone not in ["farm", "graveyard", "forest", "hall", "shop"] or data.weather not in ["sun", "rain"] or data.order not in ["follow", "guard", "focus"]: return false
-	if data.selected_crop not in CROPS or data.plots.size() != WIDTH * HEIGHT or data.spirits.size() > (2 if int(data.hall_level) == 1 else 3) or data.cargo.size() > 2: return false
+	if (not data.minutes is float and not data.minutes is int) or not is_finite(float(data.minutes)) or data.minutes < 360 or data.minutes >= 1800: return false
+	if data.zone not in ["farm", "graveyard", "forest", "sunken", "theatre", "hall", "shop"] or data.weather not in ["sun", "rain"] or data.order not in ["follow", "guard", "focus"]: return false
+	if data.selected_crop not in CROPS or data.plots.size() != WIDTH * HEIGHT or data.spirits.size() > ((2 if int(data.hall_level) == 1 else 3) + int((YinBalance.level(int(data.cultivation)) - 1) / 3)) or data.cargo.size() > 2: return false
 	for key in INVENTORY_KEYS:
 		if not valid_int(data.inventory.get(key), 0): return false
 	for key in defaults.supplies:
@@ -507,7 +524,7 @@ func restore(data: Dictionary) -> bool:
 		if not key is String or not record is Dictionary or not valid_int(record.get("hp"), 0, 3): return false
 	for collection in [data.drops, data.placements]:
 		for record in collection:
-			if not record is Dictionary or not valid_int(record.get("id"), 1) or record.get("zone") not in ["farm", "graveyard", "forest", "hall", "shop"] or not valid_point(record.get("at")): return false
+			if not record is Dictionary or not valid_int(record.get("id"), 1) or record.get("zone") not in ["farm", "graveyard", "forest", "sunken", "theatre", "hall", "shop"] or not valid_point(record.get("at")): return false
 	for drop in data.drops:
 		if drop.get("item") not in YinItemCatalog.IDS or not valid_int(drop.get("count"), 1, 99): return false
 	for placed in data.placements:
@@ -521,13 +538,13 @@ func restore(data: Dictionary) -> bool:
 		for key in ["id", "risk", "affinity", "level"]:
 			if not valid_int(s.get(key), 0, 100000): return false
 	for r in data.remains:
-		if not r is Dictionary or r.get("kind") not in YinBalance.MONSTERS.keys() or r.get("zone") not in ["farm", "graveyard", "forest", "cargo"] or not valid_point(r.get("at")): return false
+		if not r is Dictionary or r.get("kind") not in YinBalance.MONSTERS.keys() or r.get("zone") not in ["farm", "graveyard", "forest", "sunken", "theatre", "cargo"] or not valid_point(r.get("at")): return false
 		for key in ["id", "integrity", "fierceness"]:
 			if not valid_int(r.get(key), 0, 100000): return false
 		for key in ["name", "regret", "yin"]:
 			if not r.get(key) is String: return false
 	for e in data.enemies:
-		if not e is Dictionary or e.get("kind") not in YinBalance.MONSTERS.keys() or e.get("zone") not in ["farm", "graveyard", "forest"] or not valid_point(e.get("at")) or not e.get("dead") is bool or not e.get("suppressed") is bool: return false
+		if not e is Dictionary or e.get("kind") not in YinBalance.MONSTERS.keys() or e.get("zone") not in ["farm", "graveyard", "forest", "sunken", "theatre"] or not valid_point(e.get("at")) or not e.get("dead") is bool or not e.get("suppressed") is bool: return false
 		for key in ["id", "hp", "max_hp", "integrity"]:
 			if not valid_int(e.get(key), 0, 100000): return false
 		for key in ["level", "damage", "armor"]:
@@ -553,7 +570,7 @@ func restore(data: Dictionary) -> bool:
 	if not data.equipment.any(func(g): return g.id == data.equipped_gear and g.weapon != "armor"): return false
 	if data.equipped_armor != 0 and not data.equipment.any(func(g): return g.id == data.equipped_armor and g.weapon == "armor"): return false
 	for drop in data.gear_drops:
-		if not drop is Dictionary or not valid_int(drop.get("id"), 1) or drop.get("zone") not in ["farm", "graveyard", "forest", "hall", "shop"] or not valid_point(drop.get("at")) or not valid_gear(drop.get("gear")): return false
+		if not drop is Dictionary or not valid_int(drop.get("id"), 1) or drop.get("zone") not in ["farm", "graveyard", "forest", "sunken", "theatre", "hall", "shop"] or not valid_point(drop.get("at")) or not valid_gear(drop.get("gear")): return false
 		if drop.gear.id in gear_ids: return false
 		gear_ids.append(drop.gear.id)
 	if gear_ids.any(func(id): return id >= data.next_gear_id): return false

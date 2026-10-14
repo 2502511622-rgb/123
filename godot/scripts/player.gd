@@ -107,13 +107,13 @@ func draw_held_item() -> void:
 	if held_item.begins_with("tool"):
 		var index: int = int(held_item.substr(4))
 		var swing: float = sin((0.2 - attack_time) * 18) * 0.4 if attack_time > 0 else 0.0
-		draw_set_transform(hand, direction.angle() + swing, Vector2(1.25, 1.25))
+		draw_set_transform(hand, direction.angle() + swing, Vector2.ONE)
 		draw_texture_rect_region(preload("res://assets/tools.png"), Rect2(-6, -6, 16, 16), Rect2(index * 16, 0, 16, 16))
 	else:
 		var index: int = ["sword", "pistol", "smg", "rifle"].find(held_item)
 		if index < 0: return
 		var recoil: float = recoil_time / 0.09 * 3
-		draw_set_transform(hand - direction * recoil, direction.angle(), Vector2(1.4, 1.4))
+		draw_set_transform(hand - direction * recoil, direction.angle(), Vector2.ONE)
 		draw_texture_rect_region(preload("res://assets/weapons.png"), Rect2(-6, -7, 24, 16), Rect2(index * 24, 0, 24, 16))
 		if recoil_time > 0:
 			draw_rect(Rect2(18, -3, 5, 4), Color("f7df9c"))

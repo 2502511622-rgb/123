@@ -40,7 +40,7 @@ func _ready() -> void:
 	feedback.z_index = 20
 	add_child(feedback)
 	add_child(actors)
-	level_size = Vector2(1920, 1280) if state.zone == "forest" else SIZE
+	level_size = Vector2(1920, 1280) if state.zone == "forest" else (Vector2(1280, 960) if state.zone in ["sunken", "theatre"] else SIZE)
 	projectiles = YinProjectiles.new()
 	projectiles.name = "Projectiles"
 	projectiles.game = get_tree().get_first_node_in_group("yintian_game")
@@ -51,6 +51,9 @@ func _ready() -> void:
 	boundary(Rect2(-32, level_size.y, level_size.x + 64, 32))
 	boundary(Rect2(-32, 0, 32, level_size.y))
 	boundary(Rect2(level_size.x, 0, 32, level_size.y))
+	if state.zone in ["sunken", "theatre"]:
+		build_branch()
+		return
 	if state.zone == "forest":
 		build_forest()
 		return
@@ -196,7 +199,11 @@ func nearest_interaction() -> String:
 		if state.zone == "hall" and player.position.distance_to(Vector2(306, 361)) < 45: return "storage"
 		if state.zone == "hall" and player.position.distance_to(Vector2(666, 327)) < 45: return "bed"
 		return ""
+	if state.zone in ["sunken", "theatre"]:
+		return "branch_return" if player.position.distance_to(Vector2(155, 820)) < 47 else ""
 	if state.zone == "forest":
+		if player.position.distance_to(Vector2(1760, 250)) < 47: return "sunken_gate"
+		if player.position.distance_to(Vector2(1760, 1050)) < 47: return "theatre_gate"
 		return "forest_return" if player.position.distance_to(Vector2(155, 1140)) < 47 else ""
 	if state.zone == "graveyard":
 		if player.position.distance_to(Vector2(850, 530)) < 47: return "forest_gate"
@@ -352,6 +359,10 @@ func spell_trace(start: Vector2, end: Vector2, method: String) -> void:
 	effect(end, line.default_color)
 
 func build_forest() -> void:
+	add_sign(Vector2(1700, 220), "沉水村 → E")
+	add_sign(Vector2(1700, 1020), "废戏台 → E")
+	for gate in [Vector2(1760, 250), Vector2(1760, 1050)]:
+		prop("lantern", gate, Vector2(-16, -48), Rect2(-4, -6, 8, 6))
 	boundary(Rect2(960, 0, 64, 544))
 	boundary(Rect2(960, 640, 64, 640))
 	for x in range(40, 1900, 64):
@@ -369,3 +380,18 @@ func build_forest() -> void:
 	add_sign(Vector2(160, 1070), "后山铳林 · T2–T5 · 远程弹幕与精英")
 	for placed in state.placements:
 		if placed.zone == "forest": install_placement(placed)
+
+func build_branch() -> void:
+	prop("lantern", Vector2(155, 820), Vector2(-16, -48), Rect2(-4, -6, 8, 6))
+	add_sign(Vector2(120, 835), "返回后山 ↓ E")
+	add_sign(Vector2(200, 760), "沉水村 · 井中龙婆" if state.zone == "sunken" else "废戏台 · 无面伶王")
+	for x in range(40, 1260, 80):
+		prop("tree", Vector2(x, 65), Vector2(-32, -88), Rect2(-8, -16, 16, 16))
+	for at in [Vector2(440, 220), Vector2(700, 640), Vector2(850, 180)]:
+		prop("cottage" if state.zone == "sunken" else "store", at, Vector2(-64, -116), Rect2(-54, -90, 108, 81))
+	if state.zone == "sunken":
+		boundary(Rect2(580, 160, 48, 220))
+		boundary(Rect2(580, 480, 48, 260))
+	else:
+		for at in [Vector2(940, 240), Vector2(1140, 240)]:
+			prop("grave", at, Vector2(-16, -48), Rect2(-12, -16, 24, 16))
