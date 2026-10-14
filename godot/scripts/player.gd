@@ -13,6 +13,8 @@ var dodge_time: float = 0
 var dodge_cooldown: float = 0
 var dodge_direction := Vector2.DOWN
 var attack_time: float = 0
+var hit_feedback: float = 0
+var ghosts: Array = []
 var texture: Texture2D = preload("res://assets/farmer.png")
 
 var state_machine: YinPlayerStateMachine
@@ -39,6 +41,10 @@ func _physics_process(delta: float) -> void:
 		return
 	var input_direction := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	var direction: Vector2 = state_machine.update(delta, input_direction, false)
+	hit_feedback = maxf(0, hit_feedback - delta)
+	for ghost in ghosts: ghost.age += delta
+	ghosts = ghosts.filter(func(g): return g.age < 0.18)
+	if dodge_time > 0: ghosts.append({"at": position, "age": 0.0})
 	invincible = maxf(0, invincible - delta)
 	dodge_cooldown = maxf(0, dodge_cooldown - delta)
 	attack_time = maxf(0, attack_time - delta)
@@ -51,11 +57,16 @@ func _physics_process(delta: float) -> void:
 		animation_time += delta
 	else:
 		animation_time = 0
+	collision_mask = 1 if dodge_time > 0 else 5
+	collision_layer = 0 if dodge_time > 0 else 2
+	get_node("Camera2D").offset = Vector2(2 if int(hit_feedback * 40) % 2 == 0 else -2, 0) if hit_feedback > 0 else Vector2.ZERO
 	move_and_slide()
 	position = position.round() if direction == Vector2.ZERO else position
 	queue_redraw()
 
 func _draw() -> void:
+	for ghost in ghosts:
+		draw_texture_rect_region(texture, Rect2(ghost.at - position + Vector2(-16, -40), Vector2(32, 40)), Rect2(0, 0, 16, 20), Color(0.55, 0.85, 0.79, (1 - ghost.age / 0.18) * 0.3))
 	draw_rect(Rect2(-10, -3, 20, 5), Color(0.18, 0.25, 0.20, 0.22))
 	var row: int = 0
 	if facing == Vector2.UP:
@@ -65,9 +76,13 @@ func _draw() -> void:
 	elif facing == Vector2.RIGHT:
 		row = 3
 	var frame: int = int(animation_time * 9) % 4
-	draw_texture_rect_region(texture, Rect2(-16, -40, 32, 40), Rect2(frame * 16, row * 20, 16, 20), Color(1, 1, 1, 0.55) if invincible > 0 else Color.WHITE)
+	draw_texture_rect_region(texture, Rect2(-16, -40, 32, 40), Rect2(frame * 16, row * 20, 16, 20), Color("ef9a82") if hit_feedback > 0 else (Color(1, 1, 1, 0.55 if int(invincible * 20) % 2 == 0 else 1.0) if invincible > 0 else Color.WHITE))
 	if attack_time > 0:
-		draw_arc(Vector2.ZERO, 32, facing.angle() - 0.7, facing.angle() + 0.7, 10, Color("c8c89a"), 3)
+		var sweep: float = 1 - attack_time / 0.22
+		draw_arc(Vector2.ZERO, hitbox.radius, facing.angle() - 0.85, facing.angle() + 0.85, 12, Color("dcd7b0"), 2)
+		var tip := Vector2.from_angle(facing.angle() - 0.85 + sweep * 1.7) * (hitbox.radius - 2)
+		draw_line(Vector2.ZERO, tip, Color("9f7452"), 3)
+		draw_line(tip * 0.7, tip, Color("f0ddb0"), 3)
 	if burden:
 		draw_rect(Rect2(-37, -8, 18, 12), Color("6e5848"))
 		draw_rect(Rect2(-34, -5, 12, 6), Color("a99a78"))
@@ -75,7 +90,8 @@ func _draw() -> void:
 func dodge() -> void:
 	if dodge_cooldown > 0 or frozen: return
 	if not state_machine.begin("dodge", 0.18): return
-	dodge_direction = facing
+	var movement := Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	dodge_direction = movement.normalized() if movement != Vector2.ZERO else facing
 	dodge_time = 0.18
 	invincible = 0.35
 	dodge_cooldown = 1.2

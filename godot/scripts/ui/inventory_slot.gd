@@ -4,6 +4,7 @@ signal selected(slot: YinInventorySlot, half: bool)
 signal transferred
 var model: YinInventoryModel
 var index: int
+const ICON_IDS = ["candle_seeds", "vine_seeds", "gourd_seeds", "rice_seeds", "candle", "vine", "gourd", "rice", "oil", "talisman", "bone", "ash", "wood", "stone", "paper_lamp", "ward_stake"]
 func _ready() -> void:
 	custom_minimum_size = Vector2(43, 36)
 	focus_mode = Control.FOCUS_NONE
@@ -21,8 +22,16 @@ func _ready() -> void:
 	render()
 func render() -> void:
 	var item: Dictionary = model.slots()[index]
-	text = "·" if item.id == "" else short_name(item.id) + "\n" + str(item.count)
-	tooltip_text = "空格" if item.id == "" else YinItemCatalog.spec(item.id).description + "\n左键交换 / 右键取一半 / 拖拽移动"
+	text = "·" if item.id == "" else str(item.count)
+	icon = null
+	if item.id != "" and ICON_IDS.has(item.id):
+		var atlas := AtlasTexture.new()
+		atlas.atlas = preload("res://assets/items.png")
+		atlas.region = Rect2(ICON_IDS.find(item.id) * 16, 0, 16, 16)
+		icon = atlas
+	add_theme_constant_override("icon_max_width", 16)
+	expand_icon = true
+	tooltip_text = "空格" if item.id == "" else YinItemCatalog.spec(item.id).display_name + "\n" + YinItemCatalog.spec(item.id).description + "\n左键交换 / 右键取一半 / 拖拽移动"
 func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT:
 		selected.emit(self, true)

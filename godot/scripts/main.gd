@@ -14,7 +14,9 @@ var context_label: Label
 var seed_button: Button
 var status_label: Label
 var tool_buttons: Array[Button] = []
-var energy_bar: ProgressBar
+var health_bar: YinStatBar
+var combat_label: Label
+var energy_bar: YinStatBar
 var modal: Control
 var message_time: float = 8
 var autosave_time: float = 0
@@ -149,19 +151,8 @@ func setup_inputs() -> void:
 			event.physical_keycode = key
 			InputMap.action_add_event(action, event)
 
-func style(bg: String = "ded4ae", border: String = "666b59") -> StyleBoxFlat:
-	var s := StyleBoxFlat.new()
-	s.bg_color = Color(bg)
-	s.border_color = Color(border)
-	s.set_border_width_all(2)
-	s.set_corner_radius_all(2)
-	s.content_margin_left = 8
-	s.content_margin_right = 8
-	s.content_margin_top = 5
-	s.content_margin_bottom = 5
-	s.shadow_color = Color(0.05, 0.10, 0.10, 0.3)
-	s.shadow_size = 3
-	return s
+func style(bg: String = "e1d2ae", border: String = "514b40") -> StyleBoxFlat:
+	return YinPixelTheme.box(bg, border)
 
 func panel(at: Vector2, size_value: Vector2, parent: Node = null) -> Panel:
 	var p := Panel.new()
@@ -203,29 +194,29 @@ func build_hud() -> void:
 	hud = Control.new()
 	hud.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	hud.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hud.theme = YinPixelTheme.install()
 	layer.add_child(hud)
-	var title := panel(Vector2(10, 10), Vector2(148, 54))
+	var title := panel(Vector2(10, 10), Vector2(148, 50))
 	label("阴 田 录", Vector2(12, 2), title, 21)
 	label("槐阴村 · 十日祭帖", Vector2(12, 31), title, 10)
-	var date_panel := panel(Vector2(432, 10), Vector2(198, 52))
+	var date_panel := panel(Vector2(450, 10), Vector2(180, 52))
 	date_label = label("", Vector2(9, 4), date_panel, 12)
 	stats_label = label("", Vector2(9, 28), date_panel, 10)
-	var energy_panel := panel(Vector2(10, 130), Vector2(148, 30))
-	label("气力", Vector2(8, 6), energy_panel, 11)
-	energy_bar = ProgressBar.new()
-	energy_bar.position = Vector2(40, 10)
+	var energy_panel := panel(Vector2(10, 65), Vector2(148, 48))
+	label("气力", Vector2(8, 25), energy_panel, 11)
+	energy_bar = YinStatBar.new()
+	energy_bar.position = Vector2(40, 29)
 	energy_bar.size = Vector2(96, 10)
-	energy_bar.show_percentage = false
-	var track := StyleBoxFlat.new()
-	track.bg_color = Color("92947b")
-	energy_bar.add_theme_stylebox_override("background", track)
-	var fill := StyleBoxFlat.new()
-	fill.bg_color = Color("739888")
-	energy_bar.add_theme_stylebox_override("fill", fill)
 	energy_panel.add_child(energy_bar)
-	var task_panel := panel(Vector2(10, 70), Vector2(148, 54))
+	label("命息", Vector2(8, 6), energy_panel, 11)
+	health_bar = YinStatBar.new()
+	health_bar.position = Vector2(40, 10)
+	health_bar.size = Vector2(96, 9)
+	health_bar.fill_color = Color("b87364")
+	energy_panel.add_child(health_bar)
+	var task_panel := panel(Vector2(10, 118), Vector2(148, 54))
 	quest_label = label("", Vector2(8, 5), task_panel, 10)
-	var toolbar := panel(Vector2(184, 307), Vector2(354, 43))
+	var toolbar := panel(Vector2(166, 305), Vector2(386, 45))
 	var row := HBoxContainer.new()
 	row.position = Vector2(5, 4)
 	row.add_theme_constant_override("separation", 4)
@@ -234,12 +225,21 @@ func build_hud() -> void:
 		var b := button("%d %s" % [i + 1, TOOL_NAMES[i]], func():
 			tool = i
 			refresh()
-		, Vector2(54, 34))
+		, Vector2(59, 34))
 		b.focus_mode = Control.FOCUS_NONE
 		b.toggle_mode = true
+		var icon := AtlasTexture.new()
+		icon.atlas = preload("res://assets/tools.png")
+		icon.region = Rect2(i * 16, 0, 16, 16)
+		b.icon = icon
+		b.expand_icon = true
+		b.add_theme_constant_override("icon_max_width", 16)
+		b.add_theme_font_size_override("font_size", 10)
+		b.text = str(i + 1)
+		b.tooltip_text = TOOL_NAMES[i] + " · 空格使用"
 		tool_buttons.append(b)
 		row.add_child(b)
-	seed_button = button("", cycle_seed, Vector2(168, 29))
+	seed_button = button("", cycle_seed, Vector2(148, 29))
 	seed_button.position = Vector2(10, 318)
 	seed_button.focus_mode = Control.FOCUS_NONE
 	hud.add_child(seed_button)
@@ -247,13 +247,16 @@ func build_hud() -> void:
 	bag.position = Vector2(556, 318)
 	bag.focus_mode = Control.FOCUS_NONE
 	hud.add_child(bag)
-	var hint := panel(Vector2(148, 281), Vector2(388, 23))
+	var hint := panel(Vector2(166, 280), Vector2(464, 23))
 	context_label = label("", Vector2(7, 4), hint, 10)
-	var toast := panel(Vector2(166, 10), Vector2(258, 52))
+	var toast := panel(Vector2(166, 10), Vector2(276, 52))
 	toast.name = "Toast"
 	status_label = label("", Vector2(8, 5), toast, 11)
-	status_label.size = Vector2(242, 44)
+	status_label.size = Vector2(260, 44)
 	status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	var combat_panel := panel(Vector2(450, 68), Vector2(180, 38))
+	combat_label = label("", Vector2(8, 4), combat_panel, 10)
+	combat_label.size = Vector2(164, 32)
 
 func _process(delta: float) -> void:
 	action_cooldown = maxf(0, action_cooldown - delta)
@@ -295,14 +298,19 @@ func spawn_new_boss() -> void:
 
 func update_labels() -> void:
 	date_label.text = "第 %02d 日  %02d:%02d  %s" % [state.day, int(state.minutes) / 60, int(state.minutes) % 60, "雨" if state.weather == "rain" else ("夜" if state.minutes >= 1080 else "昼")]
-	stats_label.text = "%d 文 | 命 %d | 油 %d | 符 %d" % [state.money, state.health, state.oil, state.talismans]
+	stats_label.text = "%d 文  油 %d  符 %d" % [state.money, state.oil, state.talismans]
+	health_bar.value = state.health
 	energy_bar.value = state.energy
+	energy_bar.tooltip_text = "气力 %d/100" % state.energy
+	health_bar.tooltip_text = "命息 %d/100" % state.health
+	combat_label.text = "J 桃木剑  F 镇符  G 符火\nShift " + ("闪避就绪" if player.dodge_cooldown <= 0 else "恢复 %.1fs" % player.dodge_cooldown)
 	seed_button.text = "Q %s × %d" % [FarmState.CROPS[state.selected_crop].display_name, state.seed_count(state.selected_crop)]
 	quest_label.text = "役灵 %d/%d  污染 %d\n镇守 %d  载骸 %d/2\n%s" % [state.spirits.size(), state.capacity(), state.pollution, state.ward, state.cargo.size(), "手札 L · 第一章已完成" if state.ending != "" else ("棺中客已倒下 · 十日赴约" if state.boss_defeated else ("夜袭进行中 · 不可安睡" if has_live_boss() else "每夜 R 点名 · C 役灵指令"))]
 	var kind: String = world.nearest_interaction()
 	var hints: Dictionary = {"home": "E 进入义庄：案台、卧榻与仓箱", "shipping": "E 货箱：出售背包里的灵物", "shop": "E 进入杂货铺", "npc": "E 桥边阿婆：村庄秘密与十日抉择", "altar": "E 祭坛：先看收益和代价，也可不祭祀", "gate": "E 进入乱葬坡 · 携骸时移速下降", "return": "E 返回义庄，处理遗骸", "exit_interior": "E 返回院落", "workbench": "E 案台：炼骸、制符与役灵", "counter": "E 柜台：交易", "storage": "E 仓箱：存取、拆分与交换物品", "bed": "E 卧榻：休息至天亮"}
 	var general: String = "J 剑 / F 镇符 / G 符火 / Shift 闪避 / E 遗骸" if state.zone == "graveyard" else ("靠近案台、仓箱、卧榻按 E · 门口返回院落" if state.zone == "hall" else ("靠近柜台按 E 交易 · 门口返回院落" if state.zone == "shop" else "WASD 移动 · 空格劳作 · E 互动 · T 待到入夜"))
-	context_label.text = hints.get(kind, general)
+	var remains_hint: Dictionary = nearest_remains()
+	context_label.text = "E 装载遗骸 · " + remains_hint.name if not remains_hint.is_empty() else hints.get(kind, general)
 
 func persist() -> void:
 	state.player_position = player.position
@@ -358,6 +366,8 @@ func take_damage(amount: int) -> void:
 	if state.zone == "farm": amount = maxi(1, amount - int(state.ward / 30))
 	player.health_receiver.apply(amount, "enemy")
 	player.invincible = 0.6
+	world.damage_number(player.position, amount, Color("e59a86"))
+	player.hit_feedback = 0.2
 	refresh("受伤，命息 -%d。Shift 闪避可避开攻击预兆。" % amount)
 	if state.health <= 0:
 		for id in state.cargo:
@@ -416,7 +426,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		if placement.selected != "":
 			if placement.place(world.get_global_mouse_position()): notify_action("放置完成。")
 			else: refresh("距离太远、田地或障碍物占用，未消耗物品。")
-		elif state.zone == "graveyard" or nearest_enemy(player.position, 65) != null: attack("sword")
+		elif state.zone == "graveyard" or nearest_enemy(player.position, 65) != null:
+			var aim: Vector2 = player.position.direction_to(world.get_global_mouse_position())
+			if aim != Vector2.ZERO and player.state_machine.current in ["idle", "walk"]: player.facing = aim
+			attack("sword")
 		else: use_plot(world.plot_at(world.get_global_mouse_position()))
 
 func nearest_remains() -> Dictionary:

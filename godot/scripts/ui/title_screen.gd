@@ -4,6 +4,7 @@ var hint: Label
 var confirmation: ConfirmationDialog
 var existing_valid: bool = false
 func _ready() -> void:
+	theme = YinPixelTheme.install()
 	ThemeDB.fallback_font = preload("res://assets/mossfield-font.ttf")
 	var title := Label.new()
 	title.text = "阴 田 录"
@@ -45,12 +46,7 @@ func make_button(text: String, at: Vector2) -> Button:
 	button.text = text
 	button.position = at
 	button.size = Vector2(156, 32)
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color("bac2a5")
-	style.border_color = Color("718574")
-	style.set_border_width_all(2)
-	button.add_theme_stylebox_override("normal", style)
-	button.add_theme_color_override("font_color", Color("344a41"))
+	button.add_theme_stylebox_override("normal", YinPixelTheme.box())
 	button.add_theme_font_size_override("font_size", 13)
 	add_child(button)
 	return button
@@ -68,4 +64,14 @@ func _draw() -> void:
 	for x in [-12, 25, 546, 584]: draw_texture_rect(trees, Rect2(x, 110, 64, 92), false, Color("839786"))
 	draw_texture_rect(preload("res://assets/cottage.png"), Rect2(56, 177, 144, 122), false, Color("8b9b8d"))
 	draw_texture_rect(preload("res://assets/lantern.png"), Rect2(488, 198, 32, 48), false)
-	draw_circle(Vector2(506, 211), 24, Color(0.9, 0.72, 0.4, 0.06))
+	draw_rect(Rect2(8, 8, 624, 344), Color("657767"), false, 1)
+	for at in [Vector2(8, 8), Vector2(620, 8), Vector2(8, 340), Vector2(620, 340)]:
+		draw_rect(Rect2(at, Vector2(12, 12)), Color("c6ac78"), false, 2)
+	# Stepped moon and small stars keep the scene on the pixel grid.
+	draw_rect(Rect2(504, 51, 24, 36), Color("afbaa2"))
+	draw_rect(Rect2(498, 57, 36, 24), Color("afbaa2"))
+	draw_rect(Rect2(502, 60, 8, 4), Color("8da18e"))
+	for at in [Vector2(85, 53), Vector2(136, 90), Vector2(466, 31), Vector2(574, 104)]:
+		draw_rect(Rect2(at, Vector2(2, 2)), Color("9cac98"))
+	for x in range(16, 626, 8):
+		draw_rect(Rect2(x, 348, 4, 2), Color("596e60"))

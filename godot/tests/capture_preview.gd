@@ -26,7 +26,7 @@ func capture() -> void:
 			game.state.plots[i].crop = ["candle", "vine", "gourd", "rice"][int(i / 8)]
 			game.state.plots[i].growth = FarmState.CROPS[game.state.plots[i].crop].growth_days
 			game.state.plots[i].watered = i % 3 == 0
-		var zone: String = "graveyard" if "--cemetery" in args else ("hall" if "--hall" in args or "--warehouse" in args else "farm")
+		var zone: String = "graveyard" if "--cemetery" in args or "--combat" in args else ("hall" if "--hall" in args or "--warehouse" in args else "farm")
 		game.state.supplies.wood = 8
 		game.state.supplies.stone = 6
 		game.state.supplies.paper_lamp = 2
@@ -38,7 +38,23 @@ func capture() -> void:
 		if "--warehouse" in args: game.show_storage()
 		elif "--bag" in args: game.show_inventory()
 		elif "--hall" in args: game.refresh("义庄内部：案台炼骸，仓箱存取，卧榻休息。")
+	if "--combat" in args:
+		for companion in get_nodes_in_group("companions"): companion.queue_free()
+		game.player.position = Vector2(350, 423)
+		game.player.facing = Vector2(30, -33).normalized()
+		var target: YinEnemy = game.nearest_enemy(Vector2(380, 390), 60)
+		if target != null: target.stun = 3
+		var warning: YinEnemy = game.nearest_enemy(Vector2(280, 240), 60)
+		if warning != null:
+			warning.position = Vector2(438, 410)
+			warning.attack_center = game.player.position
+			warning.windup = 0.7
+		game.attack("sword")
+		game.refresh("前方剑弧命中 · 伤害数字 · 躲开地面蓄力圈")
 	game.player.frozen = true
+	if "--combat" in args:
+		for i in range(6): await physics_frame
+		Engine.time_scale = 0
 	for i in range(12): await process_frame
 	await RenderingServer.frame_post_draw
 	var target: String = args[0] if not args.is_empty() else "user://preview.png"

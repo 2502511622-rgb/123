@@ -9,8 +9,10 @@ with tempfile.TemporaryDirectory(prefix='mossfield-checks-') as temp:
   ['--headless', '--script', 'res://tests/test_farm.gd'],
   ['--headless', '--script', 'res://tests/test_world.gd'],
   ['--headless', '--script', 'res://tests/test_foundation.gd'],
+  ['--headless', '--script', 'res://tests/player_journey.gd'],
   ['--headless', '--quit-after', '30']]
- for args in commands:
+ for index,args in enumerate(commands):
+  env['MOSSFIELD_RUNTIME_DIR']=str(Path(temp)/str(index))
   try:
    run=subprocess.run(['sh',str(root/'scripts/godot.sh'),*args],cwd=root,env=env,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True,timeout=60)
   except subprocess.TimeoutExpired as error:

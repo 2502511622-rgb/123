@@ -27,7 +27,7 @@ func targets(facing: Vector2) -> Array:
 		if box == null or not is_instance_valid(box.actor) or box.actor.is_queued_for_deletion(): continue
 		var enemy: YinEnemy = box.actor as YinEnemy
 		if enemy == null or enemy.record.dead or actor.global_position.distance_to(enemy.global_position) > radius: continue
-		if facing.dot(actor.global_position.direction_to(enemy.global_position)) < -0.1: continue
+		if facing.dot(actor.global_position.direction_to(enemy.global_position)) < cos(0.85): continue
 		var ray := PhysicsRayQueryParameters2D.create(actor.global_position + Vector2(0, -4), enemy.global_position + Vector2(0, -4), 1)
 		if not actor.get_world_2d().direct_space_state.intersect_ray(ray).is_empty(): continue
 		found.append(enemy)

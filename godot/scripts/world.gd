@@ -24,6 +24,7 @@ var time: float = 0.0
 var redraw_timer: float = 0.0
 var selected_plot: int = -1
 var effects: Array = []
+var feedback: Node2D
 
 func _ready() -> void:
 	tile_farm = YinTileFarm.new()
@@ -33,6 +34,9 @@ func _ready() -> void:
 	tile_farm.refresh(state, 0)
 	actors = Node2D.new()
 	actors.y_sort_enabled = true
+	feedback = Node2D.new()
+	feedback.z_index = 20
+	add_child(feedback)
 	add_child(actors)
 	boundary(Rect2(-32, -32, 1024, 32))
 	boundary(Rect2(-32, 640, 1024, 32))
@@ -79,7 +83,7 @@ func _ready() -> void:
 	add_sign(ALTAR + Vector2(-25, 5), "虚构祭坛")
 	prop("lantern", GATE, Vector2(-16, -48), Rect2(-5, -7, 10, 7))
 	add_sign(GATE + Vector2(-23, 7), "乱葬坡 ↑")
-	for at in [Vector2(190, 220), Vector2(318, 238), Vector2(600, 478)]:
+	for at in [Vector2(212, 240), Vector2(318, 238), Vector2(600, 478)]:
 		prop("lantern", at, Vector2(-16, -48), Rect2(-4, -4, 8, 4))
 	for placed in state.placements:
 		if placed.zone == state.zone: install_placement(placed)
@@ -186,7 +190,10 @@ func nearest_interaction() -> String:
 	return ""
 
 func effect(at: Vector2, tint: Color) -> void:
-	effects.append({"at": at, "color": tint, "age": 0.0})
+	var burst := YinPixelBurst.new()
+	burst.position = at
+	burst.tint = tint
+	feedback.add_child(burst)
 
 func _process(delta: float) -> void:
 	time += delta
@@ -212,7 +219,15 @@ func _draw() -> void:
 		draw_rect(Rect2(0, 480, 960, 160), Color("293b3b"))
 		draw_rect(Rect2(0, 120, 176, 360), Color("293b3b"))
 		draw_rect(Rect2(784, 120, 176, 360), Color("293b3b"))
-		for y in range(128, 478, 16): draw_line(Vector2(190, y), Vector2(774, y), Color("b7a888"), 1)
+		draw_rect(Rect2(192, 128, 576, 60), Color("56665d"))
+		for x in range(196, 768, 32):
+			draw_line(Vector2(x, 132), Vector2(x, 184), Color("6f7d6b"), 2)
+		for y in range(192, 478, 16):
+			draw_line(Vector2(192, y), Vector2(768, y), Color("a18b66"), 2)
+			for x in range(192 + (16 if y % 32 == 0 else 0), 768, 64): draw_line(Vector2(x, y), Vector2(x, y + 16), Color("a18b66"), 1)
+		draw_rect(Rect2(420, 278, 120, 74), Color("7e6a4f"))
+		draw_rect(Rect2(424, 282, 112, 66), Color("a5946d"), false, 2)
+		for x in range(432, 532, 12): draw_rect(Rect2(x, 288, 4, 54), Color("8b7959"))
 		return
 	if state.zone == "graveyard":
 		draw_rect(Rect2(0, 0, 960, 640), Color(0.15, 0.21, 0.23, 0.24))
@@ -273,14 +288,14 @@ func build_interior() -> void:
 	boundary(Rect2(176, 478, 608, 16))
 	boundary(Rect2(176, 112, 16, 382))
 	boundary(Rect2(768, 112, 16, 382))
-	prop("altar", Vector2(480, 247), Vector2(-32, -64), Rect2(-24, -19, 48, 19))
+	prop("workbench", Vector2(480, 247), Vector2(-40, -50), Rect2(-34, -24, 68, 24))
 	prop("lantern", Vector2(480, 475), Vector2(-16, -48), Rect2(-4, -6, 8, 6))
 	add_sign(Vector2(440, 474), "返回院落")
 	add_sign(Vector2(440, 264), "案台 · E 经营" if state.zone == "hall" else "柜台 · E 交易")
 	if state.zone == "hall":
 		prop("chest", Vector2(306, 343), Vector2(-20, -30), Rect2(-17, -22, 34, 22))
 		add_sign(Vector2(278, 360), "仓箱 · E 存取")
-		prop("chest", Vector2(666, 305), Vector2(-20, -30), Rect2(-17, -22, 34, 22))
+		prop("bed", Vector2(666, 305), Vector2(-40, -30), Rect2(-35, -18, 70, 18))
 		add_sign(Vector2(638, 324), "卧榻 · E 休息")
 		for x in [282, 340]: prop("grave", Vector2(x, 231), Vector2(-16, -48), Rect2(-12, -16, 24, 16))
 	else:
@@ -289,3 +304,28 @@ func build_interior() -> void:
 func install_placement(record: Dictionary) -> void:
 	var at := Vector2(record.at[0], record.at[1])
 	prop("lantern" if record.kind == "paper_lamp" else "grave", at, Vector2(-16, -48), Rect2(-6, -10, 12, 10))
+
+func damage_number(at: Vector2, amount: int, tint: Color) -> void:
+	var text := Label.new()
+	text.text = str(amount)
+	text.position = at + Vector2(-8, -58)
+	text.add_theme_font_size_override("font_size", 16)
+	text.add_theme_color_override("font_color", tint)
+	text.add_theme_color_override("font_shadow_color", Color("24383b"))
+	text.add_theme_constant_override("shadow_offset_x", 1)
+	text.add_theme_constant_override("shadow_offset_y", 1)
+	feedback.add_child(text)
+	var tween := text.create_tween().set_parallel(true)
+	tween.tween_property(text, "position:y", text.position.y - 22, 0.55)
+	tween.tween_property(text, "modulate:a", 0.0, 0.55)
+	tween.chain().tween_callback(text.queue_free)
+func spell_trace(start: Vector2, end: Vector2, method: String) -> void:
+	var line := Line2D.new()
+	line.points = PackedVector2Array([start, start.lerp(end, 0.5) + Vector2(0, -6), end])
+	line.width = 3
+	line.default_color = Color("e5a166") if method == "fire" else Color("8dd8c7")
+	feedback.add_child(line)
+	var tween := line.create_tween()
+	tween.tween_property(line, "modulate:a", 0.0, 0.22)
+	tween.tween_callback(line.queue_free)
+	effect(end, line.default_color)

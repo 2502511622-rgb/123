@@ -45,6 +45,13 @@ for x in (17,53):
  d.rectangle((x-2,33,x+13,47),fill='#956d48');d.rectangle((x,34,x+11,44),fill='#8bb3ae');d.line((x+5,34,x+5,44),fill='#e8c490');d.line((x,39,x+11,39),fill='#e8c490');d.rectangle((x-3,46,x+14,49),fill='#ba8450')
 d.rectangle((34,36,46,59),fill='#604f3a');d.rectangle((36,38,44,56),fill='#916c48');d.point((43,47),fill='#dfbc70');d.rectangle((30,60,50,63),fill='#c4ad86');d.rectangle((28,64,52,66),fill='#d1bb90')
 for x,y in [(9,43),(11,47),(7,39),(71,46),(69,49)]:d.rectangle((x,y,x+3,y+3),fill='#6d9253');d.point((x+1,y),fill='#a6b764')
+# Small alternating tile seams, eave shade, aged plaster and foundation stones.
+for y in (8,14,20):
+ for x in range(10+(3 if y==14 else 0),71,7):
+  d.line((x,y,x,y+3),fill='#39474b');d.point((x+1,y),fill='#7d8981')
+d.line((5,29,73,29),fill='#4c4b3c');d.line((8,51,70,51),fill='#b19a70')
+for x,y in [(13,30),(60,31),(23,49),(55,50)]:d.line((x,y,x+3,y),fill='#c2a475')
+for x in range(6,72,8):d.rectangle((x,58,x+5,60),fill='#908675')
 save(im,'cottage.png')
 # General store with awning and produce crates.
 im,d=image(64,58)
@@ -59,11 +66,16 @@ for x in (5,44):
  d.rectangle((x,43,x+14,53),fill='#a57b4d');d.line((x,48,x+14,48),fill='#d5a36a')
  for j in range(3):d.ellipse((x+2+j*4,41,x+5+j*4,45),fill='#bd7048' if x==5 else '#a1ad5b')
 save(im,'store.png')
-# Broadleaf tree with pixel clusters.
+# Clustered canopy with stepped silhouette, bark and restrained highlights.
 im,d=image(32,46)
-d.rectangle((13,27,18,43),fill='#74533b');d.rectangle((15,28,18,41),fill='#8b6844');d.rectangle((10,41,21,44),fill='#74533b')
-for box,color in [((2,13,29,31),'#426449'),((4,6,28,27),'#547d4e'),((8,1,24,22),'#618d51'),((2,14,18,28),'#648e53'),((10,4,25,18),'#759953'),((8,4,18,10),'#88a660')]:d.rectangle(box,fill=color)
-for x,y in [(5,16),(20,9),(12,24),(24,21),(9,10)]:d.rectangle((x,y,x+3,y+2),fill='#8aab61')
+d.polygon([(12,23),(19,23),(18,38),(23,43),(17,44),(15,41),(10,44),(8,43),(13,38)],fill='#384b3e')
+d.rectangle((14,25,17,41),fill='#795d43');d.line((16,28,16,39),fill='#a08255')
+clusters=[((4,17,28,34),'#344f43'),((2,12,29,28),'#41684b'),((5,7,26,26),'#507c50'),((9,3,22,20),'#5e8c56'),((3,15,15,26),'#5b8552'),((13,9,27,23),'#648d55'),((8,6,19,16),'#739b5b')]
+for (x0,y0,x1,y1),color in clusters:
+ d.polygon([(x0+3,y0),(x1-3,y0),(x1,y0+3),(x1,y1-3),(x1-3,y1),(x0+3,y1),(x0,y1-3),(x0,y0+3)],fill=color)
+for x,y in [(10,7),(15,5),(20,11),(6,17),(12,21),(23,18),(8,26)]:
+ d.line((x,y,x+3,y),fill='#97b76c');d.point((x-1,y+1),fill='#7fa662')
+for x,y in [(18,27),(6,24),(24,24),(10,30)]:d.line((x,y,x+3,y),fill='#304e40')
 save(im,'tree.png')
 # Fence, chest, rock and flowers packed separately.
 im,d=image(16,16);d.rectangle((1,2,3,15),fill='#b28a58');d.rectangle((12,2,14,15),fill='#b28a58');d.rectangle((0,5,15,7),fill='#d4b079');d.rectangle((0,10,15,12),fill='#cca56a');d.point((2,5),fill='#775e41');d.point((13,10),fill='#775e41');save(im,'fence.png')
@@ -110,11 +122,13 @@ for row,color in enumerate(['#80b9a1','#a89755','#879c62','#c7c09b']):
   if stage==5:d.point((x+13,y+3),fill='#83cabd')
 save(im,'crops.png')
 # Toolbar icons.
-im,d=image(64,16)
+im,d=image(96,16)
 d.line((3,13,11,3),fill='#b59461',width=2);d.rectangle((8,2,14,4),fill='#86958e');d.rectangle((11,4,14,6),fill='#86958e')
 d.rectangle((20,3,28,13),fill='#d6bd83');d.rectangle((22,5,26,9),fill='#799452');d.line((24,6,24,11),fill='#547344')
 d.rectangle((35,5,43,12),fill='#7eabb4');d.rectangle((37,3,42,5),outline='#527e8b');d.line((43,7,47,4),fill='#7eabb4',width=2);d.rectangle((34,7,35,10),fill='#a6c8cd')
 d.rectangle((53,7,59,12),fill='#e3cea1');d.rectangle((55,4,56,7),fill='#5e884b');d.rectangle((51,3,54,5),fill='#739956');d.rectangle((57,2,60,4),fill='#739956')
+d.line((68,13,75,3),fill='#aa865b',width=2);d.polygon([(73,2),(79,2),(80,7),(75,6)],fill='#b7c0ad');d.line((74,3,79,3),fill='#edf0cf')
+d.line((84,13,90,4),fill='#aa865b',width=2);d.line((84,3,94,6),fill='#b7c0ad',width=2);d.point((84,4),fill='#e9e5c5')
 save(im,'tools.png')
 
 
@@ -142,4 +156,47 @@ im,d=image(16,24);d.rectangle((3,8,13,21),fill='#797e6c');d.rectangle((4,3,12,8)
 im,d=image(16,24);d.rectangle((7,0,8,22),fill='#6e6650');d.rectangle((3,3,12,12),fill='#b09d6b');d.rectangle((5,4,10,11),fill='#ccbb84');d.line((7,5,7,10),fill='#955f51');d.rectangle((5,2,10,3),fill='#776a53');d.rectangle((5,12,10,13),fill='#776a53');save(im,'lantern.png')
 im,d=image(24,14);d.rectangle((2,3,21,11),fill='#72634f');d.rectangle((3,4,20,10),fill='#9da28a');d.rectangle((6,5,9,8),fill='#d0c8a2');d.rectangle((14,5,16,8),fill='#4f6158');save(im,'remains.png')
 
+# Dedicated indoor furniture rather than reusing shipping crates.
+im,d=image(40,26)
+d.rectangle((2,5,37,22),fill='#443f35');d.rectangle((3,6,36,19),fill='#a38356')
+d.rectangle((5,7,34,17),fill='#ced0b1');d.rectangle((6,8,12,15),fill='#ebe0bf')
+d.rectangle((15,7,34,17),fill='#697f70');d.line((16,9,33,9),fill='#94aa89')
+d.rectangle((2,2,4,25),fill='#795c43');d.rectangle((35,3,37,25),fill='#795c43')
+save(im,'bed.png')
+im,d=image(40,28)
+d.rectangle((4,17,7,27),fill='#564938');d.rectangle((32,17,35,27),fill='#564938')
+d.rectangle((1,7,38,19),fill='#5c4936');d.rectangle((2,6,37,15),fill='#a88b60');d.line((3,7,36,7),fill='#d1b181')
+d.rectangle((8,8,19,13),fill='#e7d5a4');d.line((10,9,16,12),fill='#9b5f46')
+d.rectangle((26,4,28,11),fill='#dac294');d.rectangle((26,2,28,4),fill='#8fc7b6');d.rectangle((24,11,30,13),fill='#595b49')
+save(im,'workbench.png')
+# Bag icons share the crop silhouettes; materials have distinct pixel shapes.
+im,d=image(256,16)
+crops=Image.open(OUT/'crops.png')
+for index in range(8):
+ x=index*16
+ if index<4:
+  d.rectangle((x+3,3,x+12,14),fill='#d3bc89');d.line((x+4,4,x+11,4),fill='#f0deaf')
+  crop=crops.crop((80,index*16,96,index*16+16)).resize((8,8),Image.Resampling.NEAREST)
+  im.alpha_composite(crop,(x+4,5))
+ else:im.alpha_composite(crops.crop((80,(index-4)*16,96,(index-4)*16+16)),(x,0))
+for index in range(8,16):
+ x=index*16
+ if index==8:
+  d.rectangle((x+5,2,x+10,4),fill='#bba275');d.rectangle((x+3,5,x+12,13),fill='#839e92');d.rectangle((x+5,6,x+10,9),fill='#b3cab2')
+ elif index==9:
+  d.rectangle((x+4,1,x+11,14),fill='#e3c687');d.line((x+7,3,x+7,11),fill='#a65b49');d.line((x+5,6,x+10,6),fill='#a65b49')
+ elif index==10:
+  d.line((x+3,12,x+12,3),fill='#d7cfb1',width=3)
+  for a,b in [(2,11),(4,13),(11,2),(13,4)]:d.rectangle((x+a,b,x+a+1,b+1),fill='#d7cfb1')
+ elif index==11:
+  d.polygon([(x+2,13),(x+4,8),(x+8,6),(x+13,12)],fill='#8a8f86');d.line((x+4,11,x+10,11),fill='#b5b6a0')
+ elif index==12:
+  d.polygon([(x+2,10),(x+10,2),(x+14,5),(x+6,14)],fill='#9a7450');d.line((x+5,11,x+12,4),fill='#c1a16e');d.line((x+3,11,x+6,14),fill='#644d3c')
+ elif index==13:
+  d.polygon([(x+2,12),(x+3,6),(x+7,2),(x+12,4),(x+14,10),(x+10,13)],fill='#939e91');d.line((x+5,5,x+10,4),fill='#c3c8af')
+ elif index==14:
+  d.rectangle((x+4,3,x+11,12),fill='#e3c184');d.line((x+7,4,x+7,10),fill='#a96753');d.line((x+3,2,x+12,2),fill='#5b6656');d.rectangle((x+7,13,x+8,15),fill='#d3a05e')
+ else:
+  d.rectangle((x+5,3,x+10,13),fill='#788880');d.polygon([(x+5,3),(x+7,1),(x+10,3)],fill='#adb39c');d.line((x+7,5,x+7,11),fill='#d4c092')
+save(im,'items.png')
 print('Generated original Yintian artwork:',len(list(OUT.glob('*.png'))),'sheets')
