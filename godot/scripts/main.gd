@@ -1,6 +1,6 @@
 extends Node2D
 const SaveStore = preload("res://scripts/save_store.gd")
-const TOOL_NAMES = ["铁锹", "阴种", "浇灌", "收割"]
+const TOOL_NAMES = ["铁锹", "阴种", "浇灌", "收割", "斧头", "铁镐"]
 const CROP_IDS = ["candle", "vine", "gourd", "rice"]
 var state := FarmState.new()
 var world: FarmWorld
@@ -23,11 +23,30 @@ var save_failed: bool = false
 var whisper_day: int = 0
 var atmosphere: Control
 var ambience: AudioStreamPlayer
+var router: YinSceneRouter
+var clock: YinGameClock
+var audio_manager: YinAudioManager
+var bag_model: YinInventoryModel
+var chest_model: YinInventoryModel
+var placement: YinPlacementController
+var save_component: YinSaveComponent
+var combat: YinCombatController
 
 func _ready() -> void:
 	ThemeDB.fallback_font = preload("res://assets/mossfield-font.ttf")
 	setup_inputs()
-	var loaded: bool = SaveStore.load_game(state)
+	router = get_node("Systems/SceneRouter")
+	router.bind(get_node("Levels"))
+	clock = get_node("Systems/GameClock")
+	audio_manager = get_node("Systems/AudioManager")
+	combat = get_node("Systems/CombatController")
+	combat.game = self
+	save_component = get_node("Systems/SaveComponent")
+	save_component.state = state
+	save_component.capture_pose = func():
+		state.player_position = player.position
+		state.saved_facing = player.facing
+	var loaded: bool = save_component.load_game()
 	build_zone(state.zone, state.player_position)
 	var weather_layer := CanvasLayer.new()
 	weather_layer.layer = 5
@@ -38,6 +57,7 @@ func _ready() -> void:
 	atmosphere.set("game", self)
 	weather_layer.add_child(atmosphere)
 	build_hud()
+	clock.minute_changed.connect(func(_day, _hour, _minute): update_labels())
 	refresh("存档损坏，新建义庄；原文件在首次保存前保留。" if not loaded else "槐阴村的风，带着纸灰的味道。")
 	if not state.intro_seen:
 		var box := open_modal("阴田录 · 师父遗书", "你刚刚出师，来到槐阴村接管破败义庄与荒田。\n\n田里长出人声，不要答应。\n驱使的东西，每夜都要点名。\n祠堂里的神，不是祖宗。\n\nWASD 移动，空格劳作，E 互动。\nJ 桃木剑 / Shift 闪避 / F 镇符 / G 符火。")
@@ -46,42 +66,49 @@ func _ready() -> void:
 			close_modal()
 			persist()
 		))
-	if DisplayServer.get_name() != "headless" and OS.get_environment("YINTIAN_SILENT") != "1" and ResourceLoader.exists("res://assets/ambience.wav"):
-		ambience = AudioStreamPlayer.new()
-		ambience.stream = load("res://assets/ambience.wav")
-		ambience.volume_db = -24
-		add_child(ambience)
-		ambience.play()
-		ambience.finished.connect(ambience.play)
+	audio_manager.start()
+	ambience = audio_manager.player
 
 func build_zone(zone_name: String, at: Vector2) -> void:
-	if is_instance_valid(world):
-		world.queue_free()
+	if not YinSceneRouter.ROUTES.has(zone_name): return
 	state.zone = zone_name
+	save_component.state = state
+	bag_model = YinInventoryModel.new(state, "bag")
+	chest_model = YinInventoryModel.new(state, "chest")
+	bag_model.sync()
+	chest_model.sync()
 	if is_instance_valid(atmosphere): atmosphere.set("state", state)
 	state.prepare_enemies()
-	world = FarmWorld.new()
-	world.state = state
-	add_child(world)
-	player = FarmPlayer.new()
+	world = router.install(zone_name, state)
+	player = preload("res://scenes/actors/player.tscn").instantiate()
 	player.position = at if world.is_safe_position(at) else Vector2(300, 350)
 	player.facing = state.saved_facing
 	world.actors.add_child(player)
+	player.health_receiver.bind_source(state, "health")
 	world.player = player
+	clock.bind(state)
+	world.loot_requested.connect(spawn_loot)
+	placement = YinPlacementController.new()
+	placement.game = self
+	world.add_child(placement)
+	spawn_pickups()
 	spawn_enemies()
 	spawn_spirits()
 	spawn_remains_visuals()
 
 func travel(zone_name: String) -> void:
 	close_modal()
-	var at := Vector2(182, 533) if zone_name == "graveyard" else Vector2(810, 538)
+	var origin: String = state.zone
+	var at: Vector2 = {"graveyard": Vector2(182, 533), "hall": Vector2(480, 435), "shop": Vector2(480, 435)}.get(zone_name, Vector2(160, 218) if origin == "hall" else (Vector2(780, 260) if origin == "shop" else Vector2(810, 538)))
 	build_zone(zone_name, at)
-	notify_action("乱葬坡：留意攻击预兆。带着遗骸返回义庄，比杀鬼更重要。" if zone_name == "graveyard" else "回到义庄。走到门前按 E，处理运输车上的遗骸。")
+	var entry: String = {"hall": "FromHall", "shop": "FromShop", "graveyard": "FromGraveyard"}.get(origin, "Entry") if zone_name == "farm" else "Entry"
+	player.position = router.spawn(entry, at)
+	notify_action({"graveyard": "乱葬坡：留意攻击预兆，装车后从纸灯处返回。", "hall": "义庄：案台炼骸，仓箱存取，卧榻休息。靠近按 E。", "shop": "杂货铺：走近柜台按 E 购买阴种与灯油。", "farm": "回到院落。进入义庄，在案台处理载骸。"}.get(zone_name, ""))
 
 func spawn_enemies() -> void:
 	for e in state.enemies:
 		if e.zone != state.zone or e.dead: continue
-		var enemy := YinEnemy.new()
+		var enemy: YinEnemy = preload("res://scenes/actors/enemy.tscn").instantiate()
 		enemy.game = self
 		enemy.record = e
 		enemy.position = Vector2(e.at[0], e.at[1])
@@ -198,16 +225,16 @@ func build_hud() -> void:
 	energy_panel.add_child(energy_bar)
 	var task_panel := panel(Vector2(10, 70), Vector2(148, 54))
 	quest_label = label("", Vector2(8, 5), task_panel, 10)
-	var toolbar := panel(Vector2(184, 307), Vector2(272, 43))
+	var toolbar := panel(Vector2(184, 307), Vector2(354, 43))
 	var row := HBoxContainer.new()
 	row.position = Vector2(5, 4)
 	row.add_theme_constant_override("separation", 4)
 	toolbar.add_child(row)
-	for i in range(4):
+	for i in range(TOOL_NAMES.size()):
 		var b := button("%d %s" % [i + 1, TOOL_NAMES[i]], func():
 			tool = i
 			refresh()
-		, Vector2(62, 34))
+		, Vector2(54, 34))
 		b.focus_mode = Control.FOCUS_NONE
 		b.toggle_mode = true
 		tool_buttons.append(b)
@@ -231,7 +258,7 @@ func build_hud() -> void:
 func _process(delta: float) -> void:
 	action_cooldown = maxf(0, action_cooldown - delta)
 	if modal == null:
-		state.tick(delta)
+		clock.advance(delta, false)
 		if state.maybe_boss() and state.zone == "farm":
 			spawn_new_boss()
 			refresh("义庄门前响了三声。棺中客来了。J 攻击，F 压制，Shift 躲开预兆。")
@@ -251,7 +278,7 @@ func _process(delta: float) -> void:
 	state.saved_facing = player.facing
 	player.burden = not state.cargo.is_empty()
 	update_labels()
-	if ambience != null: ambience.volume_db = -21 if state.minutes >= 1080 else -28
+	audio_manager.set_night(state.minutes >= 1080)
 
 func has_live_boss() -> bool:
 	return state.enemies.any(func(e): return e.kind == "boss" and not e.dead)
@@ -259,7 +286,7 @@ func has_live_boss() -> bool:
 func spawn_new_boss() -> void:
 	for e in state.enemies:
 		if e.kind != "boss" or e.dead: continue
-		var enemy := YinEnemy.new()
+		var enemy: YinEnemy = preload("res://scenes/actors/enemy.tscn").instantiate()
 		enemy.record = e
 		enemy.game = self
 		enemy.position = Vector2(e.at[0], e.at[1])
@@ -273,17 +300,18 @@ func update_labels() -> void:
 	seed_button.text = "Q %s × %d" % [FarmState.CROPS[state.selected_crop].display_name, state.seed_count(state.selected_crop)]
 	quest_label.text = "役灵 %d/%d  污染 %d\n镇守 %d  载骸 %d/2\n%s" % [state.spirits.size(), state.capacity(), state.pollution, state.ward, state.cargo.size(), "手札 L · 第一章已完成" if state.ending != "" else ("棺中客已倒下 · 十日赴约" if state.boss_defeated else ("夜袭进行中 · 不可安睡" if has_live_boss() else "每夜 R 点名 · C 役灵指令"))]
 	var kind: String = world.nearest_interaction()
-	var hints: Dictionary = {"home": "E 义庄：休息、炼骸、制符、役灵与扩建", "shipping": "E 货箱：出售背包里的灵物", "shop": "E 杂货铺：购买四种阴种与灯油", "npc": "E 桥边阿婆：村庄秘密与十日抉择", "altar": "E 祭坛：先看收益和代价，也可不祭祀", "gate": "E 进入乱葬坡 · 携骸时移速下降", "return": "E 返回义庄，处理遗骸"}
-	context_label.text = hints.get(kind, "J 剑 / F 镇符 / G 符火 / Shift 闪避 / E 遗骸" if state.zone == "graveyard" else "WASD 移动 · 空格劳作 · E 互动 · T 待到入夜")
+	var hints: Dictionary = {"home": "E 进入义庄：案台、卧榻与仓箱", "shipping": "E 货箱：出售背包里的灵物", "shop": "E 进入杂货铺", "npc": "E 桥边阿婆：村庄秘密与十日抉择", "altar": "E 祭坛：先看收益和代价，也可不祭祀", "gate": "E 进入乱葬坡 · 携骸时移速下降", "return": "E 返回义庄，处理遗骸", "exit_interior": "E 返回院落", "workbench": "E 案台：炼骸、制符与役灵", "counter": "E 柜台：交易", "storage": "E 仓箱：存取、拆分与交换物品", "bed": "E 卧榻：休息至天亮"}
+	var general: String = "J 剑 / F 镇符 / G 符火 / Shift 闪避 / E 遗骸" if state.zone == "graveyard" else ("靠近案台、仓箱、卧榻按 E · 门口返回院落" if state.zone == "hall" else ("靠近柜台按 E 交易 · 门口返回院落" if state.zone == "shop" else "WASD 移动 · 空格劳作 · E 互动 · T 待到入夜"))
+	context_label.text = hints.get(kind, general)
 
 func persist() -> void:
 	state.player_position = player.position
 	state.saved_facing = player.facing
-	save_failed = not SaveStore.save_game(state)
+	save_failed = not save_component.save_game()
 	if save_failed: status_label.text = "保存失败，请检查 user:// 是否可写。"
 
 func refresh(message: String = "") -> void:
-	for i in range(4): tool_buttons[i].set_pressed_no_signal(i == tool)
+	for i in range(TOOL_NAMES.size()): tool_buttons[i].set_pressed_no_signal(i == tool)
 	if message != "":
 		status_label.text = message
 		message_time = 7
@@ -300,11 +328,15 @@ func cycle_seed() -> void:
 	notify_action("选择 %s。按 2 播种。" % FarmState.CROPS[state.selected_crop].display_name)
 
 func use_plot(index: int) -> void:
+	if tool >= 4:
+		use_terrain()
+		return
 	if action_cooldown > 0: return
 	action_cooldown = 0.2
 	if not world.reachable(index):
 		refresh("走近灵田再劳作。")
 		return
+	if not player.state_machine.begin("tool", 0.25): return
 	notify_action(state.use_tool(index, tool))
 	world.effect(world.plot_center(index), Color("91b4a8"))
 
@@ -319,30 +351,12 @@ func nearest_enemy(at: Vector2, max_distance: float) -> YinEnemy:
 	return found
 
 func attack(method: String) -> void:
-	if action_cooldown > 0: return
-	var enemy: YinEnemy = nearest_enemy(player.position, 49 if method == "sword" else 145)
-	if method == "sword":
-		player.attack_time = 0.18
-		action_cooldown = 0.32
-		if enemy != null and player.facing.dot(player.position.direction_to(enemy.position)) > -0.1:
-			enemy.receive_hit(15 + int(state.cultivation / 40), method)
-	else:
-		if enemy == null:
-			refresh("符术范围内没有目标。")
-			return
-		if state.talismans < 1:
-			refresh("符箓不足，回义庄制作。")
-			return
-		state.talismans -= 1
-		action_cooldown = 0.65
-		enemy.receive_hit(30 if method == "fire" else 5, method)
-		refresh("符火伤骸：完整度下降 35。" if method == "fire" else "镇符压制 3 秒，完整度保留。")
-	persist()
+	combat.trigger(method)
 
 func take_damage(amount: int) -> void:
 	if player.invincible > 0 or modal != null: return
 	if state.zone == "farm": amount = maxi(1, amount - int(state.ward / 30))
-	state.health = maxi(0, state.health - amount)
+	player.health_receiver.apply(amount, "enemy")
 	player.invincible = 0.6
 	refresh("受伤，命息 -%d。Shift 闪避可避开攻击预兆。" % amount)
 	if state.health <= 0:
@@ -363,12 +377,16 @@ func _unhandled_input(event: InputEvent) -> void:
 		if event.is_action_pressed("pause_game"): close_modal()
 		return
 	if event is InputEventKey and event.pressed and not event.echo:
-		if event.physical_keycode >= KEY_1 and event.physical_keycode <= KEY_4:
+		if event.physical_keycode >= KEY_1 and event.physical_keycode <= KEY_6:
 			tool = event.physical_keycode - KEY_1
 			refresh()
 		elif event.is_action_pressed("cycle_seed"): cycle_seed()
 		elif event.is_action_pressed("inventory"): show_inventory()
-		elif event.is_action_pressed("pause_game"): show_pause()
+		elif event.is_action_pressed("pause_game"):
+			if placement.selected != "":
+				placement.selected = ""
+				refresh("已取消放置，物品仍在行囊。")
+			else: show_pause()
 		elif event.is_action_pressed("interact"): interact()
 		elif event.is_action_pressed("use_tool"): use_plot(world.front_plot())
 		elif event.is_action_pressed("attack"): attack("sword")
@@ -389,10 +407,16 @@ func _unhandled_input(event: InputEvent) -> void:
 					close_modal()
 					notify_action("纸灯亮了。别忘记点名。")
 				))
-		elif event.is_action_pressed("mute") and ambience != null:
-			ambience.stream_paused = not ambience.stream_paused
+		elif event.is_action_pressed("mute"): audio_manager.toggle()
+	if event is InputEventMouseButton and event.pressed and event.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN]:
+		tool = posmod(tool + (1 if event.button_index == MOUSE_BUTTON_WHEEL_DOWN else -1), TOOL_NAMES.size())
+		refresh()
+		return
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		if state.zone == "graveyard" or nearest_enemy(player.position, 65) != null: attack("sword")
+		if placement.selected != "":
+			if placement.place(world.get_global_mouse_position()): notify_action("放置完成。")
+			else: refresh("距离太远、田地或障碍物占用，未消耗物品。")
+		elif state.zone == "graveyard" or nearest_enemy(player.position, 65) != null: attack("sword")
 		else: use_plot(world.plot_at(world.get_global_mouse_position()))
 
 func nearest_remains() -> Dictionary:
@@ -410,13 +434,18 @@ func interact() -> void:
 		show_special_plot(index)
 		return
 	match world.nearest_interaction():
-		"home": show_hall()
-		"shop": show_shop()
+		"home": travel("hall")
+		"shop": travel("shop")
 		"shipping": notify_action(state.sell())
 		"npc": show_npc()
 		"altar": show_ritual()
 		"gate": travel("graveyard")
 		"return": travel("farm")
+		"exit_interior": travel("farm")
+		"workbench": show_hall()
+		"counter": show_shop()
+		"storage": show_storage()
+		"bed": show_hall()
 		_: refresh("靠近义庄、村民、祭坛、出口或遗骸，再按 E。")
 
 func advance_day() -> void:
@@ -436,7 +465,9 @@ func open_modal(title_text: String, description: String) -> VBoxContainer:
 	dim.color = Color(0.08, 0.13, 0.15, 0.75)
 	modal.add_child(dim)
 	var card := panel(Vector2(88, 25), Vector2(464, 309), modal)
+	card.name = "ModalCard"
 	var layout := VBoxContainer.new()
+	layout.name = "Layout"
 	layout.position = Vector2(14, 10)
 	layout.size = Vector2(436, 287)
 	layout.add_theme_constant_override("separation", 8)
@@ -447,10 +478,12 @@ func open_modal(title_text: String, description: String) -> VBoxContainer:
 	heading.add_theme_color_override("font_color", Color("3d4b42"))
 	layout.add_child(heading)
 	var scroll := ScrollContainer.new()
+	scroll.name = "Scroll"
 	scroll.custom_minimum_size = Vector2(436, 209)
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	layout.add_child(scroll)
 	var column := VBoxContainer.new()
+	column.name = "Content"
 	column.custom_minimum_size.x = 420
 	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	column.add_theme_constant_override("separation", 8)
@@ -471,7 +504,9 @@ func close_modal() -> void:
 	if modal != null:
 		modal.queue_free()
 		modal = null
-	if is_instance_valid(player): player.frozen = false
+	if is_instance_valid(player):
+		player.frozen = false
+		if is_instance_valid(player.state_machine): player.state_machine.update(0, Vector2.ZERO, false)
 
 func feedback(column: VBoxContainer, text: String) -> void:
 	column.get_child(0).text = text
@@ -491,7 +526,7 @@ func show_hall() -> void:
 	for id in state.cargo:
 		var r: Dictionary = state.find_remains(id)
 		box.add_child(button("处理运输车：" + r.name, func(): show_remains(r, true)))
-	for pair in [["oil", "烛穗 → 4 灯油"], ["talisman", "1 阴灰或 12 文 → 3 张符"], ["ward", "修阵：1 骨料 + 1 灯油 → 镇守 +30"], ["hall", "扩建：3 骨料 + 80 文 → 3 安置位"]]:
+	for pair in [["oil", "烛穗 → 4 灯油"], ["talisman", "1 阴灰或 12 文 → 3 张符"], ["ward", "修阵：1 骨料 + 1 灯油 → 镇守 +30"], ["hall", "扩建：3 骨料 + 80 文 → 3 安置位"], ["paper_lamp", "纸灯：2 槐木 + 1 灯油"], ["ward_stake", "阵桩：1 骨料 + 1 青石"]]:
 		box.add_child(button(pair[1], func():
 			var text: String = state.craft(pair[0])
 			feedback(box, text)
@@ -550,7 +585,7 @@ func spawn_tracker() -> void:
 	e.at[1] = clampf(e.at[1], 70, 590)
 	state.next_id += 1
 	state.enemies.append(e)
-	var actor := YinEnemy.new()
+	var actor: YinEnemy = preload("res://scenes/actors/enemy.tscn").instantiate()
 	actor.game = self
 	actor.record = e
 	actor.position = Vector2(e.at[0], e.at[1])
@@ -582,6 +617,7 @@ func show_shop() -> void:
 		box.add_child(button("%s种子 ×3 · %d 文 · %d 日成熟" % [spec.display_name, spec.seed_price * 3, spec.growth_days], func(): feedback(box, state.buy_seeds(id, 3))))
 	box.add_child(button("购买 4 灯油 · 18 文", func():
 		if state.money < 18: feedback(box, "铜钱不足。")
+		elif not state.can_gain("oil", 4): feedback(box, "行囊已满。")
 		else:
 			state.money -= 18
 			state.oil += 4
@@ -597,23 +633,71 @@ func show_ritual() -> void:
 		))
 
 func show_npc() -> void:
-	var box := open_modal("桥边阿婆", state.talk())
-	if state.day >= 10 and state.boss_defeated:
-		box.add_child(button("封镇：镇守升至 100，污染 -25（本章不可更改）", func(): feedback(box, state.choose_ending("seal"))))
-		box.add_child(button("共处：役灵契合 +20，怨气 -10（本章不可更改）", func(): feedback(box, state.choose_ending("coexist"))))
+	var box := open_modal("桥边阿婆", "")
+	var data := YinDialogueData.new()
+	data.speaker = "桥边阿婆"
+	data.portrait = preload("res://assets/npc.png")
+	data.lines.assign([state.story_line(), "这片田里的东西，镇住它，也在养着它。" if state.day >= 8 else "你师父每夜都要点名，有一夜，门外多答了一声。", state.talk()])
+	var dialogue := YinDialoguePanel.new()
+	dialogue.data = data
+	box.add_child(dialogue)
+	dialogue.finished.connect(func():
+		dialogue.hide()
+		if state.day >= 10 and state.boss_defeated:
+			box.add_child(button("封镇：镇守 100、污染 -25（本章不可更改）", func(): feedback(box, state.choose_ending("seal"))))
+			box.add_child(button("共处：契合 +20、怨气 -10（本章不可更改）", func(): feedback(box, state.choose_ending("coexist"))))
+		else: close_modal()
+	)
 
 func show_inventory() -> void:
-	var text: String = "铜钱 %d / 命息 %d / 修为 %d / 声望 %d\n灯油 %d / 镇符 %d / 骨料 %d / 阴灰 %d\n\n" % [state.money, state.health, state.cultivation, state.reputation, state.oil, state.talismans, state.bones, state.ash]
-	for id in CROP_IDS:
-		text += "%s：种子 %d / 灵物 %d / 交易 %d 文\n" % [FarmState.CROPS[id].display_name, state.seed_count(id), state.crop_count(id), FarmState.CROPS[id].sell_price]
-	text += "\n运输车：%d/2 具。带回义庄门口处理。\nR 每夜点名 / C 跟随驻守集火 / L 手札 / M 音乐。" % state.cargo.size()
-	open_modal("行囊", text)
+	show_inventory_grid(false)
+
+func show_storage() -> void:
+	show_inventory_grid(true)
+
+func show_inventory_grid(with_storage: bool) -> void:
+	bag_model.sync()
+	chest_model.sync()
+	var box := open_modal("义庄仓箱" if with_storage else "行囊", "命息 %d · 铜钱 %d · 修为 %d
+载骸 %d/2；遗骸仍需在义庄案台处理。" % [state.health, state.money, state.cultivation, state.cargo.size()])
+	if with_storage:
+		var card: Panel = modal.get_node("ModalCard")
+		card.position = Vector2(12, 12)
+		card.size = Vector2(616, 336)
+		var layout: VBoxContainer = card.get_node("Layout")
+		layout.size = Vector2(588, 312)
+		var scroll: ScrollContainer = layout.get_node("Scroll")
+		scroll.custom_minimum_size = Vector2(588, 238)
+		box.custom_minimum_size.x = 572
+		box.get_child(0).custom_minimum_size.x = 570
+	var view := YinInventoryPanel.new()
+	view.bag = bag_model
+	view.chest = chest_model
+	view.show_chest = with_storage
+	view.use_item.connect(func(id):
+		close_modal()
+		placement.selected = id
+		refresh("绿色可放，红色被占用。左键放置，Esc 取消。")
+	)
+	view.drop_item.connect(func(id):
+		if state.container_count("bag", id) < 1: return
+		state.set_container_count("bag", id, state.container_count("bag", id) - 1)
+		close_modal()
+		spawn_loot(id, 1, player.position + player.facing * 44)
+		notify_action("物品已放在地上，靠近可以拾回。")
+	)
+	view.mutated.connect(func(): notify_action("物品已存放，进度已保存。"))
+	box.add_child(view)
 
 func show_journal() -> void:
 	open_modal("阴田手札 · 十日祭帖", "\n\n".join(state.journal))
 
 func show_pause() -> void:
-	var box := open_modal("纸灯下的片刻", "时间、敌人和角色已暂停。\nWASD 移动，J 桃木剑，F 镇符，G 符火，Shift 闪避。\n1–4 农具，Q 换阴种，E 互动，R 点名，C 役灵指令。\nT 待到黄昏，L 手札，I 行囊，M 开关环境音。")
+	var box := open_modal("纸灯下的片刻", "时间、敌人和角色已暂停。\nWASD 移动，J 桃木剑，F 镇符，G 符火，Shift 闪避。\n1–6 农具，Q 换阴种，E 互动，R 点名，C 役灵指令。\nT 待到黄昏，L 手札，I 行囊，M 开关环境音。")
+	box.add_child(button("存档并返回标题", func():
+		persist()
+		if not save_failed: get_tree().change_scene_to_file("res://scenes/ui/title_screen.tscn")
+	))
 	box.add_child(button("保存义庄进度", func():
 		persist()
 		feedback(box, "进度已保存。" if not save_failed else "保存失败。")
@@ -628,3 +712,51 @@ func _exit_tree() -> void:
 	if is_instance_valid(ambience):
 		ambience.stop()
 		ambience.stream = null
+
+func use_terrain() -> void:
+	if action_cooldown > 0 or state.energy < 4: return
+	var target: YinTerrainResource = null
+	var distance: float = 52
+	for node in get_tree().get_nodes_in_group("terrain_resources"):
+		if not node.is_inside_tree() or node.is_queued_for_deletion() or node.world != world or node.required_tool != tool: continue
+		var next: float = player.position.distance_to(node.position)
+		if next < distance and player.facing.dot(player.position.direction_to(node.position)) > 0.2:
+			target = node
+			distance = next
+	if target == null:
+		refresh("面朝近处的树使用斧头，面朝岩石使用铁镐。")
+		return
+	var ray := PhysicsRayQueryParameters2D.create(player.position + Vector2(0, -4), target.position + Vector2(0, -4), 1)
+	var blocked: Dictionary = player.get_world_2d().direct_space_state.intersect_ray(ray)
+	if not blocked.is_empty() and blocked.collider != target: return
+	if not player.state_machine.begin("tool", 0.25): return
+	player.attack_time = 0.18
+	action_cooldown = 0.3
+	if target.strike(tool):
+		state.energy -= 4
+		notify_action("工具击中了槐木。" if tool == 4 else "工具击中了青石。")
+
+func spawn_loot(item: String, count: int, at: Vector2) -> void:
+	var target: Vector2 = Vector2(clampf(at.x, 20, 940), clampf(at.y, 20, 620))
+	if not world.is_safe_position(target):
+		target = player.position
+		for offset in [Vector2.UP, Vector2.DOWN, Vector2.LEFT, Vector2.RIGHT]:
+			var alternative: Vector2 = player.position + offset * 44
+			if world.is_safe_position(alternative):
+				target = alternative
+				break
+	var record: Dictionary = {"id": state.next_id, "item": item, "count": count, "zone": state.zone, "at": [target.x, target.y]}
+	state.next_id += 1
+	state.drops.append(record)
+	spawn_pickups()
+
+func spawn_pickups() -> void:
+	for old in get_tree().get_nodes_in_group("loose_items"): old.queue_free()
+	for record in state.drops:
+		if record.zone != state.zone: continue
+		var pickup := YinItemPickup.new()
+		pickup.game = self
+		pickup.record = record
+		pickup.position = Vector2(record.at[0], record.at[1])
+		pickup.add_to_group("loose_items")
+		world.actors.add_child(pickup)

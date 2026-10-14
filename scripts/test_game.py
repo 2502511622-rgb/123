@@ -8,9 +8,16 @@ with tempfile.TemporaryDirectory(prefix='mossfield-checks-') as temp:
   ['--headless', '--editor', '--import', '--quit'],
   ['--headless', '--script', 'res://tests/test_farm.gd'],
   ['--headless', '--script', 'res://tests/test_world.gd'],
+  ['--headless', '--script', 'res://tests/test_foundation.gd'],
   ['--headless', '--quit-after', '30']]
  for args in commands:
-  run=subprocess.run(['sh',str(root/'scripts/godot.sh'),*args],cwd=root,env=env,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True,timeout=60)
+  try:
+   run=subprocess.run(['sh',str(root/'scripts/godot.sh'),*args],cwd=root,env=env,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True,timeout=60)
+  except subprocess.TimeoutExpired as error:
+   output=error.stdout or b''
+   print(output.decode(errors='replace') if isinstance(output,bytes) else output)
+   print('FAIL: timed out:',args)
+   sys.exit(1)
   output=run.stdout
   print(output)
   if run.returncode or 'SCRIPT ERROR' in output or 'ERROR:' in output:

@@ -15,28 +15,30 @@ var dodge_direction := Vector2.DOWN
 var attack_time: float = 0
 var texture: Texture2D = preload("res://assets/farmer.png")
 
+var state_machine: YinPlayerStateMachine
+var hitbox: YinHitbox
+var health_receiver: YinHealthReceiver
+
 func _ready() -> void:
-	collision_layer = 2
-	collision_mask = 1
-	var shape := CollisionShape2D.new()
-	var box := RectangleShape2D.new()
-	box.size = Vector2(14, 10)
-	shape.shape = box
-	shape.position = Vector2(0, -4)
-	add_child(shape)
-	var camera := Camera2D.new()
-	camera.name = "Camera2D"
-	camera.position = Vector2.ZERO
-	camera.limit_left = 0
-	camera.limit_top = 0
-	camera.limit_right = 960
-	camera.limit_bottom = 640
-	camera.position_smoothing_enabled = true
-	camera.position_smoothing_speed = 8
-	add_child(camera)
+	state_machine = YinPlayerStateMachine.new()
+	state_machine.name = "ActionStateMachine"
+	state_machine.bind(self)
+	add_child(state_machine)
+	hitbox = YinHitbox.new()
+	hitbox.name = "Hitbox"
+	hitbox.actor = self
+	add_child(hitbox)
+	health_receiver = YinHealthReceiver.new()
+	health_receiver.name = "HealthReceiver"
+	add_child(health_receiver)
 
 func _physics_process(delta: float) -> void:
-	var direction := Vector2.ZERO if frozen else Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	if frozen:
+		state_machine.update(0, Vector2.ZERO, true)
+		velocity = Vector2.ZERO
+		return
+	var input_direction := Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	var direction: Vector2 = state_machine.update(delta, input_direction, false)
 	invincible = maxf(0, invincible - delta)
 	dodge_cooldown = maxf(0, dodge_cooldown - delta)
 	attack_time = maxf(0, attack_time - delta)
@@ -72,6 +74,7 @@ func _draw() -> void:
 
 func dodge() -> void:
 	if dodge_cooldown > 0 or frozen: return
+	if not state_machine.begin("dodge", 0.18): return
 	dodge_direction = facing
 	dodge_time = 0.18
 	invincible = 0.35

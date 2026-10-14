@@ -58,26 +58,35 @@ func run() -> void:
 	check(game.state.zone == "graveyard" and game.world.plot_at(Vector2(335, 270)) == -1, "separate cemetery map")
 	check(get_nodes_in_group("enemies").filter(func(e): return not e.is_queued_for_deletion()).size() == 5, "cemetery spawns enemies")
 	var enemy: YinEnemy = game.nearest_enemy(Vector2(280, 240), 40)
+	var enemy_record: Dictionary = enemy.record
 	game.player.position = Vector2(280, 273)
 	game.player.facing = Vector2.UP
 	game.action_cooldown = 0
 	game.attack("seal")
 	check(enemy.stun >= 2.9 and enemy.record.integrity == 100, "real seal spell suppresses without destroying remains")
+	await frames(23)
 	for i in range(4):
+		if enemy_record.dead: break
+		game.player.position = Vector2(enemy_record.at[0], enemy_record.at[1] + 32)
+		game.player.facing = Vector2.UP
+		await frames(1)
 		game.action_cooldown = 0
 		game.attack("sword")
-	check(enemy.record.dead and game.state.remains.size() == 1, "melee kill leaves ground remains")
+		await frames(21)
+	check(enemy_record.dead and game.state.remains.size() == 1, "melee kill leaves ground remains")
 	await frames(2)
 	var r: Dictionary = game.state.remains[0]
 	check(r.zone == "graveyard" and r.integrity == 100 and r.fierceness == 12, "suppressed combat yields better remains")
 	game.state.pickup(r.id)
 	var second: YinEnemy = game.nearest_enemy(Vector2(380, 390), 45)
+	var second_record: Dictionary = second.record
 	game.player.position = Vector2(380, 423)
 	game.player.facing = Vector2.UP
 	for i in range(2):
 		game.action_cooldown = 0
 		game.attack("fire")
-	check(second.record.dead and second.record.integrity == 30, "real fire kills faster but burns remains")
+		await frames(23)
+	check(second_record.dead and second_record.integrity == 30, "real fire kills faster but burns remains")
 	await frames(2)
 	var burnt: Dictionary = game.state.remains[1]
 	game.state.pickup(burnt.id)

@@ -8,9 +8,19 @@ var windup: float = 0
 var attack_center := Vector2.ZERO
 var hit_flash: float = 0
 var knockback := Vector2.ZERO
+var health_receiver: YinHealthReceiver
+var hurtbox: YinHurtbox
 const TEXTURE = preload("res://assets/enemies.png")
 
 func _ready() -> void:
+	health_receiver = YinHealthReceiver.new()
+	health_receiver.name = "HealthReceiver"
+	health_receiver.bind_record(record)
+	add_child(health_receiver)
+	hurtbox = YinHurtbox.new()
+	hurtbox.name = "Hurtbox"
+	hurtbox.actor = self
+	add_child(hurtbox)
 	collision_layer = 4
 	collision_mask = 1
 	var shape := CollisionShape2D.new()
@@ -52,7 +62,7 @@ func _physics_process(delta: float) -> void:
 
 func receive_hit(damage: int, method: String = "sword") -> void:
 	if record.dead: return
-	record.hp = maxi(0, record.hp - damage)
+	health_receiver.apply(damage, method)
 	hit_flash = 0.15
 	if method == "fire":
 		record.integrity = maxi(0, record.integrity - 35)

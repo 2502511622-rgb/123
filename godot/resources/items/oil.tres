@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="YinItemSpec" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/inventory/item_spec.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "oil"
+display_name = "灯油"
+category = "材料"
+description = "每日役灵供养与炼化所需。"
+max_stack = 99

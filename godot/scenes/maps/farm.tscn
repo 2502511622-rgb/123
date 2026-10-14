@@ -1,0 +1,14 @@
+[gd_scene load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/world.gd" id="1"]
+[node name="Farm" type="Node2D"]
+script = ExtResource("1")
+[node name="SpawnPoints" type="Node2D" parent="."]
+[node name="Entry" type="Marker2D" parent="SpawnPoints"]
+position = Vector2(300, 350)
+
+[node name="FromHall" type="Marker2D" parent="SpawnPoints"]
+position = Vector2(160, 218)
+[node name="FromShop" type="Marker2D" parent="SpawnPoints"]
+position = Vector2(780, 260)
+[node name="FromGraveyard" type="Marker2D" parent="SpawnPoints"]
+position = Vector2(810, 538)

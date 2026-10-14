@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="YinItemSpec" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/inventory/item_spec.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "candle"
+display_name = "烛穗"
+category = "阴植"
+description = "可炼灯油或作为地脉灵供品。"
+max_stack = 99

@@ -19,6 +19,13 @@ var minutes: float = 360
 var weather: String = "sun"
 var selected_crop: String = "candle"
 var inventory: Dictionary = {"candle_seeds": 8, "vine_seeds": 5, "gourd_seeds": 2, "rice_seeds": 1, "candle": 0, "vine": 0, "gourd": 0, "rice": 0}
+var supplies: Dictionary = {"wood": 0, "stone": 0, "paper_lamp": 0, "ward_stake": 0}
+var storage: Dictionary = {}
+var bag_slots: Array = []
+var chest_slots: Array = []
+var terrain: Dictionary = {}
+var drops: Array = []
+var placements: Array = []
 var plots: Array = []
 var oil: int = 8
 var talismans: int = 6
@@ -51,6 +58,7 @@ var last_report: String = ""
 var order: String = "follow"
 
 func _init() -> void:
+	for id in YinItemCatalog.IDS: storage[id] = 0
 	for i in range(WIDTH * HEIGHT):
 		plots.append({"tilled": false, "crop": "", "growth": 0, "watered": false, "yin": 0, "sealed": false, "branch": "eat"})
 
@@ -74,6 +82,7 @@ func use_tool(index: int, tool: int) -> String:
 			return "未成熟。每日浇灌后，睡觉推进生长。"
 		if p.crop == "rice" and not p.sealed:
 			return "稻穗传来师父的声音。不要答应：靠近按 E，以一张符封声。"
+		if not can_gain(p.crop, 1): return "行囊已满，先去仓箱存放物品。"
 		inventory[p.crop] += 1
 		total_harvest += 1
 		var crop_name: String = CROPS[p.crop].display_name
@@ -232,6 +241,7 @@ func buy_seeds(id: String = "", count: int = 5) -> String:
 	if not CROPS.has(id) or count < 1: return "无效商品。"
 	var price: int = CROPS[id].seed_price * count
 	if money < price: return "铜钱不足，需要 %d 文。" % price
+	if not can_gain(id + "_seeds", count): return "行囊已满，无法购买。"
 	money -= price
 	inventory[id + "_seeds"] += count
 	return "买到 %d 包%s种子。" % [count, CROPS[id].display_name]
@@ -247,11 +257,13 @@ func sell() -> String:
 func craft(which: String) -> String:
 	match which:
 		"oil":
+			if not can_gain("oil", 4): return "行囊已满。"
 			if inventory.candle < 1: return "需要 1 份烛穗。"
 			inventory.candle -= 1
 			oil += 4
 			return "烛穗炼成 4 份灯油。"
 		"talisman":
+			if not can_gain("talisman", 3): return "行囊已满。"
 			if ash < 1 and money < 12: return "需要 1 阴灰，或购买符纸花费 12 文。"
 			if ash > 0: ash -= 1
 			else: money -= 12
@@ -263,6 +275,20 @@ func craft(which: String) -> String:
 			oil -= 1
 			ward = mini(100, ward + 30)
 			return "阵线加固，镇守 +30。"
+		"paper_lamp":
+			if supplies.wood < 2 or oil < 1: return "纸灯需要 2 槐木与 1 灯油。"
+			if not can_gain("paper_lamp", 1): return "行囊已满。"
+			supplies.wood -= 2
+			oil -= 1
+			supplies.paper_lamp += 1
+			return "制成纸灯，打开行囊选中后放置。"
+		"ward_stake":
+			if bones < 1 or supplies.stone < 1: return "阵桩需要 1 骨料与 1 青石。"
+			if not can_gain("ward_stake", 1): return "行囊已满。"
+			bones -= 1
+			supplies.stone -= 1
+			supplies.ward_stake += 1
+			return "制成阵桩，院落放置后镇守 +5。"
 		"hall":
 			if hall_level >= 2: return "第一版的义庄已扩建到最高级。"
 			if bones < 3 or money < 80: return "扩建需要 3 骨料与 80 文。"
@@ -319,6 +345,7 @@ func process_remains(id: int, method: String, plot_index: int = -1) -> String:
 			oil -= 2
 			spirits.append(make_spirit(r.kind, r.fierceness))
 		"dismantle":
+			if not can_gain_many({"bone": 2 if r.integrity >= 60 else 1, "ash": 2 if r.kind == "boss" else 1}): return "行囊已满，遗骸保持原状。"
 			bones += 2 if r.integrity >= 60 else 1
 			ash += 2 if r.kind == "boss" else 1
 		"bury":
@@ -395,14 +422,16 @@ func choose_ending(choice: String) -> String:
 	return "第一章完成。农场仍可继续经营，手札保留了你的选择。"
 
 func snapshot() -> Dictionary:
-	var data: Dictionary = {"version": 3}
+	YinInventoryModel.new(self, "bag").sync()
+	YinInventoryModel.new(self, "chest").sync()
+	var data: Dictionary = {"version": 4}
 	for key in save_keys(): data[key] = get(key)
 	data.player_position = [player_position.x, player_position.y]
 	data.saved_facing = [saved_facing.x, saved_facing.y]
 	return data.duplicate(true)
 
 static func save_keys() -> Array:
-	return ["day", "money", "energy", "health", "minutes", "weather", "selected_crop", "inventory", "plots", "oil", "talismans", "bones", "ash", "reputation", "cultivation", "pollution", "ward", "hall_level", "spirits", "remains", "cargo", "enemies", "enemy_day", "next_id", "total_harvest", "called_day", "ritual_count", "ritual_path", "boss_spawned", "boss_defeated", "ending", "intro_seen", "zone", "journal", "last_report", "order"]
+	return ["day", "money", "energy", "health", "minutes", "weather", "selected_crop", "inventory", "supplies", "storage", "bag_slots", "chest_slots", "terrain", "drops", "placements", "plots", "oil", "talismans", "bones", "ash", "reputation", "cultivation", "pollution", "ward", "hall_level", "spirits", "remains", "cargo", "enemies", "enemy_day", "next_id", "total_harvest", "called_day", "ritual_count", "ritual_path", "boss_spawned", "boss_defeated", "ending", "intro_seen", "zone", "journal", "last_report", "order"]
 
 static func valid_int(value: Variant, minimum: int, maximum: int = 100000000) -> bool:
 	return (value is int or value is float) and is_finite(float(value)) and float(value) == floor(float(value)) and value >= minimum and value <= maximum
@@ -411,8 +440,13 @@ static func valid_point(value: Variant) -> bool:
 	return value is Array and value.size() == 2 and (value[0] is float or value[0] is int) and (value[1] is float or value[1] is int) and is_finite(float(value[0])) and is_finite(float(value[1])) and value[0] >= 0 and value[0] <= 960 and value[1] >= 0 and value[1] <= 640
 
 func restore(data: Dictionary) -> bool:
-	if data.get("version") != 3: return false
+	if not valid_int(data.get("version"), 3, 4): return false
 	var defaults := FarmState.new()
+	if int(data.version) == 3:
+		data = data.duplicate(true)
+		data.version = 4
+		for key in ["supplies", "storage", "bag_slots", "chest_slots", "terrain", "drops", "placements"]:
+			data[key] = defaults.get(key).duplicate(true)
 	for key in save_keys():
 		if not data.has(key): return false
 		var expected: Variant = defaults.get(key)
@@ -423,10 +457,30 @@ func restore(data: Dictionary) -> bool:
 		if expected is Dictionary and not data[key] is Dictionary: return false
 	if data.day < 1 or data.health > 100 or data.energy > 100 or data.ward > 100 or data.pollution > 100 or not valid_int(data.hall_level, 1, 2): return false
 	if (not data.minutes is float and not data.minutes is int) or not is_finite(float(data.minutes)) or data.minutes < 360 or data.minutes > 1440: return false
-	if data.zone not in ["farm", "graveyard"] or data.weather not in ["sun", "rain"] or data.order not in ["follow", "guard", "focus"]: return false
+	if data.zone not in ["farm", "graveyard", "hall", "shop"] or data.weather not in ["sun", "rain"] or data.order not in ["follow", "guard", "focus"]: return false
 	if data.selected_crop not in CROPS or data.plots.size() != WIDTH * HEIGHT or data.spirits.size() > (2 if int(data.hall_level) == 1 else 3) or data.cargo.size() > 2: return false
 	for key in INVENTORY_KEYS:
 		if not valid_int(data.inventory.get(key), 0): return false
+	for key in defaults.supplies:
+		if not valid_int(data.supplies.get(key), 0): return false
+	for id in YinItemCatalog.IDS:
+		if not valid_int(data.storage.get(id), 0): return false
+	for layout in [data.bag_slots, data.chest_slots]:
+		if layout.size() != 0 and layout.size() != 24: return false
+		for slot in layout:
+			if not slot is Dictionary or not slot.get("id") is String or not valid_int(slot.get("count"), 0, 99): return false
+			if slot.id == "" and slot.count != 0: return false
+			if slot.id != "" and (slot.id not in YinItemCatalog.IDS or slot.count < 1): return false
+	for key in data.terrain:
+		var record: Variant = data.terrain[key]
+		if not key is String or not record is Dictionary or not valid_int(record.get("hp"), 0, 3): return false
+	for collection in [data.drops, data.placements]:
+		for record in collection:
+			if not record is Dictionary or not valid_int(record.get("id"), 1) or record.get("zone") not in ["farm", "graveyard", "hall", "shop"] or not valid_point(record.get("at")): return false
+	for drop in data.drops:
+		if drop.get("item") not in YinItemCatalog.IDS or not valid_int(drop.get("count"), 1, 99): return false
+	for placed in data.placements:
+		if placed.get("kind") not in ["paper_lamp", "ward_stake"]: return false
 	for p in data.plots:
 		if not p is Dictionary or not p.get("tilled") is bool or not p.get("watered") is bool or not p.get("sealed") is bool: return false
 		if p.get("crop") not in ["", "candle", "vine", "gourd", "rice"] or not valid_int(p.get("growth"), 0, 6) or not valid_int(p.get("yin"), 0, 100): return false
@@ -460,6 +514,16 @@ func restore(data: Dictionary) -> bool:
 	for key in save_keys():
 		if defaults.get(key) is int: normalized[key] = int(normalized[key])
 	for key in INVENTORY_KEYS: normalized.inventory[key] = int(normalized.inventory[key])
+	for key in normalized.supplies: normalized.supplies[key] = int(normalized.supplies[key])
+	for key in normalized.storage: normalized.storage[key] = int(normalized.storage[key])
+	for layout in [normalized.bag_slots, normalized.chest_slots]:
+		for slot in layout: slot.count = int(slot.count)
+	for record in normalized.terrain.values(): record.hp = int(record.hp)
+	for collection in [normalized.drops, normalized.placements]:
+		for record in collection:
+			record.id = int(record.id)
+			record.at = [float(record.at[0]), float(record.at[1])]
+	for record in normalized.drops: record.count = int(record.count)
 	for p in normalized.plots:
 		for key in ["growth", "yin"]: p[key] = int(p[key])
 	for item in normalized.spirits:
@@ -475,3 +539,23 @@ func restore(data: Dictionary) -> bool:
 	player_position = Vector2(data.player_position[0], data.player_position[1])
 	saved_facing = Vector2(face[0], face[1])
 	return true
+
+func container_count(container: String, id: String) -> int:
+	if container == "chest": return int(storage.get(id, 0))
+	if inventory.has(id): return int(inventory[id])
+	if supplies.has(id): return int(supplies[id])
+	return int(get({"oil": "oil", "talisman": "talismans", "bone": "bones", "ash": "ash"}.get(id, "oil"))) if id in ["oil", "talisman", "bone", "ash"] else 0
+
+func set_container_count(container: String, id: String, count: int) -> void:
+	if container == "chest": storage[id] = count
+	elif inventory.has(id): inventory[id] = count
+	elif supplies.has(id): supplies[id] = count
+	elif id in ["oil", "talisman", "bone", "ash"]: set({"oil": "oil", "talisman": "talismans", "bone": "bones", "ash": "ash"}[id], count)
+
+func can_gain(id: String, count: int) -> bool:
+	return can_gain_many({id: count})
+
+func can_gain_many(additions: Dictionary) -> bool:
+	var values: Dictionary = {}
+	for id in YinItemCatalog.IDS: values[id] = container_count("bag", id) + int(additions.get(id, 0))
+	return YinInventoryModel.fits(values)

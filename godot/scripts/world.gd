@@ -1,5 +1,6 @@
 class_name FarmWorld
 extends Node2D
+signal loot_requested(item: String, count: int, at: Vector2)
 
 const SIZE = Vector2(960, 640)
 const FIELD = Vector2(320, 256)
@@ -14,6 +15,7 @@ const RETURN_GATE = Vector2(155, 547)
 const TILE_TEXTURE = preload("res://assets/tiles.png")
 const CROP_TEXTURE = preload("res://assets/crops.png")
 var state: FarmState
+var tile_farm: YinTileFarm
 var player: FarmPlayer
 var actors: Node2D
 var trees: Array[Vector2] = []
@@ -24,6 +26,11 @@ var selected_plot: int = -1
 var effects: Array = []
 
 func _ready() -> void:
+	tile_farm = YinTileFarm.new()
+	tile_farm.name = "TerrainLayers"
+	add_child(tile_farm)
+	tile_farm.build(state.zone)
+	tile_farm.refresh(state, 0)
 	actors = Node2D.new()
 	actors.y_sort_enabled = true
 	add_child(actors)
@@ -31,6 +38,9 @@ func _ready() -> void:
 	boundary(Rect2(-32, 640, 1024, 32))
 	boundary(Rect2(-32, 0, 32, 640))
 	boundary(Rect2(960, 0, 32, 640))
+	if state.zone in ["hall", "shop"]:
+		build_interior()
+		return
 	if state.zone == "graveyard":
 		build_graveyard()
 		return
@@ -71,6 +81,8 @@ func _ready() -> void:
 	add_sign(GATE + Vector2(-23, 7), "乱葬坡 ↑")
 	for at in [Vector2(190, 220), Vector2(318, 238), Vector2(600, 478)]:
 		prop("lantern", at, Vector2(-16, -48), Rect2(-4, -4, 8, 4))
+	for placed in state.placements:
+		if placed.zone == state.zone: install_placement(placed)
 	if state.hall_level >= 2:
 		for x in [90, 123]:
 			prop("chest", Vector2(x, 228), Vector2(-20, -28), Rect2(-16, -20, 32, 20))
@@ -97,7 +109,19 @@ func boundary(rect: Rect2) -> void:
 	add_child(body)
 
 func prop(name_text: String, at: Vector2, offset: Vector2, collision_rect: Rect2) -> void:
-	var body := StaticBody2D.new()
+	var body: StaticBody2D
+	if name_text in ["tree", "rock"]:
+		var key: String = "%s:%d:%d" % [state.zone, int(at.x), int(at.y)]
+		if state.terrain.has(key) and state.terrain[key].hp == 0: return
+		var resource := YinTerrainResource.new()
+		resource.state = state
+		resource.world = self
+		resource.key = key
+		resource.kind = name_text
+		resource.required_tool = 4 if name_text == "tree" else 5
+		resource.world_rect = Rect2(at + collision_rect.position, collision_rect.size)
+		body = resource
+	else: body = StaticBody2D.new()
 	body.position = at
 	actors.add_child(body)
 	var sprite := Sprite2D.new()
@@ -126,6 +150,7 @@ func add_sign(at: Vector2, text: String) -> void:
 	add_child(label)
 
 func is_safe_position(at: Vector2) -> bool:
+	if state.zone in ["hall", "shop"] and not Rect2(200, 140, 560, 330).has_point(at): return false
 	if at.x < 16 or at.x > 944 or at.y < 20 or at.y > 624:
 		return false
 	var body_rect := Rect2(at + Vector2(-7, -9), Vector2(14, 10))
@@ -135,14 +160,10 @@ func is_safe_position(at: Vector2) -> bool:
 	return true
 
 func plot_at(at: Vector2) -> int:
-	if state.zone != "farm": return -1
-	var local_pos: Vector2 = at - FIELD
-	if local_pos.x < 0 or local_pos.y < 0 or local_pos.x >= FarmState.WIDTH * TILE or local_pos.y >= FarmState.HEIGHT * TILE:
-		return -1
-	return int(local_pos.y / TILE) * FarmState.WIDTH + int(local_pos.x / TILE)
+	return tile_farm.plot_at(at)
 
 func plot_center(index: int) -> Vector2:
-	return FIELD + Vector2(index % FarmState.WIDTH, int(index / FarmState.WIDTH)) * TILE + Vector2(16, 16)
+	return tile_farm.plot_center(index)
 
 func reachable(index: int) -> bool:
 	return index >= 0 and index < state.plots.size() and player.position.distance_to(plot_center(index)) <= 49
@@ -151,6 +172,12 @@ func front_plot() -> int:
 	return plot_at(player.position + Vector2(0, -6) + player.facing * 25)
 
 func nearest_interaction() -> String:
+	if state.zone in ["hall", "shop"]:
+		if player.position.distance_to(Vector2(480, 461)) < 40: return "exit_interior"
+		if player.position.distance_to(Vector2(480, 267)) < 45: return "workbench" if state.zone == "hall" else "counter"
+		if state.zone == "hall" and player.position.distance_to(Vector2(306, 361)) < 45: return "storage"
+		if state.zone == "hall" and player.position.distance_to(Vector2(666, 327)) < 45: return "bed"
+		return ""
 	if state.zone == "graveyard":
 		return "return" if player.position.distance_to(RETURN_GATE) < 47 else ""
 	for pair in [["home", HOME], ["shipping", SHIPPING], ["shop", SHOP], ["npc", NPC], ["altar", ALTAR], ["gate", GATE]]:
@@ -171,6 +198,7 @@ func _process(delta: float) -> void:
 		redraw_timer = 0
 		if is_instance_valid(player):
 			selected_plot = front_plot()
+		tile_farm.refresh(state, time)
 		queue_redraw()
 
 func tile(id: int, at: Vector2) -> void:
@@ -179,18 +207,13 @@ func tile(id: int, at: Vector2) -> void:
 func _draw() -> void:
 	if state == null:
 		return
-	for y in range(20):
-		for x in range(30):
-			var at := Vector2(x * TILE, y * TILE)
-			var id: int = (x * 7 + y * 11) % 8
-			if y == 7 or y == 8 or (x == 8 and y >= 6 and y <= 17) or (x >= 22 and x <= 25 and y >= 6 and y <= 11):
-				id = 10
-			if x == 20 or x == 21:
-				id = 11 + int(time * 2) % 3
-			if (x * 13 + y * 7) % 31 == 0 and id < 8:
-				id = 14
-			if state.zone == "graveyard" and id in [11, 12, 13]: id = 8
-			tile(id, at)
+	if state.zone in ["hall", "shop"]:
+		draw_rect(Rect2(0, 0, 960, 120), Color("293b3b"))
+		draw_rect(Rect2(0, 480, 960, 160), Color("293b3b"))
+		draw_rect(Rect2(0, 120, 176, 360), Color("293b3b"))
+		draw_rect(Rect2(784, 120, 176, 360), Color("293b3b"))
+		for y in range(128, 478, 16): draw_line(Vector2(190, y), Vector2(774, y), Color("b7a888"), 1)
+		return
 	if state.zone == "graveyard":
 		draw_rect(Rect2(0, 0, 960, 640), Color(0.15, 0.21, 0.23, 0.24))
 		for y in range(160, 576, 32): tile(10, Vector2(128, y))
@@ -210,11 +233,6 @@ func _draw() -> void:
 	for i in range(state.plots.size()):
 		var p: Dictionary = state.plots[i]
 		var at := plot_center(i) - Vector2(16, 16)
-		tile(9 if p.watered else (8 if p.tilled else 15), at)
-		if p.crop != "":
-			var row: int = ["candle", "vine", "gourd", "rice"].find(p.crop)
-			var stage: int = 5 if p.growth >= FarmState.CROPS[p.crop].growth_days else mini(4, p.growth + 1)
-			draw_texture_rect_region(CROP_TEXTURE, Rect2(at + Vector2(0, -4), Vector2(32, 32)), Rect2(stage * 16, row * 16, 16, 16))
 		if p.yin > 0:
 			draw_rect(Rect2(at + Vector2(1, 1), Vector2(30, 30)), Color("52637b"), false, 1)
 		if p.crop == "rice" and p.growth >= 2 and not p.sealed and int(time) % 3 == 0:
@@ -249,3 +267,25 @@ func _draw() -> void:
 
 func draw_remains_mark(at: Vector2, integrity: int) -> void:
 	draw_texture_rect(load("res://assets/remains.png"), Rect2(at - Vector2(24, 12), Vector2(48, 28)), false, Color.WHITE if integrity >= 60 else Color("967668"))
+
+func build_interior() -> void:
+	boundary(Rect2(176, 112, 608, 16))
+	boundary(Rect2(176, 478, 608, 16))
+	boundary(Rect2(176, 112, 16, 382))
+	boundary(Rect2(768, 112, 16, 382))
+	prop("altar", Vector2(480, 247), Vector2(-32, -64), Rect2(-24, -19, 48, 19))
+	prop("lantern", Vector2(480, 475), Vector2(-16, -48), Rect2(-4, -6, 8, 6))
+	add_sign(Vector2(440, 474), "返回院落")
+	add_sign(Vector2(440, 264), "案台 · E 经营" if state.zone == "hall" else "柜台 · E 交易")
+	if state.zone == "hall":
+		prop("chest", Vector2(306, 343), Vector2(-20, -30), Rect2(-17, -22, 34, 22))
+		add_sign(Vector2(278, 360), "仓箱 · E 存取")
+		prop("chest", Vector2(666, 305), Vector2(-20, -30), Rect2(-17, -22, 34, 22))
+		add_sign(Vector2(638, 324), "卧榻 · E 休息")
+		for x in [282, 340]: prop("grave", Vector2(x, 231), Vector2(-16, -48), Rect2(-12, -16, 24, 16))
+	else:
+		for x in [308, 370, 588, 650]: prop("chest", Vector2(x, 220), Vector2(-20, -30), Rect2(-17, -22, 34, 22))
+
+func install_placement(record: Dictionary) -> void:
+	var at := Vector2(record.at[0], record.at[1])
+	prop("lantern" if record.kind == "paper_lamp" else "grave", at, Vector2(-16, -48), Rect2(-6, -10, 12, 10))

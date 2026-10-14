@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="YinWeaponSpec" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/components/weapon_spec.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "sword"
+display_name = "桃木剑"
+damage = 15
+reach = 49.0
+talisman_cost = 0
+action_time = 0.22
+recovery = 0.32

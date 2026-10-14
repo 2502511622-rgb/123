@@ -29,3 +29,7 @@
 ## 《阴田录》版本
 
 本版沿用已验证的 Godot 工程、改写后的 MIT 玩家移动模块与原创美术生成流程，重新设计四种阴植、遗骸、役灵与即时战斗。没有再次导入其他游戏的角色、场景、音轨或专有素材。原模板许可仍完整保留。
+
+## 用户指定的全程序参考（v0.4）
+
+后续已按 [JevonLee/Stardew](https://github.com/JevonLee/Stardew) 的模块组织独立重构，实际版本 `f238436b44c1a433f4d9e27c5d073637607c9107`。完整对应与许可范围见 [STARDEW_REFERENCE.md](STARDEW_REFERENCE.md)。
