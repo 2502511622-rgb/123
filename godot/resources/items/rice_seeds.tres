@@ -5,5 +5,5 @@ script = ExtResource("1")
 id = "rice_seeds"
 display_name = "返魂稻种"
 category = "阴种"
-description = "在翻好的灵田播种，逐日浇灌。"
+description = "在翻好的灵田播种后逐日生长。浇灌为可选休闲操作。"
 max_stack = 99

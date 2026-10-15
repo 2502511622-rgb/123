@@ -36,9 +36,36 @@ void fragment(){
 		vec3 soil=texture(material_atlas,local_uv+vec2(0.0,0.5)).rgb;
 		surface=soil*(tile==9.0?0.78:1.12);
 	}else if(tile>=11.0 && tile<=13.0){
-		float ripple=sin(world_at.x*0.09+clock_time*1.5)*sin(world_at.y*0.24-clock_time*1.8);
-		surface=vec3(0.13,0.235,0.24)+vec3(0.045,0.07,0.065)*sin(world_at.y*0.035+sin(world_at.x*0.022));
-		surface+=vec3(0.09,0.13,0.13)*smoothstep(0.75,0.99,ripple);
+		// Two travelling wave fields create broken highlights rather than tiled stripes.
+		vec2 flow=world_at+vec2(clock_time*3.0,-clock_time*1.6);
+		float wave=sin(flow.x*0.065+sin(flow.y*0.081))*0.55+sin(flow.y*0.12-flow.x*0.035)*0.3;
+		float fine=sin(flow.x*0.23+sin(flow.y*0.19))*sin(flow.y*0.31+clock_time*0.7);
+		vec2 cell=mod(world_at,32.0);
+		float shore=32.0;
+		for(int i=0;i<4;i++){
+			vec2 offset=vec2(i==0?-1.0:(i==1?1.0:0.0),i==2?-1.0:(i==3?1.0:0.0));
+			float neighbor=floor(texture(terrain_types,tile_uv+offset/(map_size/32.0)).r*255.0+0.5);
+			if(neighbor<11.0 || neighbor>13.0){
+				float distance_value=i==0?cell.x:(i==1?32.0-cell.x:(i==2?cell.y:32.0-cell.y));
+				shore=min(shore,distance_value);
+			}
+		}
+		float depth=smoothstep(0.0,27.0,shore);
+		surface=mix(vec3(0.24,0.31,0.25),vec3(0.065,0.17,0.19),depth);
+		surface+=vec3(0.035,0.06,0.055)*wave;
+		float sky=smoothstep(0.48,0.92,wave+fine*0.17);
+		surface+=vec3(0.16,0.20,0.19)*sky;
+		float glint=step(0.91,sin(flow.x*0.42+sin(flow.y*0.18)))*step(0.86,sin(flow.y*0.55+sin(flow.x*0.04)));
+		surface+=vec3(0.09,0.12,0.11)*glint;
+		float foam=(1.0-smoothstep(0.6,2.5,abs(shore-2.8-sin(clock_time*1.3+world_at.x*0.08)*1.0)))*(0.45+0.25*sin(world_at.y*0.27));
+		surface=mix(surface,vec3(0.47,0.52,0.42),foam*0.4);
+		// Small rain rings appear only during wet weather.
+		vec2 rain_cell=floor(world_at/18.0);
+		float seed=fract(sin(dot(rain_cell,vec2(12.9898,78.233)))*43758.5453);
+		float age=fract(clock_time*0.7+seed);
+		float ring=1.0-smoothstep(0.3,0.85,abs(length(mod(world_at,18.0)-9.0)-age*8.0));
+		surface+=vec3(0.07,0.1,0.1)*ring*(1.0-age)*wetness;
+
 	}
 	if(indoor){surface=texture(material_atlas,local_uv+vec2(0.5,0.5)).rgb*1.32;}
 	COLOR=vec4(surface,COLOR.a);

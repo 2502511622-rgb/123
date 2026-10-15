@@ -32,8 +32,17 @@ func _draw() -> void:
 			var at: Vector2 = point(spec.at)
 			draw_circle(at, 2, Color("9bbfc0") if game.state.visited_landmarks.has(id) else Color("667c73"))
 			if size.x > 200: draw_string(ThemeDB.fallback_font, at + Vector2(4, 0), spec.name, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color("d3d0b0"))
-	for gate in gates():
-		draw_rect(Rect2(point(gate) - Vector2(2, 2), Vector2(4, 4)), Color("e9c47b"))
+	var gate_names: Array=gate_labels()
+	var exits: Array=gates()
+	for i in range(exits.size()):
+		var at: Vector2=point(exits[i])
+		draw_rect(Rect2(at-Vector2(2,2),Vector2(4,4)),Color("e9c47b"))
+		if size.x>200 and i<gate_names.size():
+			var text_at:=Vector2(clampf(at.x+5,5,size.x-100),clampf(at.y-4,29,size.y-5))
+			draw_string(ThemeDB.fallback_font,text_at,gate_names[i],HORIZONTAL_ALIGNMENT_LEFT,-1,10,Color("f0dca8"))
+	if size.x>200:
+		for villager in game.get_tree().get_nodes_in_group("villagers"):
+			if not villager.is_queued_for_deletion():draw_string(ThemeDB.fallback_font,point(villager.position)+Vector2(3,-4),villager.record.get("name","村民"),HORIZONTAL_ALIGNMENT_LEFT,-1,9,Color("c4d8ba"))
 	for enemy in game.get_tree().get_nodes_in_group("enemies") + game.get_tree().get_nodes_in_group("faction_guards"):
 		if not enemy.is_queued_for_deletion(): draw_rect(Rect2(point(enemy.position) - Vector2.ONE, Vector2(2, 2)), YinFactions.COLORS.get(enemy.record.get("faction", ""), Color("d8776b")))
 	for spirit in game.get_tree().get_nodes_in_group("companions"):
@@ -51,3 +60,14 @@ func gates() -> Array:
 		"graveyard": return [Vector2(155, 547), Vector2(850, 530)]
 		"farm": return [Vector2(160, 209), Vector2(784, 225), Vector2(810, 538), Vector2(900, 350)]
 	return [Vector2(480, 461)]
+
+func gate_labels() -> Array:
+	match game.state.zone:
+		"temple":return ["返回青槐村"]
+		"island":return ["渡口·青槐村"]
+		"village":return ["义庄田园","码头·岛国","山道·大佛寺"]
+		"forest":return ["乱葬坡","沉水村","废戏台"]
+		"sunken","theatre":return ["返回后山"]
+		"graveyard":return ["返回义庄","后山铳林"]
+		"farm":return ["义庄·休息制作","杂货铺·装备","乱葬坡·战斗","青槐村·委托"]
+	return ["院落"]

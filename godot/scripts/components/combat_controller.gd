@@ -11,11 +11,18 @@ var pending: Dictionary = {}
 var reload_job: Dictionary = {}
 var random := RandomNumberGenerator.new()
 var spin_time: float = 0
+var buffered_until: float = 0
 func _physics_process(delta: float) -> void:
 	if not is_instance_valid(game) or game.modal != null: return
+	if buffered_until > 0:
+		if game.action_cooldown <= 0 and game.player.state_machine.current in ["idle","walk"]:
+			buffered_until = 0
+			trigger("sword")
+		else: buffered_until = maxf(0,buffered_until-delta)
 	game.state.update_combat(delta)
 	if game.player.held_item == "gatling" and (Input.is_action_pressed("attack") or game.shooting_mouse): spin_time = minf(1, spin_time + delta)
 	else: spin_time = 0
+	if not reload_job.is_empty() and game.player.state_machine.current=="dodge": reload_job.clear()
 	if not reload_job.is_empty():
 		if not is_instance_valid(reload_job.actor) or reload_job.actor != game.player or reload_job.id != game.state.equipped_gear:
 			reload_job.clear()
@@ -34,10 +41,16 @@ func _physics_process(delta: float) -> void:
 		pending.clear()
 		return
 	if game.modal != null: return
+	if game.player.state_machine.current == "dodge":
+		pending.clear()
+		return
+	if game.player.hit_pause > 0: return
 	pending.delay -= delta
 	if pending.delay > 0: return
 	var strike: Dictionary = pending.duplicate()
 	pending.clear()
+	if game.player.held_item == "prajna": game.world.prajna_sweep(game.player.position, strike.facing, game.player.hitbox.radius, YinBalance.level(game.state.cultivation))
+	if game.player.held_item == "ipetam": game.world.artifact_sweep(game.player.position, strike.facing, game.player.hitbox.radius, YinBalance.artifact_level(game.state.current_gear()))
 	for target in game.player.hitbox.targets(strike.facing):
 		target.receive_hit(strike.damage, strike.get("method", "sword"), int(strike.get("gear_id", 0)))
 		if is_instance_valid(target): apply_payload(target, strike.get("payload", {}))
@@ -58,7 +71,10 @@ func trigger(method: String) -> bool:
 	if game.player.frozen or not reload_job.is_empty(): return false
 	if method == "sword" and game.player.held_item in YinBalance.GUNS: return shoot()
 	if method == "sword" and game.player.held_item in YinBalance.MAGIC: return cast_weapon()
-	if game.action_cooldown > 0 or not ARSENAL.has(method): return false
+	if game.action_cooldown > 0 or game.player.state_machine.current in ["attack","spell","dodge"]:
+		if method == "sword": buffered_until = 0.18
+		return false
+	if not ARSENAL.has(method): return false
 	var spec: YinWeaponSpec = ARSENAL[method]
 	var using_tool: bool = method == "sword" and game.player.held_item.begins_with("tool")
 	if using_tool:
@@ -80,13 +96,14 @@ func trigger(method: String) -> bool:
 		spec.recovery = weapon.interval
 	if method == "sword":
 		if not game.player.state_machine.begin("attack", spec.action_time): return false
+		game.player.swing_direction = game.player.facing
+		game.player.swing_sign *= -1
+		game.player.attack_duration = spec.action_time
 		game.player.attack_time = spec.action_time
 		game.action_cooldown = spec.recovery
 		game.player.hitbox.radius = spec.reach
 		var rolled: Dictionary = roll_hit(spec.damage, {} if using_tool else game.state.current_gear())
-		pending = {"gear_id": 0 if using_tool else game.state.equipped_gear, "payload": rolled, "actor": game.player, "facing": game.player.facing, "damage": rolled.damage, "delay": 0.06, "method": "tool" if using_tool else "sword"}
-		if game.player.held_item == "prajna": game.world.prajna_sweep(game.player.position, game.player.facing, spec.reach, YinBalance.level(game.state.cultivation))
-		if game.player.held_item == "ipetam": game.world.artifact_sweep(game.player.position, game.player.facing, spec.reach, YinBalance.artifact_level(game.state.current_gear()))
+		pending = {"gear_id": 0 if using_tool else game.state.equipped_gear, "payload": rolled, "actor": game.player, "facing": game.player.facing, "damage": rolled.damage, "delay": spec.action_time * 0.46, "method": "tool" if using_tool else "sword"}
 	else:
 		var target: YinEnemy = spell_target(spec.reach)
 		if target == null:
@@ -152,6 +169,10 @@ func select_weapon(kind: String) -> bool:
 		game.refresh("尚无%s：杂货铺购入，或击杀精英获取装备。" % YinBalance.WEAPONS[kind].name)
 		return false
 	cancel_reload()
+	pending.clear()
+	buffered_until = 0
+	game.player.attack_time = 0
+	if game.player.state_machine.current != "dodge": game.player.state_machine.reset()
 	game.state.equip(selected.id)
 	game.player.held_item = kind
 	game.notify_action("手持 " + YinBalance.gear_name(selected) + "。J 或左键攻击，U 装填。")

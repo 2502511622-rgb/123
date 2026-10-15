@@ -1,5 +1,6 @@
 shader_type canvas_item;
 uniform float flash : hint_range(0.0, 1.0) = 0.0;
+uniform float environment_blend = 0.0;
 uniform float wetness : hint_range(0.0, 1.0) = 0.0;
 uniform float motion_clock = 0.0;
 uniform float motion_amount = 0.0;
@@ -43,5 +44,7 @@ void fragment() {
 	float left=texture(TEXTURE,UV-vec2(TEXTURE_PIXEL_SIZE.x,0.0)).a;
 	float edge=max(0.0,texture(TEXTURE,UV).a-min(above,left));
 	vec3 lit=COLOR.rgb*(1.0-wetness*0.06)+vec3(0.12,0.14,0.10)*edge*(0.35+wetness*0.35);
+	float luma=dot(lit,vec3(0.299,0.587,0.114));
+	lit=mix(lit,mix(lit,vec3(luma)*vec3(0.96,1.0,0.89),0.45),environment_blend);
 	COLOR.rgb=mix(lit,vec3(1.0),flash);
 }

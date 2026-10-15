@@ -93,13 +93,12 @@ func run() -> void:
 	await frames(2)
 	var burnt: Dictionary = game.state.remains[1]
 	game.state.pickup(burnt.id)
-	game.spawn_tracker()
-	check(game.state.enemies.filter(func(e): return e.zone == "graveyard").size() == 6, "loaded cart can attract actual pursuer")
+	check(game.state.enemies.filter(func(e): return e.zone == "graveyard").size() == 5, "removed transport spawns no pursuer")
 	game.player.burden = true
 	var carrying: int = game.state.cargo.size()
 	game.travel("farm")
 	await frames(3)
-	check(game.state.cargo.size() == carrying and game.player.burden, "cargo persists across region transition and slows player")
+	check(game.state.cargo.size() == carrying and not game.player.burden, "travel has no corpse transport penalty")
 	game.state.process_remains(r.id, "refine")
 	game.spawn_spirits()
 	await frames(2)
@@ -107,7 +106,7 @@ func run() -> void:
 	game.player.invincible = 0
 	game.take_damage(500)
 	await frames(2)
-	check(game.state.health == 60 and game.state.cargo.is_empty() and game.state.find_remains(burnt.id).zone == "farm", "defeat returns player and drops carried remains")
+	check(game.state.health == 60 and game.state.cargo.is_empty() and game.state.find_remains(burnt.id).zone == "graveyard", "defeat leaves unprocessed remains where they fell")
 	game.state.day = 9
 	game.state.minutes = 1080
 	for i in range(4): await process_frame

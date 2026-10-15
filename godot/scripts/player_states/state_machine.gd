@@ -12,7 +12,8 @@ func change(next: String) -> void:
 	current = next
 	changed.emit(previous, current)
 func begin(kind: String, seconds: float, effect: Callable = Callable()) -> bool:
-	if current in ["tool", "attack", "spell", "dodge", "reload", "paused"]: return false
+	if current == "paused" or current == "dodge": return false
+	if kind != "dodge" and current in ["tool", "attack", "spell", "reload"]: return false
 	action = YinActionState.new(kind, seconds, effect)
 	change(kind)
 	action.enter()
@@ -25,7 +26,7 @@ func update(delta: float, direction: Vector2, paused: bool) -> Vector2:
 	if action != null:
 		if not action.tick(delta):
 			change(action.kind)
-			return Vector2.ZERO if action.kind in ["tool", "attack", "spell"] else direction
+			return direction * (0.52 if action.kind == "attack" else (0.65 if action.kind == "spell" else (0.0 if action.kind == "tool" else 1.0)))
 		action = null
 	change("walk" if direction != Vector2.ZERO else "idle")
 	return direction

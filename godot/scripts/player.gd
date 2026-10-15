@@ -3,7 +3,7 @@ extends CharacterBody2D
 # Adapted from gadget-hq/2d-farming-game player_controller.gd (MIT).
 # Copyright 2025 Tall Tales Games. See res://licenses/Farmworld-MIT.txt.
 
-const SPEED: float = 92.0
+const SPEED: float = 112.0
 var appearance: Dictionary = YinAppearance.initial()
 var facing := Vector2.DOWN
 var aim_direction := Vector2.RIGHT
@@ -17,6 +17,9 @@ var wind_impulse := Vector2.ZERO
 var recoil_time: float = 0
 var animation_time: float = 0.0
 var visual_clock: float = 0
+var hit_pause: float = 0
+var swing_direction := Vector2.DOWN
+var swing_sign: float = 1
 var attack_duration: float = 0.22
 var last_attack_time: float = 0
 var frozen: bool = false
@@ -54,6 +57,11 @@ func _physics_process(delta: float) -> void:
 		state_machine.update(0, Vector2.ZERO, true)
 		velocity = Vector2.ZERO
 		return
+	if hit_pause > 0:
+		hit_pause = maxf(0, hit_pause-delta)
+		velocity = Vector2.ZERO
+		queue_redraw()
+		return
 	visual_clock += delta
 	if attack_time > last_attack_time + 0.005: attack_duration = maxf(0.16, attack_time)
 	var input_direction := Input.get_vector("move_left", "move_right", "move_up", "move_down")
@@ -78,24 +86,24 @@ func _physics_process(delta: float) -> void:
 	attack_time = maxf(0, attack_time - delta)
 	last_attack_time = attack_time
 	dodge_time = maxf(0, dodge_time - delta)
-	velocity = direction * SPEED * (0.62 if burden else 1.0)
+	velocity = velocity.move_toward(direction * SPEED, delta * (1600.0 if direction == Vector2.ZERO else 1900.0))
 	if snare_time > 0: velocity *= 0.45
 	velocity += wind_impulse
 	wind_impulse = wind_impulse.move_toward(Vector2.ZERO, delta * 180)
 	if dodge_time > 0 and not frozen:
 		velocity = dodge_direction * 250
-	if direction != Vector2.ZERO:
+	if direction != Vector2.ZERO and attack_time <= 0:
 		facing = Vector2(signf(direction.x), 0) if absf(direction.x) > absf(direction.y) else Vector2(0, signf(direction.y))
-		animation_time += delta
-	else:
-		animation_time = 0
 	collision_mask = 1 if dodge_time > 0 else 5
 	collision_layer = 0 if dodge_time > 0 else 2
 	get_node("Camera2D").offset = Vector2(2 if int(hit_feedback * 40) % 2 == 0 else -2, 0) if hit_feedback > 0 else Vector2.ZERO
 	material.set_shader_parameter("motion_clock", visual_clock)
 	material.set_shader_parameter("motion_amount", 0.9 if direction.length() > 0 else 0.15)
+	var previous_position: Vector2 = position
 	move_and_slide()
-	position = position.round() if direction == Vector2.ZERO else position
+	# Gait advances with distance travelled: walls and slow spells cannot skate.
+	animation_time += position.distance_to(previous_position) / SPEED
+	if velocity.length() < 2: animation_time = 0
 	queue_redraw()
 
 func _draw() -> void:
@@ -111,31 +119,24 @@ func _draw() -> void:
 	if int(appearance.body)==1:art_hand.y+=1.5
 	for ghost in ghosts:
 		YinActorArt.draw_pose(self, YinActorArt.hero_motion_pose(facing, animation_time, true, 0, 0,0.22,int(appearance.body)), Color(0.55, 0.85, 0.79, (1 - ghost.age / 0.18) * 0.3), ghost.at - position)
-	YinActorArt.contact_shadow(self,10)
+	YinActorArt.contact_shadow(self,10,animation_time*16.0*TAU/8.0,velocity.length()/SPEED)
 	var tint := Color("ef9a82") if hit_feedback > 0 else (Color(1, 1, 1, 0.55 if int(invincible * 20) % 2 == 0 else 1.0) if invincible > 0 else Color.WHITE)
 	var lean: float = dodge_direction.x * 0.12 if dodge_time > 0 else 0.0
 	draw_set_transform(Vector2.ZERO, lean)
 	YinActorArt.draw_pose(self, pose, tint)
 	draw_set_transform(Vector2.ZERO)
 	draw_held_item()
-	if attack_time > 0 and held_item in YinBalance.MELEE:
-		var sweep: float = 1 - attack_time / 0.22
-		draw_arc(Vector2.ZERO, hitbox.radius, facing.angle() - 0.85, facing.angle() + 0.85, 12, Color("dcd7b0") if held_item != "whip" else Color("b99470"), 2)
-		var tip := Vector2.from_angle(facing.angle() - 0.85 + sweep * 1.7) * (hitbox.radius - 2)
-		draw_line(Vector2.ZERO, tip, Color("9f7452"), 3)
-		draw_line(tip * 0.7, tip, Color("f0ddb0"), 3)
-	if burden:
-		draw_rect(Rect2(-37, -8, 18, 12), Color("6e5848"))
-		draw_rect(Rect2(-34, -5, 12, 6), Color("a99a78"))
 
 func dodge() -> void:
 	if dodge_cooldown > 0 or frozen: return
 	if not state_machine.begin("dodge", 0.18): return
 	var movement := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	dodge_direction = movement.normalized() if movement != Vector2.ZERO else facing
+	attack_time = 0
+	hit_pause = 0
 	dodge_time = 0.18
 	invincible = 0.35
-	dodge_cooldown = 1.2
+	dodge_cooldown = 0.65
 
 func draw_held_item() -> void:
 	var direction: Vector2 = aim_direction if held_item in YinBalance.GUNS or held_item in YinBalance.MAGIC else facing
@@ -145,13 +146,43 @@ func draw_held_item() -> void:
 		var swing: float = sin((0.2 - attack_time) * 18) * 0.4 if attack_time > 0 else 0.0
 		draw_set_transform(hand, direction.angle() + swing, Vector2.ONE)
 		draw_texture_rect_region(preload("res://assets/tools.png"), Rect2(-6, -6, 16, 16), Rect2(index * 16, 0, 16, 16))
+	elif held_item in YinBalance.MELEE:
+		var progress: float = clampf(1.0-attack_time/maxf(attack_duration,0.01),0,1)
+		var active: float = smoothstep(0.18,0.68,progress)
+		var angle_value: float = swing_direction.angle() + swing_sign*lerpf(-1.7,1.5,active) if attack_time>0 else direction.angle()+0.8
+		var reach: float = maxf(31.0,hitbox.radius-8.0)
+		var glow: Color = Color("ead9ad") if held_item!="ipetam" else Color("c98078")
+		if held_item=="prajna": glow=Color("a5d8db")
+		if attack_time>0 and progress>0.18 and progress<0.8:
+			for trail in range(5):
+				var lag: float=float(trail)*0.1*swing_sign
+				draw_arc(hand,reach,angle_value-lag-swing_sign*0.28,angle_value-lag+0.01,12,Color(glow,0.23-float(trail)*0.035),2.0)
+		draw_set_transform(hand,angle_value)
+		draw_line(Vector2(-5,0),Vector2(5,0),Color("665548"),3)
+		if held_item=="whip":
+			var points:=PackedVector2Array()
+			for i in range(13):
+				var distance_value: float=float(i)/12.0
+				points.append(Vector2(distance_value*reach,sin(distance_value*7.0-progress*9.0)*5.0*distance_value))
+			draw_polyline(points,Color("b3a080"),2)
+		else:
+			draw_line(Vector2(5,-5),Vector2(5,5),Color("ad9768"),2)
+			draw_colored_polygon(PackedVector2Array([Vector2(6,-2),Vector2(reach-4,-2),Vector2(reach+2,0),Vector2(6,2)]),glow)
+			draw_line(Vector2(8,-1),Vector2(reach-2,-1),Color("f3eee0"),1)
 	else:
-		var index: int = YinBalance.ICON_ORDER.find(held_item)
-		if index < 0: return
 		var recoil: float = recoil_time / 0.09 * 3
-		draw_set_transform(hand - direction * recoil, direction.angle(), Vector2.ONE)
-		draw_texture_rect(YinBalance.icon(held_item), Rect2(-6, -7, 24, 16), false)
-		if recoil_time > 0:
-			draw_rect(Rect2(18, -3, 5, 4), Color("f7df9c"))
-			draw_rect(Rect2(21, -5, 3, 8), Color("db9c63"))
+		draw_set_transform(hand - direction * recoil, direction.angle())
+		if held_item in YinBalance.GUNS:
+			var barrel: float=27.0 if held_item in ["rifle","gatling"] else 16.0
+			draw_rect(Rect2(-2,-4,12,7),Color("676e68"))
+			draw_rect(Rect2(2,1,4,7),Color("776048"))
+			draw_line(Vector2(8,-2),Vector2(barrel,-2),Color("b0b8b0"),3)
+			if held_item=="revolver":draw_circle(Vector2(6,0),4,Color("9b9b86"))
+			if held_item=="gatling":
+				for y in [-4,0,4]:draw_line(Vector2(9,y),Vector2(barrel,y),Color("8b9992"),2)
+			if recoil_time>0:
+				draw_colored_polygon(PackedVector2Array([Vector2(barrel,-6),Vector2(barrel+10,-2),Vector2(barrel,4)]),Color("f6d49a"))
+		else:
+			draw_texture_rect(YinBalance.icon(held_item), Rect2(-5,-8,19,18),false)
+			if attack_time>0:draw_arc(Vector2(7,0),14,visual_clock*5,visual_clock*5+4.0,20,Color("a8d5da"),2)
 	draw_set_transform(Vector2.ZERO)

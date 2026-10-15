@@ -45,6 +45,7 @@ func _ready() -> void:
 	var flash_material := ShaderMaterial.new()
 	flash_material.shader = preload("res://shaders/hit_flash.gdshader")
 	material = flash_material
+	material.set_shader_parameter("environment_blend",0.65)
 	health_receiver = YinHealthReceiver.new()
 	health_receiver.name = "HealthReceiver"
 	health_receiver.bind_record(record)
@@ -250,6 +251,7 @@ func receive_hit(damage: int, method: String = "sword", source_gear_id: int = 0)
 		material.set_shader_parameter("flash", 1.0)
 		if method not in ["bleed", "burn", "seal"]:
 			hit_stop = 0.035 if record.kind in YinAbilities.BOSSES else 0.045
+			if method == "sword": game.player.hit_pause = 0.045
 			game.world.impact(position + Vector2(0, -20), game.player.position.direction_to(position), method)
 			if method in ["sword", "bullet"]: update_dismemberment()
 
@@ -290,9 +292,9 @@ func _draw() -> void:
 	if record.has("faction"):
 		draw_circle(Vector2(0, 1), 13, YinFactions.COLORS[record.faction])
 		draw_string(ThemeDB.fallback_font, Vector2(-18, -72), YinFactions.NAMES[record.faction], HORIZONTAL_ALIGNMENT_LEFT, -1, 10, YinFactions.COLORS[record.faction])
-	YinActorArt.contact_shadow(self,15 if record.kind in YinAbilities.BOSSES else 10)
+	YinActorArt.contact_shadow(self,15 if record.kind in YinAbilities.BOSSES else 10,art_clock*11.0,clampf(velocity.length()/45.0,0,1))
 	var boss: bool = record.kind in YinAbilities.BOSSES
-	var tint := Color.WHITE if hit_flash > 0.065 else (Color("d79279") if hit_flash > 0 else (Color("8eafd0") if stun > 0.3 or chill_time > 0 else Color.WHITE))
+	var tint := Color.WHITE if hit_flash > 0.065 else (Color("d79279") if hit_flash > 0 else (Color("8eafd0") if stun > 0.3 or chill_time > 0 else Color("e1e5ce")))
 	if record.kind == "wraith": tint.a = 0.55 if not record.suppressed else 1.0
 	if YinTempleCombat.phantom(self): tint = Color("c8a3e0aa")
 	var missing: Array = record.get("severed", [])

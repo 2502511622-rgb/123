@@ -162,3 +162,15 @@ static func normalize(data: Dictionary) -> void:
 		for key in ["troops", "supply"]: p[key] = int(p[key])
 	for war in data.wars:
 		for key in ["id", "day", "attackers", "defenders"]: war[key] = int(war[key])
+
+static func aid_weakest(s) -> String:
+	if s.factions.sponsored_day == s.day: return "今日已援助过势力，明日再来。"
+	if s.money<30: return "需要30文，可通过探索宝箱、战斗与委托取得。"
+	var weakest: String=IDS[0]
+	for id in IDS:
+		if strength(s.factions,id)<strength(s.factions,weakest):weakest=id
+	s.money-=30
+	s.factions.sponsored_day=s.day
+	s.factions.powers[weakest].troops=mini(180,int(s.factions.powers[weakest].troops)+12)
+	s.factions.powers[weakest].supply=mini(140,int(s.factions.powers[weakest].supply)+15)
+	return "援助%s：兵力+12，物资+15。"%NAMES[weakest]

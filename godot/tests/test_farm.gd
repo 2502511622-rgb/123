@@ -26,7 +26,7 @@ func _initialize() -> void:
 		crop.use_tool(0, 1)
 		check(crop.plots[0].crop == id, id + " plants")
 		crop.next_day()
-		check(crop.plots[0].growth == 0, id + " dry crop does not grow")
+		check(crop.plots[0].growth == 1, id + " leisure crop grows without daily watering")
 		for i in range(FarmState.CROPS[id].growth_days):
 			crop.use_tool(0, 2)
 			var energy: int = crop.energy
@@ -46,7 +46,7 @@ func _initialize() -> void:
 	forbidden.plots[0].tilled = true
 	forbidden.plots[0].growth = 2
 	forbidden.next_day()
-	check(forbidden.pollution == 4, "forbidden crop pollution has visible rule")
+	check(forbidden.pollution == 0, "leisure crops do not accumulate unattended pollution")
 	forbidden.seal_plot(0)
 	var pollution_before: int = forbidden.pollution
 	forbidden.next_day()
@@ -84,9 +84,9 @@ func _initialize() -> void:
 	remains.pickup(r1)
 	remains.pickup(r2)
 	remains.pickup(r3)
-	check(remains.cargo.size() == 2 and remains.find_remains(r3).zone == "graveyard", "cart capacity and ground persistence")
+	check(remains.cargo.is_empty() and remains.find_remains(r3).zone == "graveyard", "removed transport leaves remains on the ground")
 	remains.process_remains(r1, "refine")
-	check(remains.spirits.size() == 1 and remains.oil == 8 and remains.cargo.size() == 1, "transported remains refined")
+	check(remains.spirits.size() == 1 and remains.oil == 8 and remains.cargo.is_empty(), "ground remains refined directly")
 	remains.process_remains(r2, "dismantle")
 	check(remains.bones == 2 and remains.ash == 1, "dismantle material output")
 	remains.process_remains(r3, "release")
@@ -142,7 +142,7 @@ func _initialize() -> void:
 	check(restored.cargo == saved.cargo, "failed restore stays atomic")
 	check(SaveStore.save_game(saved), "file save")
 	check(SaveStore.load_game(restored) and restored.snapshot() == saved.snapshot(), "disk roundtrip")
-	var loaded_id: int = restored.cargo[0]
+	var loaded_id: int = restored.remains[0].id
 	restored.process_remains(loaded_id, "dismantle")
 	check(restored.cargo.is_empty() and restored.find_remains(loaded_id).is_empty(), "loaded numeric cart IDs can be consumed without dangling references")
 	var ten_days := FarmState.new()

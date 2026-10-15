@@ -63,7 +63,8 @@ var ward: int = 60
 var hall_level: int = 1
 var spirits: Array = []
 var remains: Array = []
-var cargo: Array = []
+var cargo: Array = [] # Legacy saves only; migrated to courtyard remains.
+var mainline_claimed: Array = []
 var enemies: Array = []
 var enemy_day: int = 0
 var next_id: int = 1
@@ -106,7 +107,7 @@ func use_tool(index: int, tool: int) -> String:
 	var p: Dictionary = plots[index]
 	if tool == 3:
 		if p.crop == "" or p.growth < CROPS[p.crop].growth_days:
-			return "未成熟。每日浇灌后，睡觉推进生长。"
+			return "未成熟。作物逐日生长，可先去探索；浇灌是可选操作。"
 		if p.crop == "rice" and not p.sealed:
 			return "稻穗传来师父的声音。不要答应：靠近按 E，以镇符技能封声。"
 		if not can_gain(p.crop, 1): return "行囊已满，先去仓箱存放物品。"
@@ -231,12 +232,8 @@ func next_day() -> void:
 			ward = mini(100, ward + (8 if s.kind == "child" and s.branch == "light" else 3))
 	spirits = kept
 	for p in plots:
-		if p.crop != "" and p.watered:
+		if p.crop != "":
 			p.growth = mini(CROPS[p.crop].growth_days, p.growth + 1)
-		if p.crop == "rice" and p.growth >= 2 and not p.sealed:
-			pollution = mini(100, pollution + 4)
-			if not report.has("返魂稻开始叫你的名字。封声符可以阻止污染。"):
-				report.append("返魂稻开始叫你的名字。封声符可以阻止污染。")
 	day += 1
 	energy = 100
 	health = mini(100, health + 45)
@@ -418,12 +415,7 @@ func find_remains(id: int) -> Dictionary:
 	return {}
 
 func pickup(id: int) -> String:
-	if cargo.size() >= 2: return "运输车最多装 2 具，先带回义庄。"
-	var r: Dictionary = find_remains(id)
-	if r.is_empty(): return "遗骸已不在这里。"
-	r.zone = "cargo"
-	cargo.append(id)
-	return "装上运输车，移速降低。稀有遗骸会引来追踪者。"
+	return "运输已移除，请在遗骸旁直接炼化、拆解或超度。"
 
 func process_remains(id: int, method: String, plot_index: int = -1) -> String:
 	var r: Dictionary = find_remains(id)
@@ -517,14 +509,14 @@ func choose_ending(choice: String) -> String:
 func snapshot() -> Dictionary:
 	YinInventoryModel.new(self, "bag").sync()
 	YinInventoryModel.new(self, "chest").sync()
-	var data: Dictionary = {"version": 11}
+	var data: Dictionary = {"version": 12}
 	for key in save_keys(): data[key] = get(key)
 	data.player_position = [player_position.x, player_position.y]
 	data.saved_facing = [saved_facing.x, saved_facing.y]
 	return data.duplicate(true)
 
 static func save_keys() -> Array:
-	return ["appearance", "temple_journal", "factions", "island_journal", "opened_chests", "quests", "tracked_quest", "visited_landmarks", "weapon_slots", "active_slot", "skill_ranks", "skill_charges", "skill_timers", "villagers", "letters", "raid_day", "raid_status", "village_integrity", "equipment", "gear_drops", "equipped_gear", "equipped_armor", "next_gear_id", "smart_farming", "day", "money", "energy", "health", "minutes", "weather", "selected_crop", "inventory", "supplies", "storage", "bag_slots", "chest_slots", "terrain", "drops", "placements", "plots", "oil", "talismans", "bones", "ash", "reputation", "cultivation", "pollution", "ward", "hall_level", "spirits", "remains", "cargo", "enemies", "enemy_day", "next_id", "total_harvest", "called_day", "ritual_count", "ritual_path", "boss_spawned", "boss_defeated", "ending", "intro_seen", "zone", "journal", "last_report", "order"]
+	return ["mainline_claimed", "appearance", "temple_journal", "factions", "island_journal", "opened_chests", "quests", "tracked_quest", "visited_landmarks", "weapon_slots", "active_slot", "skill_ranks", "skill_charges", "skill_timers", "villagers", "letters", "raid_day", "raid_status", "village_integrity", "equipment", "gear_drops", "equipped_gear", "equipped_armor", "next_gear_id", "smart_farming", "day", "money", "energy", "health", "minutes", "weather", "selected_crop", "inventory", "supplies", "storage", "bag_slots", "chest_slots", "terrain", "drops", "placements", "plots", "oil", "talismans", "bones", "ash", "reputation", "cultivation", "pollution", "ward", "hall_level", "spirits", "remains", "cargo", "enemies", "enemy_day", "next_id", "total_harvest", "called_day", "ritual_count", "ritual_path", "boss_spawned", "boss_defeated", "ending", "intro_seen", "zone", "journal", "last_report", "order"]
 
 static func valid_int(value: Variant, minimum: int, maximum: int = 100000000) -> bool:
 	return (value is int or value is float) and is_finite(float(value)) and float(value) == floor(float(value)) and value >= minimum and value <= maximum
@@ -533,7 +525,7 @@ static func valid_point(value: Variant) -> bool:
 	return value is Array and value.size() == 2 and (value[0] is float or value[0] is int) and (value[1] is float or value[1] is int) and is_finite(float(value[0])) and is_finite(float(value[1])) and value[0] >= 0 and value[0] <= 2880 and value[1] >= 0 and value[1] <= 1920
 
 func restore(data: Dictionary) -> bool:
-	if not valid_int(data.get("version"), 3, 11): return false
+	if not valid_int(data.get("version"), 3, 12): return false
 	var defaults := FarmState.new()
 	if int(data.version) == 3:
 		data = data.duplicate(true)
@@ -606,6 +598,14 @@ func restore(data: Dictionary) -> bool:
 		data=data.duplicate(true)
 		data.version=11
 		data.appearance=defaults.appearance.duplicate(true)
+	if int(data.version) < 12:
+		data = data.duplicate(true)
+		data.version = 12
+		data.mainline_claimed = []
+	if not data.get("mainline_claimed") is Array or data.mainline_claimed.size()>3: return false
+	for stage in data.mainline_claimed:
+		if stage not in ["gear","journey","balance"] or data.mainline_claimed.count(stage)!=1: return false
+
 	for key in save_keys():
 		if not data.has(key): return false
 		var expected: Variant = defaults.get(key)
@@ -629,6 +629,7 @@ func restore(data: Dictionary) -> bool:
 	if data.day < 1 or data.health > 100 or data.energy > 100 or data.ward > 100 or data.pollution > 100 or not valid_int(data.hall_level, 1, 2): return false
 	if (not data.minutes is float and not data.minutes is int) or not is_finite(float(data.minutes)) or data.minutes < 360 or data.minutes >= 1800: return false
 	if data.zone not in ["farm", "graveyard", "forest", "sunken", "theatre", "village", "hall", "shop", "island", "temple"] or data.weather not in ["sun", "rain"] or data.order not in ["follow", "guard", "focus"]: return false
+
 	if data.selected_crop not in CROPS or data.plots.size() != WIDTH * HEIGHT or data.spirits.size() > ((2 if int(data.hall_level) == 1 else 3) + int((YinBalance.level(int(data.cultivation)) - 1) / 3) + int(data.skill_ranks.get("command", 0))) or data.cargo.size() > 2: return false
 	for key in INVENTORY_KEYS:
 		if not valid_int(data.inventory.get(key), 0): return false
@@ -790,7 +791,12 @@ func restore(data: Dictionary) -> bool:
 	for drop in normalized.gear_drops:
 		if drop.gear.weapon != "armor" and drop.gear.affixes.is_empty(): drop.gear.affixes = YinBalance.make_gear(drop.gear.id, drop.gear.weapon, drop.gear.tier, drop.gear.quality).affixes
 		for affix in drop.gear.affixes: affix.value = int(affix.value)
-	normalized.cargo = normalized.cargo.map(func(id): return int(id))
+	# Keep old transported bodies accessible without retaining the transport system.
+	for r in normalized.remains:
+		if r.zone == "cargo":
+			r.zone = "farm"
+			r.at = [200.0,300.0]
+	normalized.cargo = []
 	for key in save_keys(): set(key, normalized[key])
 	player_position = Vector2(data.player_position[0], data.player_position[1])
 	saved_facing = Vector2(face[0], face[1])
@@ -1029,3 +1035,25 @@ func artifact_hit(source_gear_id: int, actual_damage: int) -> int:
 		health += amount
 		return amount
 	return 0
+
+func mainline_stages() -> Array:
+	var strengths: Array=[]
+	for id in YinFactions.IDS: strengths.append(YinFactions.strength(factions,id))
+	strengths.sort()
+	return [
+		{"id":"gear","name":"整备旅装","done":equipment.any(func(g):return g.weapon!="armor" and int(g.tier)>=2),"hint":"击败精英或开启宝箱，获得二阶以上武器","reward":80},
+		{"id":"journey","name":"走遍缝合世界","done":island_journal.visited and temple_journal.visited and not visited_landmarks.is_empty(),"hint":"调查后山地标，并抵达岛国与大佛寺","reward":120},
+		{"id":"balance","name":"四方制衡","done":int(strengths.back())-int(strengths.front())<=45 and factions.wars.is_empty(),"hint":"援助弱方、拦截强方，实力差压到45以内且无交战","reward":200}]
+func mainline_summary() -> String:
+	var lines: Array[String]=[]
+	for stage in mainline_stages():
+		lines.append("%s %s · %s"%["已领" if stage.id in mainline_claimed else ("可领" if stage.done else "进行中"),stage.name,stage.hint])
+	return "\n".join(lines)
+func claim_mainline() -> String:
+	for stage in mainline_stages():
+		if stage.done and stage.id not in mainline_claimed:
+			mainline_claimed.append(stage.id)
+			money+=stage.reward
+			cultivation+=25
+			return "%s完成：%d文、25修为。"%[stage.name,stage.reward]
+	return "暂没有可领取的奖励。探索、装备提升与势力调停都无需种田。"

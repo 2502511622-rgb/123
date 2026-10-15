@@ -29,8 +29,8 @@ static func hero_pose(direction: Vector2, column: int) -> Dictionary:
 	var scale_value: float = 58.0 / float(atlas().hero[row][0].rect[3])
 	var source: Rect2 = rect_from(frame.rect)
 	return {"texture": HERO, "source": source, "destination": Rect2(-Vector2(frame.anchor[0], frame.anchor[1]) * scale_value, source.size * scale_value), "flip": row == 2 and column == 4}
-static func contact_shadow(canvas: Node2D, radius: float = 10.0) -> void:
-	canvas.draw_set_transform(Vector2(0,-1),0,Vector2(1,0.28))
+static func contact_shadow(canvas: Node2D, radius: float = 10.0, phase: float = 0.0, speed: float = 0.0) -> void:
+	canvas.draw_set_transform(Vector2(sin(phase)*speed*0.8,-1),0,Vector2(1.0+sin(phase*2.0)*speed*0.07,0.28-absf(sin(phase))*speed*0.035))
 	for i in range(3): canvas.draw_circle(Vector2.ZERO,radius*(1.0-float(i)*0.19),Color(0.08,0.12,0.10,0.05+float(i)*0.025))
 	canvas.draw_set_transform(Vector2.ZERO)
 static func framed_pose(texture_value: Texture2D, frame: Dictionary, reference: Dictionary, height: float) -> Dictionary:
@@ -105,8 +105,10 @@ static func part_index() -> Dictionary:
 	return anatomy
 static func posed_parts(kind: String, pose: Dictionary, clock: float, moving: bool, attack: bool) -> Array:
 	var articulated: bool = moving and kind!="daitengu"
-	var step: float = sin(clock*10.0) if articulated else 0.0
-	var bob: float = sin(clock*2.5)*1.2 if kind in ["sogenbi","wraith","chochin"] else 0.0
+	var step: float = sin(clock*11.0) if articulated else 0.0
+	var bob: float = sin(clock*2.5)*1.2 if kind in ["sogenbi","wraith","chochin"] else (-absf(sin(clock*11.0))*1.5 if articulated else sin(clock*2.0)*0.25)
+	if articulated and kind=="ippon_datara":bob=-maxf(0,sin(clock*8.0))*5.0
+	if articulated and kind=="jorogumo":bob=-absf(step)*0.6
 	var result: Array = []
 	var entry: Dictionary=part_index()[pose.part_key]
 	for piece in entry.parts:
@@ -125,12 +127,12 @@ static func posed_parts(kind: String, pose: Dictionary, clock: float, moving: bo
 		var rotation_value: float=0
 		if articulated and piece.joint in ["leg","leg_left"]:
 			var side: float=-1.0 if piece.joint=="leg_left" else 1.0
-			offset.y-=maxf(0,step*side)*1.4
-			rotation_value=step*side*0.045
+			offset.y-=maxf(0,step*side)*3.0
+			rotation_value=step*side*0.12
 		if kind!="daitengu" and piece.joint in ["arm","arm_left"]:
 			var side: float=1.0 if piece.joint=="arm" else -1.0
 			offset.x+=side*2.0 if attack else 0.0
-			rotation_value=side*(-0.14 if attack else step*0.055)
+			rotation_value=side*(-0.14 if attack else step*0.095)
 		cut.destination.position+=offset-Vector2(0,bob)
 		cut.rotation=rotation_value
 		cut.pivot=pose.destination.position+Vector2(piece.pivot[0],piece.pivot[1])*pose.destination.size+offset

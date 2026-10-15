@@ -296,8 +296,9 @@ func run() -> void:
 	dummy.set_physics_process(false)
 	game.action_cooldown = 0
 	game.player.state_machine.reset()
-	check(game.combat.trigger("sword") and get_nodes_in_group("ipetam_slashes").size() == 3, "equipped artifact creates independent three-ribbon attack effect")
+	check(game.combat.trigger("sword") and get_nodes_in_group("ipetam_slashes").is_empty(), "artifact windup waits before showing impact ribbons")
 	await frames(8)
+	check(get_nodes_in_group("ipetam_slashes").size()==3,"artifact active frame creates independent three-ribbon effect")
 	check(dummy.record.hp < 1000 and game.state.health > 50, "real delayed artifact hit damages and lifesteals")
 	await capture("island-ipetam")
 	var kill: int = blade.artifact_kills

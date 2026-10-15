@@ -247,10 +247,11 @@ func run() -> void:
 	game.world.projectiles.bullets.clear()
 	game.action_cooldown = 0
 	game.player.state_machine.reset()
-	check(game.combat.trigger("sword") and get_nodes_in_group("prajna_slashes").size() == 4, "equipped sword creates four independent wisdom-element ribbons")
+	check(game.combat.trigger("sword") and get_nodes_in_group("prajna_slashes").is_empty(), "wisdom sword windup precedes elemental ribbons")
 	var payload: Dictionary = game.combat.pending.payload
 	check(payload.elements == YinBalance.ELEMENTS and payload.power > 3, "every relic swing carries all growing elemental powers")
 	await frames(8)
+	check(get_nodes_in_group("prajna_slashes").size()==4,"active strike creates four independent wisdom-element ribbons")
 	check(dummy.record.hp < 2000 and dummy.burn_time > 0 and dummy.chill_time > 0, "actual melee contact applies burn and ice together")
 	check(neighbor.record.hp < 2000, "same strike also chains lightning to adjacent enemy")
 	await capture("temple-prajna")

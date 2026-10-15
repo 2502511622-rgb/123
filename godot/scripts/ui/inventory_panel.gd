@@ -18,6 +18,8 @@ func _ready() -> void:
 	hint = Label.new()
 	hint.add_theme_font_size_override("font_size", 10)
 	hint.add_theme_color_override("font_color", YinPixelTheme.TEXT)
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	hint.custom_minimum_size.x = 440
 	hint.text = ""
 	hint.visible = false
 	add_child(hint)
@@ -93,7 +95,7 @@ func select(slot: YinInventorySlot, half: bool) -> void:
 		selected_slot = slot if cell.id != "" else null
 		selected_amount = maxi(1, int(cell.count / 2)) if half else -1
 		hint.visible = true
-		hint.text = "选中 %s，点击目标格。Esc 关闭不会丢失物品。" % YinItemCatalog.spec(cell.id).display_name if cell.id != "" else "这是空格。"
+		hint.text = "%s · %s\n点击目标格移动；右键可拆分。" % [YinItemCatalog.spec(cell.id).display_name,YinItemCatalog.spec(cell.id).description] if cell.id != "" else "这是空格。"
 		refresh()
 	else:
 		var ok: bool = selected_slot.model.move(selected_slot.index, slot.model, slot.index, selected_amount)
