@@ -134,7 +134,7 @@ func travel(zone_name: String) -> void:
 
 func spawn_enemies() -> void:
 	var existing: Array = []
-	for enemy in get_tree().get_nodes_in_group("enemies"):
+	for enemy in get_tree().get_nodes_in_group("enemies") + get_tree().get_nodes_in_group("faction_guards"):
 		if enemy.get_parent() == world.actors and not enemy.is_queued_for_deletion(): existing.append(enemy.record.id)
 	for e in state.enemies:
 		if e.id in existing: continue
@@ -144,7 +144,19 @@ func spawn_enemies() -> void:
 		enemy.game = self
 		enemy.record = e
 		enemy.position = Vector2(e.at[0], e.at[1])
-		enemy.add_to_group("enemies")
+		if e.has("war_id") and not world.is_safe_position(enemy.position):
+			var origin: Vector2 = enemy.position
+			var located: bool = false
+			for radius in range(16, 257, 16):
+				for direction in [Vector2.LEFT, Vector2.RIGHT, Vector2.UP, Vector2.DOWN]:
+					var candidate: Vector2 = origin + direction * radius
+					if world.is_safe_position(candidate):
+						enemy.position = candidate
+						located = true
+						break
+				if located: break
+			e.at = [enemy.position.x, enemy.position.y]
+		enemy.add_to_group("faction_guards" if e.get("faction", "") == "village" else "enemies")
 		world.actors.add_child(enemy)
 
 func spawn_spirits() -> void:
@@ -296,6 +308,9 @@ func _process(delta: float) -> void:
 		if state.day != previous_day:
 			spawn_spirits()
 			notify_action(("新求救信：青槐村今夜遭袭，K 阅读。" if state.raid_status == "warned" else "天亮了，仍留在原地。") + state.last_report)
+		if YinFactions.tick(state):
+			if state.factions.wars.any(func(w): return w.status == "active" and w.defender == state.zone): spawn_enemies()
+			notify_action("势力战况有变，P 查看三方局势。")
 		if state.update_raid():
 			if state.zone == "village": spawn_enemies()
 			notify_action("求救来信：青槐村遭袭！角色 → 书信查看，义庄东侧 E 前往村庄。")
@@ -450,7 +465,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		if event.is_action_pressed("pause_game"): close_modal()
 		return
 	if event is InputEventKey and event.pressed and not event.echo:
-		if event.is_action_pressed("instant_refine"): instant_refine()
+		if event.physical_keycode == KEY_P: show_factions()
+		elif event.is_action_pressed("instant_refine"): instant_refine()
 		elif event.physical_keycode in [KEY_7, KEY_8, KEY_9, KEY_0]:
 			var kind: String = {KEY_7: "sword", KEY_8: "pistol", KEY_9: "smg", KEY_0: "rifle"}[event.physical_keycode]
 			if combat.select_weapon(kind): player.held_item = kind
@@ -829,9 +845,19 @@ func show_inventory_grid(with_storage: bool) -> void:
 func show_journal() -> void:
 	open_modal("阴田手札 · 十日祭帖", "\n\n".join(state.journal))
 
+func show_factions() -> void:
+	var box := open_modal("三方势力 · P", YinFactions.report(state))
+	box.add_child(button("资助青槐村 · 30 文 · 每日一次", func():
+		var message: String = YinFactions.sponsor(state)
+		persist()
+		show_factions()
+		notify_action(message)
+	))
+
 func show_pause() -> void:
 	var box := open_modal("暂停", "进度自动保存 · 世界已暂停")
 	box.add_child(button("操作帮助", func(): open_modal("操作", "WASD 移动 · E 互动 · 空格劳作\nJ / 左键攻击 · 滚轮换武器 · U 装填\nShift 闪避 · F 镇符 · G 符火 · V 免费炼化\nI 行囊 · B 装备 · H 随从 · Tab 地图\nR 点名 · C 指令 · K 书信 · L 手札\nQ 阴种 · Z 智能劳作 · T 黄昏 · M 环境音")))
+	box.add_child(button("三方势力 · P", show_factions))
 	box.add_child(button("委托 · O", show_quests))
 	box.add_child(button("地图 · Tab", func(): show_character("地图")))
 	box.add_child(button("书信 · K", func(): show_character("书信")))
@@ -1178,6 +1204,7 @@ func show_villager() -> void:
 		if actor.is_queued_for_deletion() or actor.position.distance_to(player.position) > 56: continue
 		var record: Dictionary = actor.record
 		var box := open_modal(record.name, "生命 %d/100 · 村庄完好度 %d\n%s" % [record.hp, state.village_integrity, "今晚求道长护村。" if state.raid_status in ["warned", "active"] else "村口邪祟每隔几日便来叩门。"])
+		box.add_child(button("三方局势与援村", show_factions))
 		box.add_child(button("聊一聊", func(): show_chat(record)))
 		box.add_child(button("委托", func(): show_npc_quests(record)))
 		box.add_child(button("阅读村庄来信", func(): show_character("书信")))

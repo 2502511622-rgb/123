@@ -11,6 +11,7 @@ const CROPS = {
 }
 const SPIRITS = {"kappa": "河童役灵", "chochin": "纸灯役灵", "ippon_datara": "踏鞴役灵", "jorogumo": "蛛姬役灵", "sogenbi": "罪火役灵", "itsumade": "金羽役灵", "daitengu": "山风役灵", "ryomen_sukuna": "双面武灵", "water": "担水尸", "bone": "掘土骨", "child": "食秽童", "archer": "吐骨役灵", "lantern": "追灯役灵", "gunner": "纸铳役灵", "brute": "山魈役灵", "boss": "棺将", "well_boss": "井中龙婆", "opera_boss": "无面伶王"}
 const INVENTORY_KEYS = ["candle_seeds", "vine_seeds", "gourd_seeds", "rice_seeds", "candle", "vine", "gourd", "rice"]
+var factions: Dictionary = YinFactions.initial()
 var island_journal: Dictionary = {"visited": false, "hunted": [], "defeated": []}
 var opened_chests: Array = []
 var quests: Dictionary = {}
@@ -346,7 +347,7 @@ func prepare_enemies() -> void:
 		YinIsland.populate(self)
 		return
 	enemy_day = day
-	enemies = enemies.filter(func(e): return (e.zone == "farm" and not e.dead) or e.kind in ["well_boss", "opera_boss"] or e.kind in YinIsland.BOSSES or (e.zone == "village" and int(e.get("raid", 0)) > 0 and not e.dead))
+	enemies = enemies.filter(func(e): return (e.has("war_id") and not e.dead) or (e.zone == "farm" and not e.dead) or e.kind in ["well_boss", "opera_boss"] or e.kind in YinIsland.BOSSES or (e.zone == "village" and int(e.get("raid", 0)) > 0 and not e.dead))
 	for i in range(5):
 		var kind: String = "water" if i % 2 == 0 else "bone"
 		spawn_record(kind, "graveyard", Vector2(280 + i * 100, 240 + (i % 2) * 150), 1 + int((day - 1) / 4))
@@ -510,14 +511,14 @@ func choose_ending(choice: String) -> String:
 func snapshot() -> Dictionary:
 	YinInventoryModel.new(self, "bag").sync()
 	YinInventoryModel.new(self, "chest").sync()
-	var data: Dictionary = {"version": 8}
+	var data: Dictionary = {"version": 9}
 	for key in save_keys(): data[key] = get(key)
 	data.player_position = [player_position.x, player_position.y]
 	data.saved_facing = [saved_facing.x, saved_facing.y]
 	return data.duplicate(true)
 
 static func save_keys() -> Array:
-	return ["island_journal", "opened_chests", "quests", "tracked_quest", "visited_landmarks", "weapon_slots", "active_slot", "skill_ranks", "skill_charges", "skill_timers", "villagers", "letters", "raid_day", "raid_status", "village_integrity", "equipment", "gear_drops", "equipped_gear", "equipped_armor", "next_gear_id", "smart_farming", "day", "money", "energy", "health", "minutes", "weather", "selected_crop", "inventory", "supplies", "storage", "bag_slots", "chest_slots", "terrain", "drops", "placements", "plots", "oil", "talismans", "bones", "ash", "reputation", "cultivation", "pollution", "ward", "hall_level", "spirits", "remains", "cargo", "enemies", "enemy_day", "next_id", "total_harvest", "called_day", "ritual_count", "ritual_path", "boss_spawned", "boss_defeated", "ending", "intro_seen", "zone", "journal", "last_report", "order"]
+	return ["factions", "island_journal", "opened_chests", "quests", "tracked_quest", "visited_landmarks", "weapon_slots", "active_slot", "skill_ranks", "skill_charges", "skill_timers", "villagers", "letters", "raid_day", "raid_status", "village_integrity", "equipment", "gear_drops", "equipped_gear", "equipped_armor", "next_gear_id", "smart_farming", "day", "money", "energy", "health", "minutes", "weather", "selected_crop", "inventory", "supplies", "storage", "bag_slots", "chest_slots", "terrain", "drops", "placements", "plots", "oil", "talismans", "bones", "ash", "reputation", "cultivation", "pollution", "ward", "hall_level", "spirits", "remains", "cargo", "enemies", "enemy_day", "next_id", "total_harvest", "called_day", "ritual_count", "ritual_path", "boss_spawned", "boss_defeated", "ending", "intro_seen", "zone", "journal", "last_report", "order"]
 
 static func valid_int(value: Variant, minimum: int, maximum: int = 100000000) -> bool:
 	return (value is int or value is float) and is_finite(float(value)) and float(value) == floor(float(value)) and value >= minimum and value <= maximum
@@ -526,7 +527,7 @@ static func valid_point(value: Variant) -> bool:
 	return value is Array and value.size() == 2 and (value[0] is float or value[0] is int) and (value[1] is float or value[1] is int) and is_finite(float(value[0])) and is_finite(float(value[1])) and value[0] >= 0 and value[0] <= 2880 and value[1] >= 0 and value[1] <= 1920
 
 func restore(data: Dictionary) -> bool:
-	if not valid_int(data.get("version"), 3, 8): return false
+	if not valid_int(data.get("version"), 3, 9): return false
 	var defaults := FarmState.new()
 	if int(data.version) == 3:
 		data = data.duplicate(true)
@@ -585,6 +586,10 @@ func restore(data: Dictionary) -> bool:
 		data = data.duplicate(true)
 		data.version = 8
 		data.island_journal = {"visited": false, "hunted": [], "defeated": []}
+	if int(data.version) == 8:
+		data = data.duplicate(true)
+		data.version = 9
+		data.factions = YinFactions.initial()
 	for key in save_keys():
 		if not data.has(key): return false
 		var expected: Variant = defaults.get(key)
@@ -593,6 +598,14 @@ func restore(data: Dictionary) -> bool:
 		if expected is String and not data[key] is String: return false
 		if expected is Array and not data[key] is Array: return false
 		if expected is Dictionary and not data[key] is Dictionary: return false
+	if not YinFactions.validate(data.factions): return false
+	for e in data.enemies:
+		if not e is Dictionary: return false
+		if e.has("war_id"):
+			if not valid_int(e.war_id, 1) or e.get("faction") not in YinFactions.IDS or e.get("war_side") not in ["attacker", "defender"]: return false
+			if not e.get("dead", true):
+				var matching: Array = data.factions.wars.filter(func(w): return int(w.id) == int(e.war_id) and w.status == "active" and w[e.war_side] == e.faction)
+				if matching.size() != 1 or matching[0].defender != e.zone or matching[0][e.war_side] != e.faction: return false
 	if not YinIsland.validate(data.island_journal): return false
 	if not YinAdventure.validate(data): return false
 	if data.day < 1 or data.health > 100 or data.energy > 100 or data.ward > 100 or data.pollution > 100 or not valid_int(data.hall_level, 1, 2): return false
@@ -705,6 +718,9 @@ func restore(data: Dictionary) -> bool:
 		if not valid_int(data.weapon_slots.get(slot), 0): return false
 		if data.weapon_slots[slot] != 0 and not data.equipment.any(func(gear): return gear.id == data.weapon_slots[slot] and gear_slot(gear.weapon) == slot): return false
 	var normalized: Dictionary = data.duplicate(true)
+	YinFactions.normalize(normalized.factions)
+	for e in normalized.enemies:
+		if e.has("war_id"): e.war_id = int(e.war_id)
 	for key in save_keys():
 		if defaults.get(key) is int: normalized[key] = int(normalized[key])
 	for key in INVENTORY_KEYS: normalized.inventory[key] = int(normalized.inventory[key])

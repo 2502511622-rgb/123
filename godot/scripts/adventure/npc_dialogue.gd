@@ -5,6 +5,7 @@ var previous_topics: Dictionary = {}
 func reply(state, npc: Dictionary, message: String) -> String:
 	message = message.strip_edges().substr(0, 500)
 	if message == "": return "想问什么？可以聊委托、宝箱、武器或村里的近况。"
+	if "势力" in message or "进攻" in message or "战况" in message: return YinFactions.report(state)
 	if "伊佩塔姆" in message or "神器" in message: return "那是裂海带来的阿伊努嗜血之刃。平息三处祭场后，经砚青、秋婶、柳伯的委托，找阿祁缔约。装备后亲手击杀使它成长，剑伤能回补命息。"
 	if "河童" in message: return "河童依赖头皿中的水，靠近水岸会恢复。镇符可令水皿失效，离水作战也能压住它。"
 	if "以津真天" in message: return "荒冢金鸟在问亡者何时安葬。附近未处理遗骸越多，毒鸣越强；先超度，再战。"

@@ -51,6 +51,7 @@ func _ready() -> void:
 	hurtbox.name = "Hurtbox"
 	hurtbox.actor = self
 	add_child(hurtbox)
+	if record.get("faction", "") == "village": hurtbox.collision_layer = 0
 	health_trail = float(record.hp)
 	shield = 20 if record.kind == "opera_boss" else 0
 	collision_layer = 4
@@ -63,7 +64,10 @@ func _ready() -> void:
 	add_child(shape)
 
 func _physics_process(delta: float) -> void:
-	if game.modal != null or record.dead or is_queued_for_deletion(): return
+	if record.dead:
+		queue_free()
+		return
+	if game.modal != null or is_queued_for_deletion(): return
 	hit_flash = maxf(0, hit_flash - delta)
 	material.set_shader_parameter("flash", 1.0 if hit_flash > 0.065 else 0.0)
 	trail_delay = maxf(0, trail_delay - delta)
@@ -73,7 +77,7 @@ func _physics_process(delta: float) -> void:
 		hit_stop -= delta
 		return
 	var active_world: Node2D = game.world
-	victim = game.closest_ally(position)
+	victim = faction_target() if record.has("war_id") else game.closest_ally(position)
 	if victim == null: return
 	chill_time = maxf(0, chill_time - delta)
 	freeze_lock = maxf(0, freeze_lock - delta)
@@ -119,6 +123,9 @@ func _physics_process(delta: float) -> void:
 		velocity = panic_direction * spec.speed * 1.35
 		move_and_slide()
 		record.at = [position.x, position.y]
+		return
+	if record.has("war_id"):
+		faction_tick(delta, spec)
 		return
 	if YinIslandCombat.tick(self, delta, spec): return
 	var boss: bool = record.kind in YinAbilities.BOSSES
@@ -265,6 +272,9 @@ func receive_hit(damage: int, method: String = "sword", source_gear_id: int = 0)
 
 func _draw() -> void:
 	if record.is_empty(): return
+	if record.has("faction"):
+		draw_circle(Vector2(0, 1), 13, YinFactions.COLORS[record.faction])
+		draw_string(ThemeDB.fallback_font, Vector2(-18, -72), YinFactions.NAMES[record.faction], HORIZONTAL_ALIGNMENT_LEFT, -1, 10, YinFactions.COLORS[record.faction])
 	draw_rect(Rect2(-12, -3, 24, 5), Color("253b3a66"))
 	var row: int = {"water": 0, "bone": 1, "boss": 2, "archer": 3, "lantern": 4, "gunner": 5, "brute": 6, "well_boss": 0, "opera_boss": 5}.get(record.kind, 0)
 	row = YinIsland.ROWS.get(record.kind, row)
@@ -295,6 +305,7 @@ func _draw() -> void:
 	if chill_time > 0: draw_arc(Vector2(0, -20), 18, 0, TAU, 12, Color("91d8ee"), 1)
 	if bleed_time > 0: draw_rect(Rect2(-3, -56, 6, 6), Color("b54e5c"))
 	var caption: String = YinBalance.MONSTERS[record.kind].name + " Lv%d" % int(record.get("level", 1)) + (" · 精英" if record.get("elite", false) else "")
+	if record.get("faction", "") == "village": caption = "护村役卫 Lv%d" % int(record.get("level", 1))
 	draw_string(ThemeDB.fallback_font, Vector2(-24, -56 * (1.4 if record.kind in YinAbilities.BOSSES else 1)), caption, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color("e6c485") if record.get("elite", false) else Color("c8c9ae"))
 	if YinIsland.ROWS.has(record.kind):
 		YinIslandCombat.draw_warning(self)
@@ -366,3 +377,58 @@ func apply_element(element: String, power: int = 3) -> void:
 				game.world.spell_trace(position + Vector2(0, -20), neighbors[i].position + Vector2(0, -20), "lightning")
 				neighbors[i].receive_hit(power * 2, "lightning")
 	queue_redraw()
+
+# Expedition units seek the opposing army; village militia never target the player.
+func faction_target() -> Node2D:
+	var target: Node2D = null
+	var best: float = INF
+	for group in ["enemies", "faction_guards"]:
+		for actor in get_tree().get_nodes_in_group(group):
+			if actor == self or actor.is_queued_for_deletion() or actor.get_parent() != game.world.actors or actor.record.dead: continue
+			if actor.record.get("war_id", 0) != record.war_id or actor.record.get("faction", "") == record.faction: continue
+			var distance: float = position.distance_to(actor.position)
+			if distance < best:
+				best = distance
+				target = actor
+	if target == null and record.faction != "village": return game.closest_ally(position)
+	return target
+
+func faction_tick(delta: float, spec: Dictionary) -> void:
+	var distance: float = position.distance_to(victim.position)
+	var ray := PhysicsRayQueryParameters2D.create(position + Vector2(0, -4), victim.position + Vector2(0, -4), 1)
+	var sight: bool = get_world_2d().direct_space_state.intersect_ray(ray).is_empty()
+	velocity = Vector2.ZERO
+	if stun > 0:
+		windup = 0
+	elif windup > 0:
+		windup -= delta
+		if windup <= 0:
+			if sight and victim.position.distance_to(attack_center) < 45:
+				if victim is YinEnemy:
+					victim.receive_faction_hit(int(record.damage))
+				else: hurt_victim(int(record.damage))
+			cooldown = 1.2
+	elif distance < 38 and sight and cooldown <= 0:
+		windup = 0.5
+		attack_center = victim.position
+	else:
+		if sight: velocity = position.direction_to(victim.position) * float(spec.speed)
+		else:
+			repath -= delta
+			if repath <= 0:
+				route = game.world.path_to(position, victim.position)
+				repath = 0.5
+			while not route.is_empty() and position.distance_to(route[0]) < 8: route.remove_at(0)
+			if not route.is_empty(): velocity = position.direction_to(route[0]) * float(spec.speed)
+	if is_inside_tree() and get_parent() == game.world.actors:
+		move_and_slide()
+		record.at = [position.x, position.y]
+
+func receive_faction_hit(damage: int) -> void:
+	if record.dead: return
+	health_receiver.apply(maxi(1, damage - int(record.get("armor", 0))), "war")
+	hit_flash = 0.13
+	game.world.damage_number(position, damage, Color("e5c792"))
+	if record.hp <= 0:
+		record.dead = true
+		queue_free()

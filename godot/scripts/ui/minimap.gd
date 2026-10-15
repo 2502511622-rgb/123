@@ -29,8 +29,8 @@ func _draw() -> void:
 			if size.x > 200: draw_string(ThemeDB.fallback_font, at + Vector2(4, 0), spec.name, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color("d3d0b0"))
 	for gate in gates():
 		draw_rect(Rect2(point(gate) - Vector2(2, 2), Vector2(4, 4)), Color("e9c47b"))
-	for enemy in game.get_tree().get_nodes_in_group("enemies"):
-		if not enemy.is_queued_for_deletion(): draw_rect(Rect2(point(enemy.position) - Vector2.ONE, Vector2(2, 2)), Color("d8776b"))
+	for enemy in game.get_tree().get_nodes_in_group("enemies") + game.get_tree().get_nodes_in_group("faction_guards"):
+		if not enemy.is_queued_for_deletion(): draw_rect(Rect2(point(enemy.position) - Vector2.ONE, Vector2(2, 2)), YinFactions.COLORS.get(enemy.record.get("faction", ""), Color("d8776b")))
 	for spirit in game.get_tree().get_nodes_in_group("companions"):
 		if not spirit.is_queued_for_deletion(): draw_rect(Rect2(point(spirit.position) - Vector2.ONE, Vector2(2, 2)), Color("82bbc3"))
 	for villager in game.get_tree().get_nodes_in_group("villagers"):
