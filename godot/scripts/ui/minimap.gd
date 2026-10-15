@@ -12,6 +12,16 @@ func _draw() -> void:
 	draw_string(ThemeDB.fallback_font, Vector2(5, 12), NAMES.get(game.state.zone, game.state.zone), HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color("d3d0b0"))
 	for rect in game.world.obstacles:
 		draw_rect(Rect2(point(rect.position), rect.size / game.world.level_size * (size - Vector2(10, 23))), Color("52664f"))
+	for id in YinAdventure.CHESTS:
+		var spec: Dictionary = YinAdventure.CHESTS[id]
+		if spec.zone == game.state.zone and id not in game.state.opened_chests:
+			draw_rect(Rect2(point(spec.at) - Vector2(2, 2), Vector2(4, 4)), Color("d9a552"), false, 1)
+	if game.state.zone == "forest":
+		for id in YinAdventure.LANDMARKS:
+			var spec: Dictionary = YinAdventure.LANDMARKS[id]
+			var at: Vector2 = point(spec.at)
+			draw_circle(at, 2, Color("9bbfc0") if game.state.visited_landmarks.has(id) else Color("667c73"))
+			if size.x > 200: draw_string(ThemeDB.fallback_font, at + Vector2(4, 0), spec.name, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color("d3d0b0"))
 	for gate in gates():
 		draw_rect(Rect2(point(gate) - Vector2(2, 2), Vector2(4, 4)), Color("e9c47b"))
 	for enemy in game.get_tree().get_nodes_in_group("enemies"):

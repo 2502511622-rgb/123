@@ -31,4 +31,6 @@ static func affix_text(gear: Dictionary) -> String:
  var result: Array[String] = []
  for affix in gear.get("affixes", []):
   result.append("%s %d%s" % [AFFIXES.get(affix.id, ""), affix.value, "%" if affix.id == "crit" else "秒"])
+ var element: String = gear.get("enchantment", "")
+ if element != "": result.append("附魔·" + YinBalance.ELEMENT_NAMES.get(element, element))
  return " / ".join(result) if not result.is_empty() else "无词条"

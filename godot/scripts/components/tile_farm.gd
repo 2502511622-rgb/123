@@ -49,6 +49,23 @@ func build(zone_name: String) -> void:
 				id = 11 if x == 18 and y in range(5, 23) and y not in range(12, 15) else (10 if y in [24, 25] else 4)
 			if zone == "theatre": id = 10 if x > 26 and y < 16 else (8 if (x + y) % 6 == 0 else 3)
 			ground.set_cell(Vector2i(x, y), 0, Vector2i(id, 0))
+	if zone == "forest":
+		for route in [
+			[Vector2i(5, 35), Vector2i(10, 35), Vector2i(10, 18), Vector2i(75, 18)],
+			[Vector2i(55, 7), Vector2i(55, 32)],
+			[Vector2i(63, 18), Vector2i(63, 12), Vector2i(82, 12), Vector2i(82, 51), Vector2i(68, 51), Vector2i(68, 32), Vector2i(76, 32)],
+			[Vector2i(75, 18), Vector2i(75, 51)],
+			[Vector2i(10, 35), Vector2i(10, 44), Vector2i(68, 44)],
+			[Vector2i(20, 18), Vector2i(20, 24)]
+		]:
+			for i in range(route.size() - 1): paint_road(route[i], route[i + 1])
+func paint_road(start: Vector2i, end: Vector2i) -> void:
+	var at: Vector2i = start
+	var direction := Vector2i(signi(end.x - start.x), signi(end.y - start.y))
+	for i in range(absi(end.x - start.x) + absi(end.y - start.y) + 1):
+		ground.set_cell(at, 0, Vector2i(10, 0))
+		ground.set_cell(at + Vector2i(0, -1), 0, Vector2i(10, 0))
+		at += direction
 func refresh(state: FarmState, time: float) -> void:
 	if zone != "farm": return
 	var frame: int = int(time * 2) % 3

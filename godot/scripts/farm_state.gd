@@ -11,6 +11,10 @@ const CROPS = {
 }
 const SPIRITS = {"water": "担水尸", "bone": "掘土骨", "child": "食秽童", "archer": "吐骨役灵", "lantern": "追灯役灵", "gunner": "纸铳役灵", "brute": "山魈役灵", "boss": "棺将", "well_boss": "井中龙婆", "opera_boss": "无面伶王"}
 const INVENTORY_KEYS = ["candle_seeds", "vine_seeds", "gourd_seeds", "rice_seeds", "candle", "vine", "gourd", "rice"]
+var opened_chests: Array = []
+var quests: Dictionary = {}
+var tracked_quest: String = ""
+var visited_landmarks: Dictionary = {}
 var day: int = 1
 var money: int = 90
 var energy: int = 100
@@ -379,6 +383,7 @@ func kill_enemy(id: int, at: Vector2) -> void:
 	for e in enemies:
 		if e.id != id or e.dead: continue
 		e.dead = true
+		YinAdventure.on_kill(self, e)
 		var boss: bool = e.kind == "boss"
 		remains.append({"id": next_id, "kind": e.kind, "name": "棺将遗骸" if boss else ("担水尸骸" if e.kind == "water" else YinBalance.MONSTERS[e.kind].name + "遗骸"), "integrity": e.integrity, "regret": "守门" if boss else ("生前担水" if e.kind == "water" else {"bone": "替人掘墓", "archer": "守山残念", "lantern": "不肯熄灭的旧灯", "gunner": "未传到的军令", "brute": "山中猎食"}.get(e.kind, "未散残念")), "fierceness": 40 if e.kind in YinAbilities.BOSSES else (12 if e.suppressed else 30), "yin": "山煞" if boss else ("水阴" if e.kind == "water" else "土阴"), "at": [at.x, at.y], "zone": e.zone, "source_level": int(e.get("level", 1))})
 		next_id += 1
@@ -498,14 +503,14 @@ func choose_ending(choice: String) -> String:
 func snapshot() -> Dictionary:
 	YinInventoryModel.new(self, "bag").sync()
 	YinInventoryModel.new(self, "chest").sync()
-	var data: Dictionary = {"version": 6}
+	var data: Dictionary = {"version": 7}
 	for key in save_keys(): data[key] = get(key)
 	data.player_position = [player_position.x, player_position.y]
 	data.saved_facing = [saved_facing.x, saved_facing.y]
 	return data.duplicate(true)
 
 static func save_keys() -> Array:
-	return ["weapon_slots", "active_slot", "skill_ranks", "skill_charges", "skill_timers", "villagers", "letters", "raid_day", "raid_status", "village_integrity", "equipment", "gear_drops", "equipped_gear", "equipped_armor", "next_gear_id", "smart_farming", "day", "money", "energy", "health", "minutes", "weather", "selected_crop", "inventory", "supplies", "storage", "bag_slots", "chest_slots", "terrain", "drops", "placements", "plots", "oil", "talismans", "bones", "ash", "reputation", "cultivation", "pollution", "ward", "hall_level", "spirits", "remains", "cargo", "enemies", "enemy_day", "next_id", "total_harvest", "called_day", "ritual_count", "ritual_path", "boss_spawned", "boss_defeated", "ending", "intro_seen", "zone", "journal", "last_report", "order"]
+	return ["opened_chests", "quests", "tracked_quest", "visited_landmarks", "weapon_slots", "active_slot", "skill_ranks", "skill_charges", "skill_timers", "villagers", "letters", "raid_day", "raid_status", "village_integrity", "equipment", "gear_drops", "equipped_gear", "equipped_armor", "next_gear_id", "smart_farming", "day", "money", "energy", "health", "minutes", "weather", "selected_crop", "inventory", "supplies", "storage", "bag_slots", "chest_slots", "terrain", "drops", "placements", "plots", "oil", "talismans", "bones", "ash", "reputation", "cultivation", "pollution", "ward", "hall_level", "spirits", "remains", "cargo", "enemies", "enemy_day", "next_id", "total_harvest", "called_day", "ritual_count", "ritual_path", "boss_spawned", "boss_defeated", "ending", "intro_seen", "zone", "journal", "last_report", "order"]
 
 static func valid_int(value: Variant, minimum: int, maximum: int = 100000000) -> bool:
 	return (value is int or value is float) and is_finite(float(value)) and float(value) == floor(float(value)) and value >= minimum and value <= maximum
@@ -514,7 +519,7 @@ static func valid_point(value: Variant) -> bool:
 	return value is Array and value.size() == 2 and (value[0] is float or value[0] is int) and (value[1] is float or value[1] is int) and is_finite(float(value[0])) and is_finite(float(value[1])) and value[0] >= 0 and value[0] <= 2880 and value[1] >= 0 and value[1] <= 1920
 
 func restore(data: Dictionary) -> bool:
-	if not valid_int(data.get("version"), 3, 6): return false
+	if not valid_int(data.get("version"), 3, 7): return false
 	var defaults := FarmState.new()
 	if int(data.version) == 3:
 		data = data.duplicate(true)
@@ -548,7 +553,7 @@ func restore(data: Dictionary) -> bool:
 		for slot in ["melee", "primary", "secondary"]: data.weapon_slots[slot] = 0
 		for gear in data.equipment:
 			gear.affixes = []
-			var slot: String = "melee" if gear.weapon == "sword" else ("secondary" if gear.weapon == "pistol" else "primary")
+			var slot: String = gear_slot(gear.weapon)
 			if gear.weapon != "armor" and data.weapon_slots[slot] == 0: data.weapon_slots[slot] = gear.id
 		for gear in data.equipment:
 			if gear.id == data.equipped_gear:
@@ -562,6 +567,13 @@ func restore(data: Dictionary) -> bool:
 			spirit.hp = spirit.max_hp
 			spirit.xp = 0
 			spirit.active = false
+	if int(data.version) == 6:
+		data = data.duplicate(true)
+		data.version = 7
+		data.opened_chests = []
+		data.quests = {}
+		data.tracked_quest = ""
+		data.visited_landmarks = {}
 	for key in save_keys():
 		if not data.has(key): return false
 		var expected: Variant = defaults.get(key)
@@ -570,6 +582,7 @@ func restore(data: Dictionary) -> bool:
 		if expected is String and not data[key] is String: return false
 		if expected is Array and not data[key] is Array: return false
 		if expected is Dictionary and not data[key] is Dictionary: return false
+	if not YinAdventure.validate(data): return false
 	if data.day < 1 or data.health > 100 or data.energy > 100 or data.ward > 100 or data.pollution > 100 or not valid_int(data.hall_level, 1, 2): return false
 	if (not data.minutes is float and not data.minutes is int) or not is_finite(float(data.minutes)) or data.minutes < 360 or data.minutes >= 1800: return false
 	if data.zone not in ["farm", "graveyard", "forest", "sunken", "theatre", "village", "hall", "shop"] or data.weather not in ["sun", "rain"] or data.order not in ["follow", "guard", "focus"]: return false
@@ -620,10 +633,10 @@ func restore(data: Dictionary) -> bool:
 		if e.has("elite") and not e.elite is bool: return false
 		if e.has("forest_extension") and not e.forest_extension is bool: return false
 		if e.has("severed"):
-			if not e.severed is Array or e.severed.size() > 2: return false
+			if not e.severed is Array or e.severed.size() > 3: return false
 			var limbs: Array = []
 			for part in e.severed:
-				if part not in ["arm", "leg"] or part in limbs: return false
+				if part not in ["arm", "leg", "head"] or part in limbs: return false
 				limbs.append(part)
 		if e.max_hp < 1 or e.hp > e.max_hp or e.integrity > 100: return false
 	for id in data.cargo:
@@ -709,6 +722,7 @@ func restore(data: Dictionary) -> bool:
 		drop.id = int(drop.id)
 		for key in ["id", "tier", "quality", "bonus", "magazine"]: drop.gear[key] = int(drop.gear[key])
 	for slot in normalized.weapon_slots: normalized.weapon_slots[slot] = int(normalized.weapon_slots[slot])
+	for id in normalized.quests: normalized.quests[id].progress = int(normalized.quests[id].progress)
 	for key in normalized.skill_ranks: normalized.skill_ranks[key] = int(normalized.skill_ranks[key])
 	for key in normalized.skill_charges: normalized.skill_charges[key] = int(normalized.skill_charges[key])
 	for villager in normalized.villagers:
@@ -750,6 +764,7 @@ static func valid_gear(gear: Variant) -> bool:
 	if not gear is Dictionary or gear.get("weapon") not in YinBalance.WEAPONS: return false
 	for key in ["id", "tier", "quality", "bonus", "magazine"]:
 		if not valid_int(gear.get(key), 0): return false
+	if gear.get("enchantment", "") not in ["", "burn", "freeze", "lightning"]: return false
 	if not gear.get("affixes") is Array or gear.affixes.size() > 2: return false
 	var used: Array = []
 	for affix in gear.affixes:
@@ -797,7 +812,7 @@ func reward_enemy(enemy: Dictionary, at: Vector2) -> void:
 		var quality: int = 3 if roll > 0.98 else (2 if roll > 0.88 else (1 if roll > 0.6 else 0))
 		if enemy.get("elite", false) or enemy.kind in YinAbilities.BOSSES: quality = maxi(1, quality)
 		var weapon_roll: float = random.randf()
-		var weapon: String = "sword" if weapon_roll < 0.45 else ("armor" if weapon_roll < 0.90 else ("pistol" if weapon_roll < 0.97 else ("smg" if weapon_roll < 0.99 else "rifle")))
+		var weapon: String = ["sword", "whip", "silver_sword"][random.randi_range(0, 2)] if weapon_roll < 0.45 else ("armor" if weapon_roll < 0.75 else (["spellbook", "curse_doll"][random.randi_range(0, 1)] if weapon_roll < 0.90 else YinBalance.GUNS[random.randi_range(0, 4)]))
 		var gear := YinBalance.make_gear(next_gear_id, weapon, mini(20, level_value), quality)
 		next_gear_id += 1
 		gear_drops.append({"id": next_id, "gear": gear, "zone": enemy.zone, "at": [at.x - 14, at.y + 10]})
@@ -827,7 +842,7 @@ func craft_ammo(ammo: String) -> String:
 	return "制成 %s ×%d。" % [YinItemCatalog.spec(ammo).display_name, amount]
 
 static func gear_slot(weapon: String) -> String:
-	return "melee" if weapon == "sword" else ("secondary" if weapon == "pistol" else "primary")
+	return "melee" if weapon in YinBalance.MELEE else ("secondary" if weapon in ["pistol", "revolver", "curse_doll"] else "primary")
 func cycle_weapon(direction: int) -> String:
 	var names: Array = ["melee", "primary", "secondary"]
 	var index: int = names.find(active_slot)

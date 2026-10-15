@@ -10,9 +10,12 @@ var game: Node2D
 var pending: Dictionary = {}
 var reload_job: Dictionary = {}
 var random := RandomNumberGenerator.new()
+var spin_time: float = 0
 func _physics_process(delta: float) -> void:
 	if not is_instance_valid(game) or game.modal != null: return
 	game.state.update_combat(delta)
+	if game.player.held_item == "gatling" and (Input.is_action_pressed("attack") or game.shooting_mouse): spin_time = minf(1, spin_time + delta)
+	else: spin_time = 0
 	if not reload_job.is_empty():
 		if not is_instance_valid(reload_job.actor) or reload_job.actor != game.player or reload_job.id != game.state.equipped_gear:
 			reload_job.clear()
@@ -37,7 +40,7 @@ func _physics_process(delta: float) -> void:
 	pending.clear()
 	for target in game.player.hitbox.targets(strike.facing):
 		target.receive_hit(strike.damage, strike.get("method", "sword"))
-		if is_instance_valid(target) and strike.get("payload", {}).get("bleed", 0) > 0: target.apply_bleed(strike.payload.bleed, 2)
+		if is_instance_valid(target): apply_payload(target, strike.get("payload", {}))
 	game.persist()
 func visible(target: YinEnemy) -> bool:
 	var ray := PhysicsRayQueryParameters2D.create(game.player.global_position + Vector2(0, -4), target.global_position + Vector2(0, -4), 1)
@@ -53,7 +56,8 @@ func spell_target(reach: float) -> YinEnemy:
 	return chosen
 func trigger(method: String) -> bool:
 	if game.player.frozen or not reload_job.is_empty(): return false
-	if method == "sword" and game.player.held_item in ["pistol", "smg", "rifle"]: return shoot()
+	if method == "sword" and game.player.held_item in YinBalance.GUNS: return shoot()
+	if method == "sword" and game.player.held_item in YinBalance.MAGIC: return cast_weapon()
 	if game.action_cooldown > 0 or not ARSENAL.has(method): return false
 	var spec: YinWeaponSpec = ARSENAL[method]
 	var using_tool: bool = method == "sword" and game.player.held_item.begins_with("tool")
@@ -67,6 +71,13 @@ func trigger(method: String) -> bool:
 		spec.reach = values[1]
 		spec.action_time = values[2]
 		spec.recovery = values[3]
+	if method == "sword" and not using_tool:
+		var weapon: Dictionary = YinBalance.WEAPONS[game.state.current_gear().weapon]
+		spec = YinWeaponSpec.new()
+		spec.damage = weapon.damage
+		spec.reach = weapon.range
+		spec.action_time = 0.22 if game.player.held_item != "whip" else 0.3
+		spec.recovery = weapon.interval
 	if method == "sword":
 		if not game.player.state_machine.begin("attack", spec.action_time): return false
 		game.player.attack_time = spec.action_time
@@ -98,8 +109,9 @@ func shoot() -> bool:
 	if game.modal != null or game.player.frozen or game.action_cooldown > 0 or not reload_job.is_empty(): return false
 	if game.player.state_machine.current not in ["idle", "walk"]: return false
 	var gear: Dictionary = game.state.current_gear()
-	if gear.weapon in ["sword", "armor"] or game.player.held_item != gear.weapon: return false
+	if gear.weapon not in YinBalance.GUNS or game.player.held_item != gear.weapon: return false
 	var spec: Dictionary = YinBalance.WEAPONS[gear.weapon]
+	if gear.weapon == "gatling" and spin_time < 0.25: return false
 	if gear.magazine <= 0:
 		reload()
 		return false
@@ -108,7 +120,7 @@ func shoot() -> bool:
 	var direction: Vector2 = aim.rotated(random.randf_range(-spec.spread, spec.spread))
 	var start: Vector2 = game.player.position + Vector2(0, -4)
 	var rolled: Dictionary = roll_hit(spec.damage, gear)
-	if not game.world.projectiles.spawn(start, direction, true, rolled.damage, spec.speed, spec.range, Color("f1d599"), rolled): return false
+	if not game.world.projectiles.spawn(start, direction, true, rolled.damage, spec.speed, spec.range, YinBalance.ELEMENT_COLORS.get(rolled.element, Color("f1d599")), rolled): return false
 	gear.magazine -= 1
 	game.action_cooldown += spec.interval
 	game.player.recoil_time = 0.09
@@ -156,4 +168,41 @@ func roll_hit(base: int, gear: Dictionary) -> Dictionary:
 			damage = roundi(damage * 1.65)
 			critical = true
 		if affix.id == "bleed" and random.randf() < 0.25: bleed = int(affix.value)
-	return {"damage": damage, "bleed": bleed, "critical": critical}
+	return {"damage": damage, "bleed": bleed, "critical": critical, "element": gear.get("enchantment", "") if random.randf() < 0.3 else "", "power": 3 + int(gear.get("quality", 0))}
+
+func apply_payload(target: YinEnemy, payload: Dictionary) -> void:
+	if not is_instance_valid(target) or target.record.dead or target.is_queued_for_deletion(): return
+	if payload.get("bleed", 0) > 0: target.apply_bleed(payload.bleed, 2)
+	var element: String = payload.get("element", "")
+	if element != "": target.apply_element(element, int(payload.get("power", 3)))
+
+func cast_weapon() -> bool:
+	if game.modal != null or game.player.frozen or game.action_cooldown > 0 or not reload_job.is_empty(): return false
+	var gear: Dictionary = game.state.current_gear()
+	if gear.weapon not in YinBalance.MAGIC or game.player.held_item != gear.weapon: return false
+	var spec: Dictionary = YinBalance.WEAPONS[gear.weapon]
+	if game.state.energy < spec.energy:
+		game.refresh("气力不足，调息后再施术。")
+		return false
+	var target: YinEnemy = spell_target(spec.range) if gear.weapon == "curse_doll" else null
+	if gear.weapon == "curse_doll" and target == null: return false
+	if not game.player.state_machine.begin("spell", 0.22): return false
+	var payload: Dictionary = roll_hit(spec.damage, gear)
+	var element: String = gear.get("enchantment", "")
+	var tint: Color = YinBalance.ELEMENT_COLORS.get(element, Color("bba1df"))
+	if gear.weapon == "spellbook":
+		var direction: Vector2 = game.player.aim_direction.normalized()
+		if direction == Vector2.ZERO: direction = game.player.facing
+		if not game.world.projectiles.spawn(game.player.position + Vector2(0, -4), direction, true, payload.damage, spec.speed, spec.range, tint, payload):
+			game.player.state_machine.reset()
+			return false
+	else:
+		game.world.spell_trace(game.player.position + Vector2(0, -20), target.position + Vector2(0, -20), "curse")
+		target.receive_hit(payload.damage, "curse")
+		target.apply_bleed(4, 3)
+		apply_payload(target, payload)
+	game.state.energy -= spec.energy
+	game.action_cooldown = spec.interval
+	game.player.attack_time = 0.22
+	game.persist()
+	return true

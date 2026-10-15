@@ -97,6 +97,7 @@ func run() -> void:
   quit(1)
   return
  game = current_scene
+ for gear in game.state.equipment: gear.enchantment = ""
  check(game.modal != null, "new game opens readable letter")
  check(await choose("收起遗书"), "letter dismiss by mouse")
  check(game.modal == null and not game.player.frozen, "letter releases player input")
@@ -179,6 +180,7 @@ func run() -> void:
   check(game.modal == null and not game.player.frozen, "refinement returns to active play")
  # Focused adversarial collision case, with explicit test fixture.
  game.state = FarmState.new()
+ for gear in game.state.equipment: gear.enchantment = ""
  game.build_zone("farm", Vector2(618, 180))
  await frames(4)
  var blocked := {"id": 900, "kind": "water", "zone": "farm", "at": [722,180], "hp": 100, "max_hp": 100, "integrity": 100, "suppressed": false, "dead": false}

@@ -21,6 +21,14 @@ var bleed_tick: float = 0
 var bleed_damage: int = 0
 var passive_clock: float = 0
 var shield: int = 0
+var burn_time: float = 0
+var burn_tick: float = 0
+var burn_power: int = 3
+var chill_time: float = 0
+var freeze_lock: float = 0
+var freeze_immunity: float = 0
+var panic_turn: float = 0
+var panic_direction := Vector2.RIGHT
 var charge_time: float = 0
 var charge_direction: Vector2
 var charge_hit: bool = false
@@ -64,6 +72,19 @@ func _physics_process(delta: float) -> void:
 	var active_world: Node2D = game.world
 	victim = game.closest_ally(position)
 	if victim == null: return
+	chill_time = maxf(0, chill_time - delta)
+	freeze_lock = maxf(0, freeze_lock - delta)
+	freeze_immunity = maxf(0, freeze_immunity - delta)
+	if burn_time > 0:
+		burn_time -= delta
+		burn_tick -= delta
+		if burn_tick <= 0:
+			burn_tick = 1
+			receive_hit(burn_power, "burn")
+			if record.dead: return
+	if freeze_lock > 0:
+		velocity = Vector2.ZERO
+		return
 	passive_clock += delta
 	if bleed_time > 0:
 		bleed_time -= delta
@@ -83,6 +104,19 @@ func _physics_process(delta: float) -> void:
 	var spec: Dictionary = YinBalance.MONSTERS[record.kind].duplicate()
 	spec.pattern = YinAbilities.meta(record.kind).pattern
 	if "leg" in record.get("severed", []): spec.speed *= 0.62
+	if chill_time > 0: spec.speed *= 0.45
+	if "head" in record.get("severed", []):
+		windup = 0
+		burst_remaining = 0
+		charge_time = 0
+		panic_turn -= delta
+		if panic_turn <= 0 or is_on_wall():
+			panic_direction = Vector2.from_angle(float(record.id) + float(Time.get_ticks_msec()) * 0.007)
+			panic_turn = 0.55
+		velocity = panic_direction * spec.speed * 1.35
+		move_and_slide()
+		record.at = [position.x, position.y]
+		return
 	var boss: bool = record.kind in YinAbilities.BOSSES
 	var ranged: bool = spec.pattern in ["fan", "ring", "burst", "tide", "opera", "cold"]
 	var distance: float = position.distance_to(victim.position)
@@ -143,9 +177,11 @@ func _physics_process(delta: float) -> void:
 	record.at = [position.x, position.y]
 	queue_redraw()
 func fire_bullet(direction: Vector2, speed: float = 160) -> void:
+	if "head" in record.get("severed", []) or record.dead: return
 	var spec: Dictionary = YinBalance.MONSTERS[record.kind]
 	game.world.projectiles.spawn(position + Vector2(0, -4), direction, false, roundi(int(record.get("damage", spec.damage)) * (0.75 if "arm" in record.get("severed", []) else 1.0)) + (2 if record.kind == "archer" else 0), speed, 760, Color("c78882") if record.kind != "lantern" else Color("8bc5b1"))
 func volley(pattern: String) -> void:
+	if "head" in record.get("severed", []) or record.dead: return
 	var aim: Vector2 = position.direction_to(attack_center)
 	match pattern:
 		"cold":
@@ -172,9 +208,9 @@ func volley(pattern: String) -> void:
 
 func receive_hit(damage: int, method: String = "sword") -> void:
 	if record.dead: return
-	var armor: int = int(record.get("armor", 0)) if method not in ["seal", "fire", "bleed"] else 0
+	var armor: int = int(record.get("armor", 0)) if method not in ["seal", "fire", "bleed", "burn", "lightning", "curse"] else 0
 	var adjusted: int = YinBalance.damage(damage, 1, {}, armor)
-	if record.kind == "boss" and method not in ["seal", "fire", "bleed"]: adjusted = maxi(1, roundi(adjusted * 0.75))
+	if record.kind == "boss" and method not in ["seal", "fire", "bleed", "burn", "lightning", "curse"]: adjusted = maxi(1, roundi(adjusted * 0.75))
 	if shield > 0:
 		var absorbed: int = mini(shield, adjusted)
 		shield -= absorbed
@@ -185,7 +221,7 @@ func receive_hit(damage: int, method: String = "sword") -> void:
 		trail_delay = 0.3
 		hit_flash = 0.13
 		material.set_shader_parameter("flash", 1.0)
-		if method not in ["bleed", "seal"]:
+		if method not in ["bleed", "burn", "seal"]:
 			hit_stop = 0.035 if record.kind in YinAbilities.BOSSES else 0.045
 			game.world.impact(position + Vector2(0, -20), game.player.position.direction_to(position), method)
 			if method in ["sword", "bullet"]: update_dismemberment()
@@ -201,7 +237,7 @@ func receive_hit(damage: int, method: String = "sword") -> void:
 	elif method == "bullet":
 		knockback = game.player.position.direction_to(position) * (18 if record.kind in YinAbilities.BOSSES else 42)
 		stun = maxf(stun, 0.045)
-	elif method == "bleed" or record.kind in YinAbilities.BOSSES:
+	elif method in ["bleed", "burn", "curse", "lightning"] or record.kind in YinAbilities.BOSSES:
 		pass
 	else:
 		windup = 0
@@ -221,10 +257,11 @@ func _draw() -> void:
 	draw_rect(Rect2(-12, -3, 24, 5), Color("253b3a66"))
 	var row: int = {"water": 0, "bone": 1, "boss": 2, "archer": 3, "lantern": 4, "gunner": 5, "brute": 6, "well_boss": 0, "opera_boss": 5}.get(record.kind, 0)
 	var scale_value: float = 3 if record.kind in ["boss", "well_boss", "opera_boss"] else 2
-	var tint := Color.WHITE if hit_flash > 0.065 else (Color("d79279") if hit_flash > 0 else (Color("8eafd0") if stun > 0.3 else Color.WHITE))
+	var tint := Color.WHITE if hit_flash > 0.065 else (Color("d79279") if hit_flash > 0 else (Color("8eafd0") if stun > 0.3 or chill_time > 0 else Color.WHITE))
 	var missing: Array = record.get("severed", [])
 	# Draw the original sprite in non-overlapping pieces so missing limbs stay absent.
 	for part in [Rect2(0, 0, 16, 8), Rect2(4, 8, 8, 10), Rect2(0, 8, 4, 10), Rect2(12, 8, 4, 10), Rect2(0, 18, 8, 6), Rect2(8, 18, 8, 6)]:
+		if part.position == Vector2(0, 0) and "head" in missing: continue
 		if part.position == Vector2(12, 8) and "arm" in missing: continue
 		if part.position == Vector2(8, 18) and "leg" in missing: continue
 		var destination := Rect2(Vector2(-8, -22) * scale_value + part.position * scale_value, part.size * scale_value)
@@ -232,7 +269,7 @@ func _draw() -> void:
 	if record.kind == "well_boss":
 		draw_arc(Vector2(0, -18), 24, 0, TAU, 16, Color("85c9ce"), 3)
 		draw_rect(Rect2(-20, -70, 40, 8), Color("366777"))
-	if record.kind == "opera_boss":
+	if record.kind == "opera_boss" and "head" not in missing:
 		draw_rect(Rect2(-12, -62, 24, 16), Color("e7d6b9"))
 		draw_rect(Rect2(-9, -56, 18, 4), Color("9d495c"))
 		for side in [-1, 1]: draw_line(Vector2(side * 15, -38), Vector2(side * 31, -7), Color("c26f85"), 4)
@@ -240,6 +277,8 @@ func _draw() -> void:
 	draw_rect(Rect2(-16, -50 * (1.4 if row == 2 else 1), 32 * health_trail / record.max_hp, 3), Color("e6bb83"))
 	draw_rect(Rect2(-16, -50 * (1.4 if row == 2 else 1), 32 * float(record.hp) / record.max_hp, 3), Color("aa7164"))
 	if shield > 0: draw_arc(Vector2(0, -25), 25, 0, TAU, 20, Color("96c0db"), 2)
+	if burn_time > 0: draw_circle(Vector2(8, -24), 3, Color("f4a261"))
+	if chill_time > 0: draw_arc(Vector2(0, -20), 18, 0, TAU, 12, Color("91d8ee"), 1)
 	if bleed_time > 0: draw_rect(Rect2(-3, -56, 6, 6), Color("b54e5c"))
 	var caption: String = YinBalance.MONSTERS[record.kind].name + " Lv%d" % int(record.get("level", 1)) + (" · 精英" if record.get("elite", false) else "")
 	draw_string(ThemeDB.fallback_font, Vector2(-24, -56 * (1.4 if row == 2 else 1)), caption, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color("e6c485") if record.get("elite", false) else Color("c8c9ae"))
@@ -254,7 +293,7 @@ func _draw() -> void:
 		draw_rect(Rect2(local_center - Vector2(2, 2), Vector2(4, 4)), Color("f0bc7d"))
 
 func hurt_victim(damage: int) -> void:
-	if not is_instance_valid(victim): return
+	if not is_instance_valid(victim) or "head" in record.get("severed", []) or record.dead: return
 	if "arm" in record.get("severed", []): damage = maxi(1, roundi(damage * 0.75))
 	if record.kind == "brute" and record.hp < record.max_hp / 2: damage = roundi(damage * 1.2)
 	if victim == game.player: game.take_damage(damage)
@@ -266,9 +305,13 @@ func apply_bleed(duration: float, damage: int) -> void:
 func update_dismemberment() -> void:
 	if not record.has("severed"): record.severed = []
 	var ratio: float = float(record.hp) / record.max_hp
-	for part in ["arm", "leg"]:
-		if part in record.severed or ratio > (0.60 if part == "arm" else 0.30): continue
+	for part in ["arm", "leg", "head"]:
+		if part in record.severed or ratio > {"arm": 0.60, "leg": 0.30, "head": 0.15}[part]: continue
 		record.severed.append(part)
+		if part == "head":
+			windup = 0
+			burst_remaining = 0
+			charge_time = 0
 		var fragment := YinSeveredLimb.new()
 		fragment.part = part
 		fragment.row = {"water": 0, "bone": 1, "boss": 2, "archer": 3, "lantern": 4, "gunner": 5, "brute": 6, "well_boss": 0, "opera_boss": 5}.get(record.kind, 0)
@@ -277,3 +320,31 @@ func update_dismemberment() -> void:
 		fragment.velocity = game.player.position.direction_to(position).rotated(-0.6 if part == "arm" else 0.6) * 85
 		game.world.feedback.add_child(fragment)
 		game.world.effect(fragment.position, Color("a57465"))
+
+func apply_element(element: String, power: int = 3) -> void:
+	if record.dead: return
+	match element:
+		"burn":
+			chill_time = 0
+			freeze_lock = 0
+			burn_time = 4
+			burn_power = maxi(burn_power, power)
+		"freeze":
+			if burn_time > 0:
+				burn_time = 0
+				game.world.effect(position + Vector2(0, -20), Color("dce5e7"))
+			chill_time = 3
+			if freeze_immunity <= 0:
+				freeze_lock = 0.10 if record.kind in YinAbilities.BOSSES else 0.4
+				freeze_immunity = 4
+		"lightning":
+			var neighbors: Array = []
+			for other in get_tree().get_nodes_in_group("enemies"):
+				if other == self or other.is_queued_for_deletion() or other.record.dead or other.get_parent() != game.world.actors or position.distance_to(other.position) > 140: continue
+				var ray := PhysicsRayQueryParameters2D.create(position + Vector2(0, -4), other.position + Vector2(0, -4), 1)
+				if get_world_2d().direct_space_state.intersect_ray(ray).is_empty(): neighbors.append(other)
+			neighbors.sort_custom(func(a, b): return position.distance_squared_to(a.position) < position.distance_squared_to(b.position))
+			for i in range(mini(2, neighbors.size())):
+				game.world.spell_trace(position + Vector2(0, -20), neighbors[i].position + Vector2(0, -20), "lightning")
+				neighbors[i].receive_hit(power * 2, "lightning")
+	queue_redraw()

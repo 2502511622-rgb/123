@@ -198,6 +198,7 @@ func front_plot() -> int:
 	return plot_at(player.position + Vector2(0, -6) + player.facing * 25)
 
 func nearest_interaction() -> String:
+	if nearest_chest() != "": return "treasure"
 	if state.zone == "village":
 		if player.position.distance_to(Vector2(155, 820)) < 47: return "village_return"
 		for villager in get_tree().get_nodes_in_group("villagers"):
@@ -364,7 +365,7 @@ func spell_trace(start: Vector2, end: Vector2, method: String) -> void:
 	var line := Line2D.new()
 	line.points = PackedVector2Array([start, start.lerp(end, 0.5) + Vector2(0, -6), end])
 	line.width = 3
-	line.default_color = Color("e5a166") if method == "fire" else Color("8dd8c7")
+	line.default_color = {"fire": Color("e5a166"), "lightning": Color("c4a7ef"), "curse": Color("c18ba9")}.get(method, Color("8dd8c7"))
 	feedback.add_child(line)
 	var tween := line.create_tween()
 	tween.tween_property(line, "modulate:a", 0.0, 0.22)
@@ -393,6 +394,9 @@ func build_forest() -> void:
 	add_sign(Vector2(125, 1152), "返回乱葬坡 ↓")
 	add_sign(Vector2(160, 1070), "后山铳林 · T2–T5 · 远程弹幕与精英")
 	# Open trails connect the old eastern exits to three new encounter landmarks.
+	add_sign(Vector2(1710, 590), "向东探索 → 宝箱与遗址")
+	add_sign(Vector2(608, 720), "猎人旧箱 · 支路")
+	add_sign(Vector2(320, 1060), "沿主路向北过桥 → 东侧分岔")
 	add_sign(Vector2(1900, 570), "东行 · 断碑营地 / 枯井 / 山门")
 	for center in [Vector2(2304, 384), Vector2(2432, 1024), Vector2(2304, 1632)]:
 		for offset in [Vector2(-112, -80), Vector2(112, -80), Vector2(-112, 80), Vector2(112, 80)]:
@@ -470,3 +474,17 @@ func impact(at: Vector2, direction: Vector2, method: String) -> void:
 	tween.tween_property(spark, "modulate:a", 0.0, 0.14)
 	tween.tween_callback(spark.queue_free)
 	effect(at, Color("e0b490"))
+
+func nearest_chest() -> String:
+	for id in YinAdventure.CHESTS:
+		var spec: Dictionary = YinAdventure.CHESTS[id]
+		if spec.zone == state.zone and id not in state.opened_chests and is_instance_valid(player) and player.position.distance_to(spec.at) < 46: return id
+	return ""
+func install_chests(game: Node2D) -> void:
+	for id in YinAdventure.CHESTS:
+		if YinAdventure.CHESTS[id].zone != state.zone: continue
+		var chest := YinTreasureChest.new()
+		chest.chest_id = id
+		chest.game = game
+		chest.position = YinAdventure.CHESTS[id].at
+		actors.add_child(chest)

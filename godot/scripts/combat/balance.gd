@@ -5,8 +5,21 @@ const WEAPONS = {
  "pistol": {"name": "手枪", "damage": 19, "interval": 0.28, "magazine": 8, "reload": 1.0, "ammo": "light_ammo", "speed": 700, "spread": 0.018, "range": 650},
  "smg": {"name": "冲锋枪", "damage": 9, "interval": 0.09, "magazine": 24, "reload": 1.4, "ammo": "light_ammo", "speed": 750, "spread": 0.09, "range": 560},
  "rifle": {"name": "步枪", "damage": 31, "interval": 0.2, "magazine": 12, "reload": 1.6, "ammo": "rifle_ammo", "speed": 1000, "spread": 0.008, "range": 1000},
+ "whip": {"name": "鞭子", "damage": 13, "interval": 0.48, "magazine": 0, "reload": 0.0, "ammo": "", "speed": 0, "spread": 0.0, "range": 112},
+ "silver_sword": {"name": "银剑", "damage": 24, "interval": 0.4, "magazine": 0, "reload": 0.0, "ammo": "", "speed": 0, "spread": 0.0, "range": 57},
+ "revolver": {"name": "左轮", "damage": 38, "interval": 0.48, "magazine": 6, "reload": 1.7, "ammo": "light_ammo", "speed": 900, "spread": 0.01, "range": 820},
+ "gatling": {"name": "加特林", "damage": 7, "interval": 0.055, "magazine": 80, "reload": 3.2, "ammo": "rifle_ammo", "speed": 800, "spread": 0.12, "range": 760},
+ "spellbook": {"name": "魔法书", "damage": 26, "interval": 0.6, "magazine": 0, "reload": 0.0, "ammo": "", "speed": 340, "spread": 0.0, "range": 640, "energy": 7},
+ "curse_doll": {"name": "咒术娃娃", "damage": 18, "interval": 0.9, "magazine": 0, "reload": 0.0, "ammo": "", "speed": 0, "spread": 0.0, "range": 220, "energy": 9},
  "armor": {"name": "镇煞护甲", "damage": 0, "interval": 0.0, "magazine": 0, "reload": 0.0, "ammo": "", "speed": 0, "spread": 0.0, "range": 0}
 }
+const MELEE = ["sword", "whip", "silver_sword"]
+const GUNS = ["pistol", "smg", "rifle", "revolver", "gatling"]
+const MAGIC = ["spellbook", "curse_doll"]
+const ICON_ORDER = ["sword", "pistol", "smg", "rifle", "armor", "whip", "silver_sword", "revolver", "gatling", "spellbook", "curse_doll"]
+const ELEMENTS = ["burn", "freeze", "lightning"]
+const ELEMENT_NAMES = {"burn": "燃烧", "freeze": "冰冻", "lightning": "闪电"}
+const ELEMENT_COLORS = {"burn": Color("f4a261"), "freeze": Color("91d8ee"), "lightning": Color("c4a7ef")}
 const QUALITY = ["凡品", "灵纹", "珍品", "异宝"]
 const COLORS = [Color("c5c8b5"), Color("84bdda"), Color("e5c477"), Color("e7a46e")]
 const MONSTERS = {
@@ -36,7 +49,7 @@ static func make_gear(id: int, weapon: String, tier: int = 1, quality: int = 0) 
   affixes.append({"id": first, "value": 8 + quality * 4 if first == "crit" else 3 + mini(quality, 3)})
   if quality >= 2:
    affixes.append({"id": "bleed" if first == "crit" else "crit", "value": 4 if first == "crit" else 16})
- return {"id": id, "weapon": weapon, "tier": tier, "quality": quality, "bonus": quality * 8, "magazine": 0, "affixes": affixes}
+ return {"id": id, "weapon": weapon, "tier": tier, "quality": quality, "bonus": quality * 8, "magazine": 0, "affixes": affixes, "enchantment": ELEMENTS[randi_range(0, 2)] if weapon != "armor" else ""}
 static func gear_name(gear: Dictionary) -> String:
  return "%s·%s T%d" % [QUALITY[int(gear.quality)], WEAPONS[gear.weapon].name, gear.tier]
 static func armor_value(gear: Dictionary) -> int:
@@ -45,3 +58,13 @@ static func enemy(kind: String, level_value: int, elite: bool = false) -> Dictio
  level_value = clampi(level_value, 1, 20)
  var spec: Dictionary = MONSTERS[kind]
  return {"hp": roundi(spec.hp * (1 + 0.18 * (level_value - 1)) * (1.65 if elite else 1)), "damage": roundi(spec.damage * (1 + 0.10 * (level_value - 1)) * (1.2 if elite else 1)), "armor": int(spec.armor) + (level_value - 1) * 2 + (8 if kind == "bone" else 0), "level": level_value, "elite": elite}
+
+static var icon_cache: Dictionary = {}
+static func icon(weapon: String) -> AtlasTexture:
+ if icon_cache.has(weapon): return icon_cache[weapon]
+ var index: int = ICON_ORDER.find(weapon)
+ var texture := AtlasTexture.new()
+ texture.atlas = preload("res://assets/weapons.png") if index < 5 else preload("res://assets/arsenal.svg")
+ texture.region = Rect2((index if index < 5 else index - 5) * 24, 0, 24, 16)
+ icon_cache[weapon] = texture
+ return texture

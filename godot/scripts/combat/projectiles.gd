@@ -24,7 +24,7 @@ func _physics_process(delta: float) -> void:
    if bullet.friendly and hit.collider is YinHurtbox:
     var enemy: YinEnemy = hit.collider.actor as YinEnemy
     if is_instance_valid(enemy) and not enemy.record.dead: enemy.receive_hit(bullet.damage, "bullet")
-    if is_instance_valid(enemy) and bullet.payload.get("bleed", 0) > 0: enemy.apply_bleed(bullet.payload.bleed, 2)
+    if is_instance_valid(enemy): game.combat.apply_payload(enemy, bullet.payload)
    elif not bullet.friendly and hit.collider is YinAllyHurtbox:
     hit.collider.actor.receive_hit(bullet.damage)
    elif not bullet.friendly and hit.collider == game.player:

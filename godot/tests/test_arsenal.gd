@@ -62,6 +62,7 @@ func fixture(kind: String, at: Vector2, hp: int = 1000) -> YinEnemy:
 func reset_world(at: Vector2) -> void:
  game.close_modal()
  game.state = FarmState.new()
+ for gear in game.state.equipment: gear.enchantment = ""
  game.build_zone("farm", at)
  game.state.enemies.clear()
  game.action_cooldown = 0
@@ -147,6 +148,7 @@ func run() -> void:
  await key(KEY_8)
  check(game.state.current_gear().weapon == "pistol" and game.player.held_item == "pistol", "pistol shortcut changes equipped and visible weapon")
  game.state.current_gear().affixes.clear() # This fixture isolates base bullet damage from innate procs.
+ game.state.current_gear().enchantment = ""
  var reserve: int = game.state.supplies.light_ammo
  await key(KEY_U)
  await frames(24)
@@ -160,6 +162,7 @@ func run() -> void:
  var ammo_total: int = game.state.supplies.light_ammo
  var smg: Dictionary = game.state.grant_gear("smg")
  smg.affixes.clear()
+ smg.enchantment = ""
  await key(KEY_9)
  await key(KEY_U)
  await frames(32)
@@ -178,6 +181,7 @@ func run() -> void:
  game.world.projectiles.projectile_spawned.disconnect(count_shots)
  var rifle: Dictionary = game.state.grant_gear("rifle")
  rifle.affixes.clear()
+ rifle.enchantment = ""
  game.state.supplies.rifle_ammo = 12
  await key(KEY_0)
  await key(KEY_U)

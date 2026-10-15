@@ -20,7 +20,5 @@ func _process(delta: float) -> void:
 func _draw() -> void:
  var tint: Color = YinBalance.COLORS[int(record.gear.quality)]
  draw_line(Vector2(0, -28), Vector2(0, 4), Color(tint, 0.35), 2)
- var atlas: Texture2D = preload("res://assets/weapons.png")
- var index: int = ["sword", "pistol", "smg", "rifle", "armor"].find(record.gear.weapon)
- draw_texture_rect_region(atlas, Rect2(-12, -18, 24, 16), Rect2(index * 24, 0, 24, 16))
+ draw_texture_rect(YinBalance.icon(record.gear.weapon), Rect2(-12, -18, 24, 16), false)
  draw_string(ThemeDB.fallback_font, Vector2(-38, -30), YinBalance.WEAPONS[record.gear.weapon].name, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, tint)

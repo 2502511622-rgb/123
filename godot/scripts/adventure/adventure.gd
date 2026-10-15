@@ -1,0 +1,78 @@
+class_name YinAdventure
+extends RefCounted
+const CHESTS = {
+	"grave_cache": {"name": "守墓人的箱子", "zone": "graveyard", "at": Vector2(448, 500), "weapon": "whip", "tier": 1},
+	"forest_west": {"name": "猎人的旧箱", "zone": "forest", "at": Vector2(640, 768), "weapon": "revolver", "tier": 2},
+	"camp_cache": {"name": "断碑军械箱", "zone": "forest", "at": Vector2(2304, 448), "weapon": "gatling", "tier": 3},
+	"well_cache": {"name": "枯井密匣", "zone": "forest", "at": Vector2(2432, 1088), "weapon": "curse_doll", "tier": 3},
+	"temple_cache": {"name": "山门经匣", "zone": "forest", "at": Vector2(2304, 1696), "weapon": "spellbook", "tier": 4},
+	"sunken_cache": {"name": "沉水银匣", "zone": "sunken", "at": Vector2(1088, 704), "weapon": "silver_sword", "tier": 3},
+	"theatre_cache": {"name": "戏台道具箱", "zone": "theatre", "at": Vector2(1088, 704), "weapon": "curse_doll", "tier": 3}
+}
+const LANDMARKS = {
+	"camp": {"name": "断碑营地", "at": Vector2(2304, 384)},
+	"well": {"name": "枯井", "at": Vector2(2432, 1024)},
+	"temple": {"name": "山门遗址", "at": Vector2(2304, 1632)}
+}
+const QUESTS = {
+	"grave_patrol": {"npc": 1, "name": "清理乱葬坡", "kind": "hunt", "target": 4, "money": 65, "weapon": "whip", "description": "在乱葬坡击败四只鬼物，回村向柳伯复命。"},
+	"lamp_supplies": {"npc": 4, "name": "修复村口纸灯", "kind": "delivery", "target": 3, "item": "wood", "money": 45, "weapon": "revolver", "description": "交给灯匠小满三份槐木，修好村口纸灯。"},
+	"forge_supplies": {"npc": 3, "name": "重铸银剑", "kind": "delivery", "target": 3, "item": "scrap", "money": 30, "weapon": "silver_sword", "description": "交给铁匠阿祁三份零件，换取一把银剑。"},
+	"lost_records": {"npc": 6, "name": "后山遗迹调查", "kind": "survey", "target": 3, "money": 100, "weapon": "spellbook", "description": "调查后山的断碑营地、枯井和山门遗址，再找砚青。"}
+}
+static func accept(state, id: String) -> String:
+	if not QUESTS.has(id): return "没有这项委托。"
+	if state.quests.has(id): return "这项委托已经接取。"
+	state.quests[id] = {"progress": 0, "claimed": false}
+	state.tracked_quest = id
+	return "接取委托：" + QUESTS[id].name
+static func progress(state, id: String) -> int:
+	if not state.quests.has(id) or not QUESTS.has(id): return 0
+	var spec: Dictionary = QUESTS[id]
+	if spec.kind == "delivery": return mini(spec.target, state.container_count("bag", spec.item))
+	if spec.kind == "survey": return mini(spec.target, state.visited_landmarks.size())
+	return mini(spec.target, int(state.quests[id].progress))
+static func on_kill(state, enemy: Dictionary) -> void:
+	if enemy.zone != "graveyard" or not state.quests.has("grave_patrol"): return
+	var quest: Dictionary = state.quests.grave_patrol
+	if not quest.claimed: quest.progress = mini(4, int(quest.progress) + 1)
+static func claim(state, id: String, npc_id: int) -> String:
+	if not QUESTS.has(id) or not state.quests.has(id): return "尚未接取。"
+	var spec: Dictionary = QUESTS[id]
+	if spec.npc != npc_id: return "请向委托人复命。"
+	if state.quests[id].claimed: return "奖励已经领取。"
+	if progress(state, id) < spec.target: return "委托尚未完成。"
+	if state.equipment.size() >= 20: return "装备位已满，请先整理，再来领取。"
+	if spec.kind == "delivery": state.set_container_count("bag", spec.item, state.container_count("bag", spec.item) - spec.target)
+	state.grant_gear(spec.weapon, 2, 1)
+	state.money += spec.money
+	state.quests[id].claimed = true
+	if state.tracked_quest == id: state.tracked_quest = ""
+	state.add_log("完成委托：" + spec.name)
+	return "委托完成：%d 文与%s。" % [spec.money, YinBalance.WEAPONS[spec.weapon].name]
+static func open_chest(state, id: String, player_at: Vector2) -> String:
+	if not CHESTS.has(id): return "没有这个宝箱。"
+	var spec: Dictionary = CHESTS[id]
+	if id in state.opened_chests: return "宝箱已经打开。"
+	if spec.zone != state.zone or player_at.distance_to(spec.at) > 56: return "走近宝箱再开启。"
+	if state.enemies.any(func(e): return e.zone == spec.zone and not e.dead and Vector2(e.at[0], e.at[1]).distance_to(spec.at) < 150): return "附近仍有守卫，先清理再开箱。"
+	var supplies: Dictionary = {"light_ammo": 12, "rifle_ammo": 6, "scrap": 1}
+	if state.equipment.size() >= 20 or not state.can_gain_many(supplies): return "装备或行囊已满，宝箱奖励仍保留。"
+	var gear: Dictionary = state.grant_gear(spec.weapon, spec.tier, 2)
+	for item in supplies: state.set_container_count("bag", item, state.container_count("bag", item) + supplies[item])
+	state.money += 20 * spec.tier
+	state.opened_chests.append(id)
+	return "获得 %s、弹药、零件与 %d 文。" % [YinBalance.gear_name(gear), 20 * spec.tier]
+static func validate(data: Dictionary) -> bool:
+	if data.opened_chests.size() > CHESTS.size() or data.visited_landmarks.size() > LANDMARKS.size() or data.quests.size() > QUESTS.size(): return false
+	var opened: Array = []
+	for id in data.opened_chests:
+		if not id is String or not CHESTS.has(id) or id in opened: return false
+		opened.append(id)
+	for id in data.visited_landmarks:
+		if not id is String or not LANDMARKS.has(id) or data.visited_landmarks[id] != true: return false
+	for id in data.quests:
+		if not QUESTS.has(id) or not data.quests[id] is Dictionary: return false
+		var quest: Dictionary = data.quests[id]
+		if not quest.get("claimed") is bool or not FarmState.valid_int(quest.get("progress"), 0, QUESTS[id].target): return false
+	return data.tracked_quest == "" or (data.quests.has(data.tracked_quest) and not data.quests[data.tracked_quest].claimed)

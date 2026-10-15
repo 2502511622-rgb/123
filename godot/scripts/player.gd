@@ -82,9 +82,9 @@ func _draw() -> void:
 	var frame: int = int(animation_time * 9) % 4
 	draw_texture_rect_region(texture, Rect2(-16, -40, 32, 40), Rect2(frame * 16, row * 20, 16, 20), Color("ef9a82") if hit_feedback > 0 else (Color(1, 1, 1, 0.55 if int(invincible * 20) % 2 == 0 else 1.0) if invincible > 0 else Color.WHITE))
 	draw_held_item()
-	if attack_time > 0 and held_item == "sword":
+	if attack_time > 0 and held_item in YinBalance.MELEE:
 		var sweep: float = 1 - attack_time / 0.22
-		draw_arc(Vector2.ZERO, hitbox.radius, facing.angle() - 0.85, facing.angle() + 0.85, 12, Color("dcd7b0"), 2)
+		draw_arc(Vector2.ZERO, hitbox.radius, facing.angle() - 0.85, facing.angle() + 0.85, 12, Color("dcd7b0") if held_item != "whip" else Color("b99470"), 2)
 		var tip := Vector2.from_angle(facing.angle() - 0.85 + sweep * 1.7) * (hitbox.radius - 2)
 		draw_line(Vector2.ZERO, tip, Color("9f7452"), 3)
 		draw_line(tip * 0.7, tip, Color("f0ddb0"), 3)
@@ -102,7 +102,7 @@ func dodge() -> void:
 	dodge_cooldown = 1.2
 
 func draw_held_item() -> void:
-	var direction: Vector2 = aim_direction if held_item in ["pistol", "smg", "rifle"] else facing
+	var direction: Vector2 = aim_direction if held_item in YinBalance.GUNS or held_item in YinBalance.MAGIC else facing
 	var hand := direction * 6 + Vector2(0, -17)
 	if held_item.begins_with("tool"):
 		var index: int = int(held_item.substr(4))
@@ -110,11 +110,11 @@ func draw_held_item() -> void:
 		draw_set_transform(hand, direction.angle() + swing, Vector2.ONE)
 		draw_texture_rect_region(preload("res://assets/tools.png"), Rect2(-6, -6, 16, 16), Rect2(index * 16, 0, 16, 16))
 	else:
-		var index: int = ["sword", "pistol", "smg", "rifle"].find(held_item)
+		var index: int = YinBalance.ICON_ORDER.find(held_item)
 		if index < 0: return
 		var recoil: float = recoil_time / 0.09 * 3
 		draw_set_transform(hand - direction * recoil, direction.angle(), Vector2.ONE)
-		draw_texture_rect_region(preload("res://assets/weapons.png"), Rect2(-6, -7, 24, 16), Rect2(index * 24, 0, 24, 16))
+		draw_texture_rect(YinBalance.icon(held_item), Rect2(-6, -7, 24, 16), false)
 		if recoil_time > 0:
 			draw_rect(Rect2(18, -3, 5, 4), Color("f7df9c"))
 			draw_rect(Rect2(21, -5, 3, 8), Color("db9c63"))

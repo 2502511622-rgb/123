@@ -36,6 +36,10 @@ var smart_button: Button
 var shooting_mouse: bool = false
 var minimap: YinMinimap
 var character_tab: String = "背包"
+var quest_tracker: Button
+var npc_dialogue := YinNpcDialogue.new()
+var dialogue_log: Dictionary = {}
+var exploration_clock: float = 0
 
 func _ready() -> void:
 	YinDisplaySettings.load_settings()
@@ -111,6 +115,7 @@ func build_zone(zone_name: String, at: Vector2) -> void:
 	spawn_villagers()
 	spawn_spirits()
 	spawn_remains_visuals()
+	world.install_chests(self)
 
 func travel(zone_name: String) -> void:
 	close_modal()
@@ -170,7 +175,7 @@ func spawn_remains_visuals() -> void:
 		world.actors.add_child(sprite)
 
 func setup_inputs() -> void:
-	var keys: Dictionary = {"move_left": [KEY_A, KEY_LEFT], "move_right": [KEY_D, KEY_RIGHT], "move_up": [KEY_W, KEY_UP], "move_down": [KEY_S, KEY_DOWN], "use_tool": [KEY_SPACE], "interact": [KEY_E], "cycle_seed": [KEY_Q], "inventory": [KEY_I], "pause_game": [KEY_ESCAPE], "attack": [KEY_J], "dodge": [KEY_SHIFT], "seal": [KEY_F], "fire": [KEY_G], "rollcall": [KEY_R], "order": [KEY_C], "journal": [KEY_L], "wait_night": [KEY_T], "mute": [KEY_M], "reload": [KEY_U], "equipment": [KEY_B], "smart_farming": [KEY_Z], "instant_refine": [KEY_V], "map": [KEY_TAB], "companions": [KEY_H], "mail": [KEY_K]}
+	var keys: Dictionary = {"move_left": [KEY_A, KEY_LEFT], "move_right": [KEY_D, KEY_RIGHT], "move_up": [KEY_W, KEY_UP], "move_down": [KEY_S, KEY_DOWN], "use_tool": [KEY_SPACE], "interact": [KEY_E], "cycle_seed": [KEY_Q], "inventory": [KEY_I], "pause_game": [KEY_ESCAPE], "attack": [KEY_J], "dodge": [KEY_SHIFT], "seal": [KEY_F], "fire": [KEY_G], "rollcall": [KEY_R], "order": [KEY_C], "journal": [KEY_L], "wait_night": [KEY_T], "mute": [KEY_M], "reload": [KEY_U], "equipment": [KEY_B], "smart_farming": [KEY_Z], "instant_refine": [KEY_V], "quests": [KEY_O], "map": [KEY_TAB], "companions": [KEY_H], "mail": [KEY_K]}
 	for action in keys:
 		if not InputMap.has_action(action): InputMap.add_action(action)
 		for key in keys[action]:
@@ -237,6 +242,10 @@ func build_hud() -> void:
 	info.add_child(energy_bar)
 	quest_label = label("", Vector2.ZERO, hud, 10)
 	quest_label.visible = false
+	quest_tracker = button("O 委托", show_quests, Vector2(194, 44))
+	quest_tracker.position = Vector2(436, 106)
+	quest_tracker.add_theme_font_size_override("font_size", 10)
+	hud.add_child(quest_tracker)
 	seed_button = button("", cycle_seed)
 	var crop_icon := AtlasTexture.new()
 	crop_icon.atlas = preload("res://assets/crops.png")
@@ -273,7 +282,7 @@ func build_hud() -> void:
 func _physics_process(delta: float) -> void:
 	if modal != null: return
 	action_cooldown = maxf(-delta, action_cooldown - delta)
-	if player.held_item in ["pistol", "smg", "rifle"] and (Input.is_action_pressed("attack") or shooting_mouse): combat.shoot()
+	if player.held_item in YinBalance.GUNS and (Input.is_action_pressed("attack") or shooting_mouse): combat.shoot()
 
 func _process(delta: float) -> void:
 	if modal == null:
@@ -291,6 +300,10 @@ func _process(delta: float) -> void:
 		if state.zone == "farm" and state.minutes >= 1080 and whisper_day != state.day and state.plots.any(func(p): return p.crop == "rice" and p.growth >= 2 and not p.sealed):
 			whisper_day = state.day
 			refresh("田里响起师父的声音：你回来啦？——不要答应，靠近返魂稻按 E 封声。")
+		exploration_clock += delta
+		if exploration_clock >= 0.25:
+			exploration_clock = 0
+			update_exploration()
 		message_time -= delta
 		hud.get_node("Toast").visible = message_time > 0 or save_failed
 		autosave_time += delta
@@ -317,6 +330,7 @@ func spawn_new_boss() -> void:
 		world.actors.add_child(enemy)
 
 func update_labels() -> void:
+	update_quest_tracker()
 	date_label.text = "第 %02d 日  %02d:%02d  %s" % [state.day, (int(state.minutes) % 1440) / 60, int(state.minutes) % 60, "雨" if state.weather == "rain" else ("夜" if state.minutes >= 1080 else "昼")]
 	stats_label.text = "%d 文  油 %d  新信 %d" % [state.money, state.oil, state.letters.filter(func(letter): return not letter.read).size()]
 	health_bar.value = state.health
@@ -326,14 +340,14 @@ func update_labels() -> void:
 	var gear: Dictionary = state.current_gear()
 	var spec: Dictionary = YinBalance.WEAPONS[gear.weapon]
 	var shown_name: String = TOOL_NAMES[int(player.held_item.substr(4))] if player.held_item.begins_with("tool") else spec.name
-	combat_label.text = "%s  ·  %s\nF %d/2%s" % [shown_name, "近战" if spec.ammo == "" else "%d / %d" % [gear.magazine, state.container_count("bag", spec.ammo)], state.skill_charges.seal, "    G %d/2" % state.skill_charges.fire if state.skill_ranks.fire > 0 else ""]
+	combat_label.text = "%s  ·  %s\nF %d/2%s" % [shown_name, ("气力 %d" % state.energy if gear.weapon in YinBalance.MAGIC else "近战") if spec.ammo == "" else "%d / %d" % [gear.magazine, state.container_count("bag", spec.ammo)], state.skill_charges.seal, "    G %d/2" % state.skill_charges.fire if state.skill_ranks.fire > 0 else ""]
 	if not combat.reload_job.is_empty(): combat_label.text += " · 装填 %.1fs" % combat.reload_job.remaining
 	smart_button.text = "Z 智能劳作：" + ("开" if state.smart_farming else "手动")
 	(seed_button.icon as AtlasTexture).region = Rect2(80, CROP_IDS.find(state.selected_crop) * 16, 16, 16)
 	seed_button.text = "Q %s × %d" % [FarmState.CROPS[state.selected_crop].display_name, state.seed_count(state.selected_crop)]
 	quest_label.text = "役灵 %d/%d  污染 %d\n镇守 %d  载骸 %d/2\n%s" % [state.spirits.size(), state.capacity(), state.pollution, state.ward, state.cargo.size(), "手札 L · 第一章已完成" if state.ending != "" else ("棺中客已倒下 · 十日赴约" if state.boss_defeated else ("夜袭进行中 · 不可安睡" if has_live_boss() else "每夜 R 点名 · C 役灵指令"))]
 	var kind: String = world.nearest_interaction()
-	var hints: Dictionary = {"village_gate": "E 青槐村 · 村民与夜袭求救", "village_return": "E 返回义庄田园", "villager": "E 与村民交谈","sunken_gate": "E 沉水村 · 支线首领井中龙婆", "theatre_gate": "E 废戏台 · 支线首领无面伶王", "branch_return": "E 返回后山铳林","forest_gate": "E 进入后山铳林 · 更大地图、精英与远程弹幕", "forest_return": "E 返回乱葬坡", "home": "E 进入义庄：案台、卧榻与仓箱", "shipping": "E 货箱：出售背包里的灵物", "shop": "E 进入杂货铺", "npc": "E 桥边阿婆：村庄秘密与十日抉择", "altar": "E 祭坛：先看收益和代价，也可不祭祀", "gate": "E 进入乱葬坡 · 携骸时移速下降", "return": "E 返回义庄，处理遗骸", "exit_interior": "E 返回院落", "workbench": "E 案台：炼骸、制符与役灵", "counter": "E 柜台：交易", "storage": "E 仓箱：存取、拆分与交换物品", "bed": "E 卧榻：休息至天亮"}
+	var hints: Dictionary = {"treasure": "E 开启宝箱 · 清理附近守卫后领取","village_gate": "E 青槐村 · 村民与夜袭求救", "village_return": "E 返回义庄田园", "villager": "E 与村民交谈","sunken_gate": "E 沉水村 · 支线首领井中龙婆", "theatre_gate": "E 废戏台 · 支线首领无面伶王", "branch_return": "E 返回后山铳林","forest_gate": "E 进入后山铳林 · 更大地图、精英与远程弹幕", "forest_return": "E 返回乱葬坡", "home": "E 进入义庄：案台、卧榻与仓箱", "shipping": "E 货箱：出售背包里的灵物", "shop": "E 进入杂货铺", "npc": "E 桥边阿婆：村庄秘密与十日抉择", "altar": "E 祭坛：先看收益和代价，也可不祭祀", "gate": "E 进入乱葬坡 · 携骸时移速下降", "return": "E 返回义庄，处理遗骸", "exit_interior": "E 返回院落", "workbench": "E 案台：炼骸、制符与役灵", "counter": "E 柜台：交易", "storage": "E 仓箱：存取、拆分与交换物品", "bed": "E 卧榻：休息至天亮"}
 
 	var remains_hint: Dictionary = nearest_remains()
 	context_label.text = "V 免费炼化 · E 处理 · " + remains_hint.name if not remains_hint.is_empty() else hints.get(kind, "")
@@ -437,6 +451,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			if combat.select_weapon(kind): player.held_item = kind
 		elif event.is_action_pressed("reload"): combat.reload()
 		elif event.is_action_pressed("equipment"): show_character("穿戴")
+		elif event.is_action_pressed("quests"): show_quests()
 		elif event.is_action_pressed("map"): show_character("地图")
 		elif event.is_action_pressed("companions"): show_character("随从")
 		elif event.is_action_pressed("mail"): show_character("书信")
@@ -475,21 +490,21 @@ func _unhandled_input(event: InputEvent) -> void:
 		player.held_item = state.current_gear().weapon
 		refresh("%s：%s" % [{"melee": "近战", "primary": "主武器", "secondary": "副武器"}[slot], YinBalance.gear_name(state.current_gear())])
 		return
-	if event is InputEventMouseMotion and state.current_gear().weapon != "sword":
+	if event is InputEventMouseMotion and state.current_gear().weapon not in YinBalance.MELEE:
 		player.aim_direction = player.position.direction_to(world.get_global_mouse_position())
 	if event is InputEventMouseButton and not event.pressed and event.button_index == MOUSE_BUTTON_LEFT: shooting_mouse = false
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT:
-		if state.current_gear().weapon != "sword": combat.reload()
+		if state.current_gear().weapon not in YinBalance.MELEE: combat.reload()
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		if placement.selected != "":
 			if placement.place(world.get_global_mouse_position()): notify_action("放置完成。")
 			else: refresh("距离太远、田地或障碍物占用，未消耗物品。")
-		elif state.zone in ["graveyard", "forest", "sunken", "theatre", "village"] or nearest_enemy(player.position, 65) != null or player.held_item in ["pistol", "smg", "rifle"]:
+		elif state.zone in ["graveyard", "forest", "sunken", "theatre", "village"] or nearest_enemy(player.position, 65) != null or player.held_item in YinBalance.GUNS:
 			var aim: Vector2 = player.position.direction_to(world.get_global_mouse_position())
 			if aim != Vector2.ZERO and player.state_machine.current in ["idle", "walk"]:
 				player.facing = aim
 				player.aim_direction = aim
-			shooting_mouse = state.current_gear().weapon != "sword"
+			shooting_mouse = state.current_gear().weapon not in YinBalance.MELEE
 			attack("sword")
 		else: use_plot(world.plot_at(world.get_global_mouse_position()))
 
@@ -508,6 +523,9 @@ func interact() -> void:
 		show_special_plot(index)
 		return
 	match world.nearest_interaction():
+		"treasure":
+			var id: String = world.nearest_chest()
+			notify_action(YinAdventure.open_chest(state, id, player.position))
 		"village_gate": travel("village")
 		"village_return": travel("farm")
 		"villager": show_villager()
@@ -717,7 +735,7 @@ func show_shop() -> void:
 
 	box.add_child(button("轻弹 ×24 · 12 文", func(): purchase_ammo("light_ammo", 24, 12, box)))
 	box.add_child(button("步枪弹 ×12 · 18 文", func(): purchase_ammo("rifle_ammo", 12, 18, box)))
-	for pair in [["smg", 80], ["rifle", 140], ["armor", 50]]:
+	for pair in [["smg", 80], ["rifle", 140], ["whip", 60], ["silver_sword", 110], ["revolver", 100], ["gatling", 260], ["spellbook", 150], ["curse_doll", 130], ["armor", 50]]:
 		box.add_child(button("%s · %d 文" % [YinBalance.WEAPONS[pair[0]].name, pair[1]], func():
 			if state.money < pair[1]: feedback(box, "铜钱不足。")
 			elif state.equipment.size() >= 20: feedback(box, "装备位已满。")
@@ -807,6 +825,7 @@ func show_journal() -> void:
 func show_pause() -> void:
 	var box := open_modal("暂停", "进度自动保存 · 世界已暂停")
 	box.add_child(button("操作帮助", func(): open_modal("操作", "WASD 移动 · E 互动 · 空格劳作\nJ / 左键攻击 · 滚轮换武器 · U 装填\nShift 闪避 · F 镇符 · G 符火 · V 免费炼化\nI 行囊 · B 装备 · H 随从 · Tab 地图\nR 点名 · C 指令 · K 书信 · L 手札\nQ 阴种 · Z 智能劳作 · T 黄昏 · M 环境音")))
+	box.add_child(button("委托 · O", show_quests))
 	box.add_child(button("地图 · Tab", func(): show_character("地图")))
 	box.add_child(button("书信 · K", func(): show_character("书信")))
 	box.add_child(button("画面与分辨率设置", func(): show_character("设置")))
@@ -920,8 +939,11 @@ func equipment_content(box: VBoxContainer) -> void:
 		row.add_theme_constant_override("separation", 4)
 		box.add_child(row)
 		var spec: Dictionary = YinBalance.WEAPONS[gear.weapon]
-		var info: String = "护甲 %d" % YinBalance.armor_value(gear) if gear.weapon == "armor" else "伤害 %d · 弹匣 %d/%d" % [YinBalance.damage(spec.damage, YinBalance.level(state.cultivation), gear), gear.magazine, spec.magazine]
-		var equip_button := button("%s  %s\n%s" % [YinBalance.gear_name(gear), "已装备" if gear.id in state.weapon_slots.values() or gear.id == state.equipped_armor else "点击装备", info + ("  ·  " + YinAbilities.affix_text(gear) if gear.weapon != "armor" else "")], func():
+		var info: String = "护甲 %d" % YinBalance.armor_value(gear)
+		if gear.weapon != "armor":
+			info = "伤害 %d · " % YinBalance.damage(spec.damage, YinBalance.level(state.cultivation), gear)
+			info += "弹匣 %d/%d" % [gear.magazine, spec.magazine] if spec.ammo != "" else ("气力 %d" % spec.energy if gear.weapon in YinBalance.MAGIC else "距离 %d" % spec.range)
+		var equip_button := button("%s  %s\n%s" % [YinBalance.gear_name(gear), "已装备" if gear.id in state.weapon_slots.values() or gear.id == state.equipped_armor else "点击装备", info + ("\n" + YinAbilities.affix_text(gear) if gear.weapon != "armor" else "")], func():
 			state.equip(gear.id)
 			player.held_item = state.current_gear().weapon
 			persist()
@@ -931,13 +953,10 @@ func equipment_content(box: VBoxContainer) -> void:
 		equip_button.add_theme_font_size_override("font_size", 11)
 		equip_button.add_theme_stylebox_override("normal", style("e1d2ae", YinBalance.COLORS[int(gear.quality)].darkened(0.35).to_html(false)))
 		equip_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		var icon := AtlasTexture.new()
-		icon.atlas = preload("res://assets/weapons.png")
-		icon.region = Rect2(["sword", "pistol", "smg", "rifle", "armor"].find(gear.weapon) * 24, 0, 24, 16)
-		equip_button.icon = icon
+		equip_button.icon = YinBalance.icon(gear.weapon)
 		equip_button.tooltip_text = "获取时自带词条，无需加工\n" + YinAbilities.affix_text(gear)
 		row.add_child(equip_button)
-		equip_button.custom_minimum_size.y = 46
+		equip_button.custom_minimum_size.y = 58
 		if gear.id not in [state.equipped_gear, state.equipped_armor] and gear.id not in state.weapon_slots.values():
 			row.add_child(button("拆解", func():
 				var result: String = state.salvage(gear.id)
@@ -1152,6 +1171,8 @@ func show_villager() -> void:
 		if actor.is_queued_for_deletion() or actor.position.distance_to(player.position) > 56: continue
 		var record: Dictionary = actor.record
 		var box := open_modal(record.name, "生命 %d/100 · 村庄完好度 %d\n%s" % [record.hp, state.village_integrity, "今晚求道长护村。" if state.raid_status in ["warned", "active"] else "村口邪祟每隔几日便来叩门。"])
+		box.add_child(button("聊一聊", func(): show_chat(record)))
+		box.add_child(button("委托", func(): show_npc_quests(record)))
 		box.add_child(button("阅读村庄来信", func(): show_character("书信")))
 		if record.id == 3: box.add_child(button("铁匠交易：武器与弹药", show_shop))
 		box.add_child(button("救治村民 · 10 文 · 恢复 40 生命", func():
@@ -1179,3 +1200,120 @@ func show_tools() -> void:
 		icon.region = Rect2(i * 16, 0, 16, 16)
 		choice.icon = icon
 		tools.add_child(choice)
+
+func update_exploration() -> void:
+	if state.zone != "forest": return
+	for id in YinAdventure.LANDMARKS:
+		var spec: Dictionary = YinAdventure.LANDMARKS[id]
+		if not state.visited_landmarks.has(id) and player.position.distance_to(spec.at) < 110:
+			state.visited_landmarks[id] = true
+			notify_action("发现地标：" + spec.name)
+func update_quest_tracker() -> void:
+	if not is_instance_valid(quest_tracker): return
+	var id: String = state.tracked_quest
+	if id == "" or not state.quests.has(id):
+		quest_tracker.text = "O 委托 · 查看任务"
+		quest_tracker.tooltip_text = "向村民接取委托；这里只追踪一项。"
+		return
+	var spec: Dictionary = YinAdventure.QUESTS[id]
+	var count: int = YinAdventure.progress(state, id)
+	quest_tracker.text = "O %s  %d/%d\n%s" % [spec.name, count, spec.target, "返回村庄复命" if count >= spec.target else {"hunt": "前往乱葬坡", "delivery": "收集物资后交给委托人", "survey": "探索后山三处遗址"}[spec.kind]]
+	quest_tracker.tooltip_text = spec.description
+func show_quests() -> void:
+	var box := open_modal("委托", "O 打开任务栏 · 一次追踪一项")
+	if state.quests.is_empty():
+		box.get_child(0).text = "暂无委托。到青槐村找柳伯、小满、阿祁或砚青。"
+	for id in state.quests:
+		var spec: Dictionary = YinAdventure.QUESTS[id]
+		var completed: bool = state.quests[id].claimed
+		var summary := Label.new()
+		summary.text = "%s · %s\n%s" % [spec.name, "已领取奖励" if completed else "%d/%d" % [YinAdventure.progress(state, id), spec.target], spec.description]
+		summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		summary.custom_minimum_size.x = 410
+		summary.add_theme_color_override("font_color", Color("424c42"))
+		summary.add_theme_font_size_override("font_size", 11)
+		box.add_child(summary)
+		if not completed:
+			box.add_child(button("正在追踪" if state.tracked_quest == id else "追踪 · " + spec.name, func():
+				state.tracked_quest = id
+				persist()
+				show_quests()
+			))
+func show_npc_quests(record: Dictionary) -> void:
+	var box := open_modal(record.name + " · 委托", "复命时领取报酬；奖励由委托规则决定。")
+	var offered: bool = false
+	for id in YinAdventure.QUESTS:
+		var spec: Dictionary = YinAdventure.QUESTS[id]
+		if spec.npc != int(record.id): continue
+		offered = true
+		var detail := Label.new()
+		detail.text = "%s\n%s\n报酬：%d 文 + %s" % [spec.name, spec.description, spec.money, YinBalance.WEAPONS[spec.weapon].name]
+		detail.custom_minimum_size.x = 410
+		detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		detail.add_theme_color_override("font_color", Color("424c42"))
+		detail.add_theme_font_size_override("font_size", 11)
+		box.add_child(detail)
+		if not state.quests.has(id):
+			box.add_child(button("接取 · " + spec.name, func():
+				var message: String = YinAdventure.accept(state, id)
+				persist()
+				show_npc_quests(record)
+				refresh(message)
+			))
+		elif not state.quests[id].claimed:
+			box.add_child(button("复命 · %d/%d" % [YinAdventure.progress(state, id), spec.target], func():
+				var message: String = YinAdventure.claim(state, id, int(record.id))
+				persist()
+				show_npc_quests(record)
+				refresh(message)
+			))
+		else:
+			detail.text += "\n已完成并领取。"
+	if not offered: box.get_child(0).text = "暂时没有委托，去问问其他村民。"
+func show_chat(record: Dictionary) -> void:
+	var box := open_modal(record.name + " · 交谈", "离线交谈 · 可输入问题，也可选择话题")
+	var layout: VBoxContainer = modal.get_node("ModalCard/Layout")
+	var chat_scroll: ScrollContainer = layout.get_node("Scroll")
+	chat_scroll.custom_minimum_size.y = 142
+	var topics := HBoxContainer.new()
+	layout.add_child(topics)
+	layout.move_child(topics, 1)
+	var composer := HBoxContainer.new()
+	composer.add_theme_constant_override("separation", 6)
+	layout.add_child(composer)
+	layout.move_child(composer, layout.get_child_count() - 2)
+	var transcript := Label.new()
+	transcript.custom_minimum_size = Vector2(410, 62)
+	transcript.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	transcript.add_theme_font_size_override("font_size", 11)
+	transcript.add_theme_color_override("font_color", Color("424c42"))
+	box.add_child(transcript)
+	var input := LineEdit.new()
+	input.name = "NpcChatInput"
+	input.placeholder_text = "想问什么？例如：附近宝箱在哪里"
+	input.max_length = 240
+	input.custom_minimum_size = Vector2(330, 28)
+	input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	composer.add_child(input)
+	if not dialogue_log.has(record.id): dialogue_log[record.id] = []
+	if dialogue_log[record.id].is_empty(): dialogue_log[record.id].append(record.name + "：" + npc_dialogue.reply(state, record, "你好"))
+	transcript.text = "\n\n".join(dialogue_log[record.id])
+	var send := func():
+		var text: String = input.text.strip_edges()
+		if text == "": return
+		dialogue_log[record.id].append("你：" + text)
+		dialogue_log[record.id].append(record.name + "：" + npc_dialogue.reply(state, record, text))
+		while dialogue_log[record.id].size() > 6: dialogue_log[record.id].pop_front()
+		transcript.text = "\n\n".join(dialogue_log[record.id])
+		input.clear()
+		call_deferred("scroll_chat_to_end", chat_scroll)
+		input.grab_focus()
+	for topic in ["委托", "近况", "武器", "探索"]:
+		topics.add_child(button(topic, func(): input.text = topic; send.call(), Vector2(96, 24)))
+	input.text_submitted.connect(func(_value): send.call())
+	composer.add_child(button("发送", send, Vector2(78, 28)))
+	input.grab_focus()
+
+func scroll_chat_to_end(scroll: ScrollContainer) -> void:
+	await get_tree().process_frame
+	if is_instance_valid(scroll): scroll.set_deferred("scroll_vertical", int(scroll.get_v_scroll_bar().max_value))

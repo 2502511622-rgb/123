@@ -26,5 +26,5 @@ func _process(delta: float) -> void:
 	modulate.a = minf(1, 9 - age)
 	queue_redraw()
 func _draw() -> void:
-	var region := Rect2(12, row * 24 + 8, 4, 10) if part == "arm" else Rect2(8, row * 24 + 18, 8, 6)
+	var region: Rect2 = {"arm": Rect2(12, row * 24 + 8, 4, 10), "leg": Rect2(8, row * 24 + 18, 8, 6), "head": Rect2(0, row * 24, 16, 8)}[part]
 	draw_texture_rect_region(TEXTURE, Rect2(-region.size * sprite_scale / 2 - Vector2(0, height), region.size * sprite_scale), region)
