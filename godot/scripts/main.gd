@@ -17,7 +17,7 @@ var health_bar: YinStatBar
 var combat_label: Label
 var energy_bar: YinStatBar
 var modal: Control
-var message_time: float = 8
+var message_time: float = 3
 var autosave_time: float = 0
 var action_cooldown: float = 0
 var save_failed: bool = false
@@ -202,9 +202,9 @@ func button(text: String, action: Callable, size_value: Vector2 = Vector2(100, 2
 	var b := Button.new()
 	b.text = text
 	b.custom_minimum_size = size_value
-	b.add_theme_stylebox_override("normal", style("c6c4a0"))
-	b.add_theme_stylebox_override("hover", style("e6d6ae", "8c9778"))
-	b.add_theme_stylebox_override("pressed", style("829480", "586963"))
+	b.add_theme_stylebox_override("normal", style("dedecb", "a0a68e"))
+	b.add_theme_stylebox_override("hover", style("f3e8cb", "7c957f"))
+	b.add_theme_stylebox_override("pressed", style("9eb7a4", "586963"))
 	b.add_theme_stylebox_override("focus", style("d3d4b6", "748a76"))
 	b.add_theme_color_override("font_color", Color("3e4a42"))
 	b.add_theme_color_override("font_hover_color", Color("3e4a42"))
@@ -223,7 +223,7 @@ func build_hud() -> void:
 	hud.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hud.theme = YinPixelTheme.install()
 	layer.add_child(hud)
-	var info := panel(Vector2(6, 6), Vector2(174, 53))
+	var info := panel(Vector2(10, 10), Vector2(170, 48))
 	date_label = label("", Vector2(6, 3), info, 10)
 	stats_label = label("", Vector2(6, 16), info, 9)
 	health_bar = YinStatBar.new()
@@ -247,21 +247,21 @@ func build_hud() -> void:
 	smart_button = button("", toggle_smart)
 	smart_button.visible = false
 	hud.add_child(smart_button)
-	var bag := button("I 角色", show_inventory, Vector2(66, 22))
-	bag.position = Vector2(6, 62)
+	var bag := button("I 行囊", show_inventory, Vector2(66, 22))
+	bag.position = Vector2(10, 62)
 	bag.focus_mode = Control.FOCUS_NONE
 	hud.add_child(bag)
-	var combat_panel := panel(Vector2(6, 302), Vector2(195, 49))
+	var combat_panel := panel(Vector2(10, 310), Vector2(190, 40))
 	combat_label = label("", Vector2(6, 4), combat_panel, 10)
-	combat_label.size = Vector2(184, 40)
-	var hint := panel(Vector2(207, 330), Vector2(427, 21))
+	combat_label.size = Vector2(178, 32)
+	var hint := panel(Vector2(210, 326), Vector2(420, 24))
 	context_label = label("", Vector2(5, 3), hint, 9)
 	context_label.size.x = 415
 	context_label.clip_text = true
-	var toast := panel(Vector2(187, 6), Vector2(320, 39))
+	var toast := panel(Vector2(194, 10), Vector2(308, 35))
 	toast.name = "Toast"
 	status_label = label("", Vector2(6, 3), toast, 10)
-	status_label.size = Vector2(308, 33)
+	status_label.size = Vector2(296, 29)
 	status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	minimap = YinMinimap.new()
 	minimap.game = self
@@ -326,10 +326,7 @@ func update_labels() -> void:
 	var gear: Dictionary = state.current_gear()
 	var spec: Dictionary = YinBalance.WEAPONS[gear.weapon]
 	var shown_name: String = TOOL_NAMES[int(player.held_item.substr(4))] if player.held_item.begins_with("tool") else spec.name
-	var ammo_text: String = "F %d/2 · G %d/2 · 体力 %d" % [state.skill_charges.seal, state.skill_charges.fire, state.energy] if spec.ammo == "" else "弹匣 %d/%d · 备用 %d" % [gear.magazine, spec.magazine, state.container_count("bag", spec.ammo)]
-	if player.held_item.begins_with("tool"):
-		ammo_text = "空格劳作 · J 手持近战" if YinCombatController.TOOL_ATTACKS.has(player.held_item) else "空格劳作 · 不用于攻击"
-	combat_label.text = "%s Lv%d  F%d/2 G%s\n%s" % [shown_name, YinBalance.level(state.cultivation), state.skill_charges.seal, "%d/2" % state.skill_charges.fire if state.skill_ranks.fire > 0 else "未学", ammo_text]
+	combat_label.text = "%s  ·  %s\nF %d/2%s" % [shown_name, "近战" if spec.ammo == "" else "%d / %d" % [gear.magazine, state.container_count("bag", spec.ammo)], state.skill_charges.seal, "    G %d/2" % state.skill_charges.fire if state.skill_ranks.fire > 0 else ""]
 	if not combat.reload_job.is_empty(): combat_label.text += " · 装填 %.1fs" % combat.reload_job.remaining
 	smart_button.text = "Z 智能劳作：" + ("开" if state.smart_farming else "手动")
 	(seed_button.icon as AtlasTexture).region = Rect2(80, CROP_IDS.find(state.selected_crop) * 16, 16, 16)
@@ -337,12 +334,14 @@ func update_labels() -> void:
 	quest_label.text = "役灵 %d/%d  污染 %d\n镇守 %d  载骸 %d/2\n%s" % [state.spirits.size(), state.capacity(), state.pollution, state.ward, state.cargo.size(), "手札 L · 第一章已完成" if state.ending != "" else ("棺中客已倒下 · 十日赴约" if state.boss_defeated else ("夜袭进行中 · 不可安睡" if has_live_boss() else "每夜 R 点名 · C 役灵指令"))]
 	var kind: String = world.nearest_interaction()
 	var hints: Dictionary = {"village_gate": "E 青槐村 · 村民与夜袭求救", "village_return": "E 返回义庄田园", "villager": "E 与村民交谈","sunken_gate": "E 沉水村 · 支线首领井中龙婆", "theatre_gate": "E 废戏台 · 支线首领无面伶王", "branch_return": "E 返回后山铳林","forest_gate": "E 进入后山铳林 · 更大地图、精英与远程弹幕", "forest_return": "E 返回乱葬坡", "home": "E 进入义庄：案台、卧榻与仓箱", "shipping": "E 货箱：出售背包里的灵物", "shop": "E 进入杂货铺", "npc": "E 桥边阿婆：村庄秘密与十日抉择", "altar": "E 祭坛：先看收益和代价，也可不祭祀", "gate": "E 进入乱葬坡 · 携骸时移速下降", "return": "E 返回义庄，处理遗骸", "exit_interior": "E 返回院落", "workbench": "E 案台：炼骸、制符与役灵", "counter": "E 柜台：交易", "storage": "E 仓箱：存取、拆分与交换物品", "bed": "E 卧榻：休息至天亮"}
-	var general: String = "滚轮换武器 / F 镇符 / G 符火 / Shift 闪避 / V 炼化" if state.zone in ["graveyard", "forest", "sunken", "theatre", "village"] else ("靠近案台、仓箱、卧榻按 E · 门口返回院落" if state.zone == "hall" else ("靠近柜台按 E 交易 · 门口返回院落" if state.zone == "shop" else "WASD 移动 · 空格劳作 · E 互动 · T 待到入夜"))
+
 	var remains_hint: Dictionary = nearest_remains()
-	context_label.text = "E 装载遗骸 · " + remains_hint.name if not remains_hint.is_empty() else hints.get(kind, general)
+	context_label.text = "V 免费炼化 · E 处理 · " + remains_hint.name if not remains_hint.is_empty() else hints.get(kind, "")
+	context_label.get_parent().visible = context_label.text != ""
 	if state.zone == "farm" and state.smart_farming and kind == "":
 		var index: int = world.front_plot()
-		if world.reachable(index): context_label.text = "空格 智能：" + suggested_action(index) + " · Z / 数字键可改手动"
+		if world.reachable(index): context_label.text = "空格 " + suggested_action(index)
+		context_label.get_parent().visible = world.reachable(index)
 
 func persist() -> void:
 	state.player_position = player.position
@@ -353,7 +352,7 @@ func persist() -> void:
 func refresh(message: String = "") -> void:
 	if message != "":
 		status_label.text = message
-		message_time = 7
+		message_time = 3
 		hud.get_node("Toast").show()
 	world.queue_redraw()
 	update_labels()
@@ -598,7 +597,7 @@ func feedback(column: VBoxContainer, text: String) -> void:
 	notify_action(text)
 
 func show_hall() -> void:
-	var box := open_modal("义庄 · 停尸棚", "安置 %d/%d · 骨料 %d · 阴灰 %d · 灯油 %d\n睡觉前先点名！役灵每位每日消耗 1 灯油。" % [state.spirits.size(), state.capacity(), state.bones, state.ash, state.oil])
+	var box := open_modal("义庄 · 停尸棚", "安置 %d/%d · 灯油 %d" % [state.spirits.size(), state.capacity(), state.oil])
 	box.add_child(button("每夜点名：今天 %s" % ("已完成" if state.called_day == state.day else "未完成"), func(): feedback(box, state.rollcall())))
 	box.add_child(button("休息到天亮", func():
 		if has_live_boss():
@@ -611,6 +610,10 @@ func show_hall() -> void:
 	for id in state.cargo:
 		var r: Dictionary = state.find_remains(id)
 		box.add_child(button("处理运输车：" + r.name, func(): show_remains(r, true)))
+	box.add_child(button("制作与扩建", show_crafting))
+
+func show_crafting() -> void:
+	var box := open_modal("制作与扩建", "选择配方后制作；材料不足时保留现有物品。")
 	box.add_child(button("制作 12 轻弹 · 1 零件 + 1 骨料", func(): feedback(box, state.craft_ammo("light_ammo"))))
 	box.add_child(button("制作 6 步枪弹 · 1 零件 + 1 骨料", func(): feedback(box, state.craft_ammo("rifle_ammo"))))
 	for pair in [["oil", "烛穗 → 4 灯油"], ["talisman", "1 阴灰或 12 文 → 3 张符"], ["ward", "修阵：1 骨料 + 1 灯油 → 镇守 +30"], ["hall", "扩建：3 骨料 + 80 文 → 3 安置位"], ["paper_lamp", "纸灯：2 槐木 + 1 灯油"], ["ward_stake", "阵桩：1 骨料 + 1 青石"]]:
@@ -635,10 +638,10 @@ func show_job(s: Dictionary) -> void:
 
 func show_remains(r: Dictionary, at_hall: bool) -> void:
 	var meta: Dictionary = YinAbilities.meta(r.kind)
-	var box := open_modal(r.name, "完整度 %d / 残念：%s\n凶性 %d / 阴性：%s\n主动：%s / 被动：%s\n遗骸用途互斥，完整度低于 60 不能收役。" % [r.integrity, r.regret, r.fierceness, r.yin, meta.active, meta.passive])
-	box.add_child(button(("炼为役灵 · " if at_hall else "") + "顷刻炼化 · %d 灯油 · 完整度 ≥60" % (6 if r.kind in YinAbilities.BOSSES else 2), func(): process_choice(box, r, "refine")))
+	var box := open_modal(r.name, "完整度 %d · %s\n%s / %s" % [r.integrity, r.regret, meta.active, meta.passive])
+	box.add_child(button("炼为役灵 · 无需耗材", func(): process_choice(box, r, "refine")))
 	if not at_hall:
-		box.add_child(button("装车带回（最多 2 具，减速；装满会引来追踪者）", func():
+		box.add_child(button("装车带回 · %d/2" % state.cargo.size(), func():
 			var message: String = state.pickup(r.id)
 			if state.cargo.has(r.id):
 				if state.cargo.size() == 2: spawn_tracker()
@@ -802,7 +805,10 @@ func show_journal() -> void:
 	open_modal("阴田手札 · 十日祭帖", "\n\n".join(state.journal))
 
 func show_pause() -> void:
-	var box := open_modal("纸灯下的片刻", "时间、敌人和角色已暂停。\nWASD 移动，J / 左键使用手持武器，F 镇符，G 符火。\nI 角色选农具，Z 智能劳作，滚轮换三栏武器，U 装填。\nQ 阴种，E 互动，R 点名，C 役灵指令，H 随从，K 书信。\nT 待到黄昏，L 手札，I 角色，M 开关环境音。")
+	var box := open_modal("暂停", "进度自动保存 · 世界已暂停")
+	box.add_child(button("操作帮助", func(): open_modal("操作", "WASD 移动 · E 互动 · 空格劳作\nJ / 左键攻击 · 滚轮换武器 · U 装填\nShift 闪避 · F 镇符 · G 符火 · V 免费炼化\nI 行囊 · B 装备 · H 随从 · Tab 地图\nR 点名 · C 指令 · K 书信 · L 手札\nQ 阴种 · Z 智能劳作 · T 黄昏 · M 环境音")))
+	box.add_child(button("地图 · Tab", func(): show_character("地图")))
+	box.add_child(button("书信 · K", func(): show_character("书信")))
 	box.add_child(button("画面与分辨率设置", func(): show_character("设置")))
 	box.add_child(button("存档并返回标题", func():
 		persist()
@@ -902,12 +908,11 @@ func show_equipment() -> void:
 	show_character("穿戴")
 
 func equipment_content(box: VBoxContainer) -> void:
-	paragraph(box, "滚轮：近战 / 主武器 / 副武器；点击装备分配栏位。")
 	var loadout: Array[String] = []
 	for slot in ["melee", "primary", "secondary"]:
 		var worn: Array = state.equipment.filter(func(gear): return gear.id == state.weapon_slots[slot])
-		loadout.append("%s：%s" % [{"melee": "近战", "primary": "主武器", "secondary": "副武器"}[slot], YinBalance.gear_name(worn[0]) if not worn.is_empty() else "未配备"])
-	paragraph(box, "\n".join(loadout))
+		loadout.append("%s %s" % [{"melee": "近战", "primary": "主武器", "secondary": "副武器"}[slot], YinBalance.WEAPONS[worn[0].weapon].name if not worn.is_empty() else "—"])
+	paragraph(box, " · ".join(loadout), 10)
 	var displayed: Array = state.equipment.duplicate()
 	displayed.sort_custom(func(a, b): return (2 if a.id == state.equipped_gear else (1 if a.id == state.equipped_armor else 0)) > (2 if b.id == state.equipped_gear else (1 if b.id == state.equipped_armor else 0)))
 	for gear in displayed:
@@ -916,28 +921,23 @@ func equipment_content(box: VBoxContainer) -> void:
 		box.add_child(row)
 		var spec: Dictionary = YinBalance.WEAPONS[gear.weapon]
 		var info: String = "护甲 %d" % YinBalance.armor_value(gear) if gear.weapon == "armor" else "伤害 %d · 弹匣 %d/%d" % [YinBalance.damage(spec.damage, YinBalance.level(state.cultivation), gear), gear.magazine, spec.magazine]
-		var equip_button := button("%s  %s%s" % [YinBalance.gear_name(gear), info, " [穿戴中]" if gear.id in [state.equipped_gear, state.equipped_armor] else ""], func():
+		var equip_button := button("%s  %s\n%s" % [YinBalance.gear_name(gear), "已装备" if gear.id in state.weapon_slots.values() or gear.id == state.equipped_armor else "点击装备", info + ("  ·  " + YinAbilities.affix_text(gear) if gear.weapon != "armor" else "")], func():
 			state.equip(gear.id)
 			player.held_item = state.current_gear().weapon
 			persist()
 			show_equipment()
 		)
 		equip_button.add_theme_color_override("font_color", YinBalance.COLORS[int(gear.quality)].darkened(0.65))
-		equip_button.add_theme_font_size_override("font_size", 10)
+		equip_button.add_theme_font_size_override("font_size", 11)
 		equip_button.add_theme_stylebox_override("normal", style("e1d2ae", YinBalance.COLORS[int(gear.quality)].darkened(0.35).to_html(false)))
 		equip_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		var icon := AtlasTexture.new()
 		icon.atlas = preload("res://assets/weapons.png")
 		icon.region = Rect2(["sword", "pistol", "smg", "rifle", "armor"].find(gear.weapon) * 24, 0, 24, 16)
 		equip_button.icon = icon
-		equip_button.tooltip_text = YinAbilities.affix_text(gear)
+		equip_button.tooltip_text = "获取时自带词条，无需加工\n" + YinAbilities.affix_text(gear)
 		row.add_child(equip_button)
-		var affix_label := Label.new()
-		affix_label.text = YinAbilities.affix_text(gear)
-		affix_label.add_theme_font_size_override("font_size", 10)
-		affix_label.add_theme_color_override("font_color", Color("685440"))
-		box.add_child(affix_label)
-		if gear.weapon != "armor": box.add_child(button("铭刻词条 · " + YinBalance.gear_name(gear), func(): show_inscription(gear.id)))
+		equip_button.custom_minimum_size.y = 46
 		if gear.id not in [state.equipped_gear, state.equipped_armor] and gear.id not in state.weapon_slots.values():
 			row.add_child(button("拆解", func():
 				var result: String = state.salvage(gear.id)
@@ -963,13 +963,13 @@ func instant_refine() -> void:
 			world.effect(player.position, Color("91d6bb"))
 			notify_action(message)
 			return
-	refresh("站到遗骸上按 V 炼化；普通 2 灯油，Boss 6 灯油。")
+	refresh("站到遗骸上按 V 炼化；无需耗材，完整度需达到 60。")
 
 func show_character(tab: String = "背包") -> void:
 	character_tab = tab
 	bag_model.sync()
 	var level_value: int = YinBalance.level(state.cultivation)
-	var box := open_modal("角色 · 小道士 Lv%d" % level_value, "命息 %d / 气力 %d · 铜钱 %d · 役灵 %d/%d" % [state.health, state.energy, state.money, state.spirits.size(), state.capacity()])
+	var box := open_modal({"背包": "行囊", "穿戴": "装备", "技能": "修行", "随从": "随从", "地图": "地图", "书信": "书信", "设置": "设置"}.get(tab, tab), "命息 %d / 气力 %d · 铜钱 %d · 役灵 %d/%d" % [state.health, state.energy, state.money, state.spirits.size(), state.capacity()])
 	var card: Panel = modal.get_node("ModalCard")
 	card.position = Vector2(44, 10)
 	card.size = Vector2(552, 340)
@@ -978,40 +978,31 @@ func show_character(tab: String = "背包") -> void:
 	var scroll: ScrollContainer = layout.get_node("Scroll")
 	scroll.custom_minimum_size = Vector2(524, 246)
 	box.custom_minimum_size.x = 508
-	var portrait := TextureRect.new()
-	var face := AtlasTexture.new()
-	face.atlas = preload("res://assets/farmer.png")
-	face.region = Rect2(0, 0, 16, 20)
-	portrait.texture = face
-	portrait.size = Vector2(32, 40)
-	portrait.position = Vector2(492, 7)
-	portrait.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	card.add_child(portrait)
 	var tabs := HBoxContainer.new()
-	box.add_child(tabs)
-	for name_value in ["背包", "穿戴", "技能", "随从", "书信", "地图", "设置"]:
-		var tab_button := button(name_value, func(): show_character(name_value), Vector2(68, 23))
+	tabs.name = "Navigation"
+	tabs.add_theme_constant_override("separation", 6)
+	layout.add_child(tabs)
+	layout.move_child(tabs, 1)
+	for name_value in ["背包", "穿戴", "技能", "随从"]:
+		var tab_button := button({"背包": "行囊", "穿戴": "装备", "技能": "修行", "随从": "随从"}[name_value], func(): show_character(name_value), Vector2(122, 26))
 		tab_button.name = "Tab" + name_value
+		tab_button.toggle_mode = true
+		tab_button.set_pressed_no_signal(tab == name_value)
 		tabs.add_child(tab_button)
+	scroll.custom_minimum_size.y = 214
+	box.get_child(0).text = "%d 文 · Lv%d · 随从 %d/%d" % [state.money, level_value, state.spirits.size(), state.capacity()]
+	box.get_child(0).add_theme_font_size_override("font_size", 10)
 	match tab:
 		"背包":
-			var columns := HBoxContainer.new()
-			columns.add_theme_constant_override("separation", 6)
+			box.get_child(0).visible = false
+			var columns := VBoxContainer.new()
+			columns.add_theme_constant_override("separation", 8)
 			box.add_child(columns)
-			var tools := VBoxContainer.new()
-			tools.custom_minimum_size.x = 220
-			columns.add_child(tools)
-			for i in range(TOOL_NAMES.size()):
-				var tool_button := button(TOOL_NAMES[i], func(): choose_tool(i), Vector2(220, 25))
-				tool_button.name = "Tool%d" % i
-				var icon := AtlasTexture.new()
-				icon.atlas = preload("res://assets/tools.png")
-				icon.region = Rect2(i * 16, 0, 16, 16)
-				tool_button.icon = icon
-				tools.add_child(tool_button)
-			tools.add_child(button("Z 智能劳作：" + ("开启" if state.smart_farming else "关闭"), func(): toggle_smart(); show_character("背包")))
-			tools.add_child(button("阴种：" + FarmState.CROPS[state.selected_crop].display_name + " · 点击切换", func(): cycle_seed(); show_character("背包")))
+			var shortcuts := HBoxContainer.new()
+			columns.add_child(shortcuts)
+			shortcuts.add_child(button("农具 · " + TOOL_NAMES[tool], show_tools, Vector2(155, 24)))
+			shortcuts.add_child(button("智能 " + ("开" if state.smart_farming else "关"), func(): toggle_smart(); show_character("背包"), Vector2(110, 24)))
+			shortcuts.add_child(button("阴种 · " + FarmState.CROPS[state.selected_crop].display_name, func(): cycle_seed(); show_character("背包"), Vector2(210, 24)))
 			var view := YinInventoryPanel.new()
 			view.bag = bag_model
 			view.chest = chest_model
@@ -1042,7 +1033,7 @@ func show_character(tab: String = "背包") -> void:
 			atlas.custom_minimum_size = Vector2(410, 160)
 			box.add_child(atlas)
 			var route_label := Label.new()
-			route_label.text = "义庄 → 乱葬坡 → 后山铳林\n后山东北 → 沉水村【井中龙婆】\n后山东南 → 废戏台【无面伶王】\n黄点出口 · 红点敌人 · 蓝点役灵 · 白点自己"
+			route_label.text = "义庄 → 乱葬坡 → 后山铳林\n后山东北 → 沉水村【井中龙婆】\n后山东南 → 废戏台【无面伶王】\n后山向东 → 断碑营地 / 枯井 / 山门遗址\n黄点出口 · 红点敌人 · 蓝点役灵 · 白点自己"
 			route_label.add_theme_font_size_override("font_size", 11)
 			route_label.add_theme_color_override("font_color", Color("424c42"))
 			box.add_child(route_label)
@@ -1079,14 +1070,25 @@ func paragraph(box: VBoxContainer, text: String, font_size: int = 11) -> Label:
 	box.add_child(result)
 	return result
 func skill_tree_content(box: VBoxContainer) -> void:
-	paragraph(box, "技能点 %d · 升级角色获得 1 点；每项最多三阶。\n镇符 → 符火 / 调息 → 统御。F/G 不耗符箓，消耗体力与充能。\n充能上限 2；暂停时停止充能，满充能不积攒额外次数。" % state.skill_points())
+	paragraph(box, "技能点 %d · 每项最多三阶" % state.skill_points())
+	var grid := GridContainer.new()
+	grid.columns = 2
+	grid.add_theme_constant_override("h_separation", 10)
+	grid.add_theme_constant_override("v_separation", 12)
+	box.add_child(grid)
 	for id in ["seal", "fire", "breath", "command"]:
 		var spec: Dictionary = YinAbilities.SKILLS[id]
 		var rank_value: int = int(state.skill_ranks[id])
 		var details: String = "未学习" if rank_value == 0 else "%d 阶" % rank_value
 		if id in ["seal", "fire"]:
 			details += " · 充能 %d/2 · %.1f 秒回复一次" % [state.skill_charges[id], state.skill_recharge(id)]
-		paragraph(box, "%s：%s\n%s" % [spec.name, details, spec.description])
+		var card := VBoxContainer.new()
+		card.custom_minimum_size.x = 244
+		grid.add_child(card)
+		var title := Label.new()
+		title.text = "%s · %s" % [spec.name, "未学" if rank_value == 0 else "%d 阶" % rank_value]
+		title.add_theme_color_override("font_color", Color("424c42"))
+		card.add_child(title)
 		var learn := button("学习 / 升阶 " + spec.name, func():
 			var message: String = state.learn_skill(id)
 			persist()
@@ -1095,44 +1097,50 @@ func skill_tree_content(box: VBoxContainer) -> void:
 		)
 		learn.name = "Learn_" + id
 		learn.disabled = rank_value >= 3 or state.skill_points() <= 0 or YinBalance.level(state.cultivation) < spec.level or (spec.parent != "" and state.skill_ranks[spec.parent] == 0)
-		box.add_child(learn)
+		learn.tooltip_text = spec.description + "\n" + details
+		card.add_child(learn)
 func companion_content(box: VBoxContainer) -> void:
-	paragraph(box, "安置 %d/%d · 出战 %d/3 点（Boss 占 2 点）\n每位有生命与技能，倒下会召回。训练消耗 2 骨料，疗养消耗 3 灯油。\n每夜点名，普通供养 1 灯油 / Boss 2 灯油；C 改变出战指令。" % [state.spirits.size(), state.capacity(), state.deployment_used()])
-	if state.spirits.is_empty(): paragraph(box, "尚无随从。击杀后站到遗骸上 V 炼化，小怪 2 灯油，Boss 6 灯油。")
+	paragraph(box, "安置 %d/%d · 出战 %d/3 点" % [state.spirits.size(), state.capacity(), state.deployment_used()])
+	if state.spirits.is_empty(): paragraph(box, "站到遗骸上 V 炼化，无需耗材。")
 	for spirit in state.spirits:
-		var meta: Dictionary = YinAbilities.meta(spirit.source_kind)
-		paragraph(box, "%s · Lv%d · 生命 %d/%d · %s\n经验 %d/%d · 主动：%s / 被动：%s" % [spirit.name, spirit.level, spirit.hp, spirit.max_hp, "倒下" if spirit.hp == 0 else ("出战" if spirit.active else "义庄待命"), spirit.xp, spirit.level * 40, meta.active, meta.passive])
-		var row := HBoxContainer.new()
-		box.add_child(row)
-		row.add_child(button("召回" if spirit.active else "出战", func():
-			var message: String = state.deploy_spirit(spirit.id, not spirit.active)
+		box.add_child(button("管理 · %s  Lv%d  %d/%d  %s" % [spirit.name, spirit.level, spirit.hp, spirit.max_hp, "倒下" if spirit.hp == 0 else ("出战中" if spirit.active else "待命")], func(): show_companion(spirit)))
+
+func show_companion(spirit: Dictionary) -> void:
+	var meta: Dictionary = YinAbilities.meta(spirit.source_kind)
+	var box := open_modal(spirit.name + " · Lv%d" % spirit.level, "生命 %d/%d · 经验 %d/%d\n%s / %s" % [spirit.hp, spirit.max_hp, spirit.xp, spirit.level * 40, meta.active, meta.passive])
+	var row := HBoxContainer.new()
+	box.add_child(row)
+	row.add_child(button("召回" if spirit.active else "出战", func():
+		var message: String = state.deploy_spirit(spirit.id, not spirit.active)
+		spawn_spirits()
+		persist()
+		show_companion(spirit)
+		refresh(message)
+	, Vector2(96, 27)))
+	row.add_child(button("训练升级", func():
+		var message: String = state.train_spirit(spirit.id)
+		persist()
+		show_companion(spirit)
+		refresh(message)
+	, Vector2(96, 27)))
+	row.add_child(button("疗养", func():
+		var message: String = state.heal_spirit(spirit.id)
+		persist()
+		show_companion(spirit)
+		refresh(message)
+	, Vector2(96, 27)))
+	row.add_child(button("解散", func():
+		var confirm := open_modal("解除役灵契约", "确认解散 %s？解散后将离开队伍。" % spirit.name)
+		confirm.add_child(button("确认解散", func():
+			var message: String = state.dismiss_spirit(spirit.id)
 			spawn_spirits()
 			persist()
 			show_character("随从")
 			refresh(message)
-		, Vector2(96, 27)))
-		row.add_child(button("训练升级", func():
-			var message: String = state.train_spirit(spirit.id)
-			persist()
-			show_character("随从")
-			refresh(message)
-		, Vector2(96, 27)))
-		row.add_child(button("疗养", func():
-			var message: String = state.heal_spirit(spirit.id)
-			persist()
-			show_character("随从")
-			refresh(message)
-		, Vector2(96, 27)))
-		row.add_child(button("解散", func():
-			var confirm := open_modal("解除役灵契约", "确认解散 %s？不会返还炼化材料。" % spirit.name)
-			confirm.add_child(button("确认解散", func():
-				var message: String = state.dismiss_spirit(spirit.id)
-				spawn_spirits()
-				persist()
-				show_character("随从")
-				refresh(message)
-			))
-		, Vector2(96, 27)))
+		))
+	, Vector2(96, 27)))
+	box.add_child(button("安排工作", func(): show_job(spirit)))
+	box.add_child(button("返回随从", func(): show_character("随从")))
 func mail_content(box: VBoxContainer) -> void:
 	paragraph(box, "青槐村完好度 %d/100 · 每 3 日发送求救信\n当日 18:00 袭击，次日 06:00 前消灭来犯者。\n义庄东侧纸灯 E 前往；未救援会造成村庄损坏与村民受伤。" % state.village_integrity)
 	if state.letters.is_empty(): paragraph(box, "暂无求救来信。可先前往村庄与六位村民交谈。")
@@ -1157,16 +1165,17 @@ func show_villager() -> void:
 		))
 		return
 
-func show_inscription(id: int) -> void:
-	var gear_list: Array = state.equipment.filter(func(gear): return gear.id == id)
-	if gear_list.is_empty(): return
-	var gear: Dictionary = gear_list[0]
-	var box := open_modal("武器铭刻 · " + YinBalance.gear_name(gear), "每项消耗 20 文 + 2 零件，最多两个不同词条。\n暴击：12% 概率造成 165% 伤害。\n重伤：25% 概率附加 4 秒持续伤害，不重复堆叠。\n当前：" + YinAbilities.affix_text(gear))
-	for affix_id in ["crit", "bleed"]:
-		box.add_child(button("铭刻" + YinAbilities.AFFIXES[affix_id], func():
-			var message: String = state.inscribe_gear(id, affix_id)
-			persist()
-			show_inscription(id)
-			refresh(message)
-		))
-	box.add_child(button("返回穿戴", func(): show_character("穿戴")))
+
+func show_tools() -> void:
+	var box := open_modal("农具", "选择后直接手持，关闭智能劳作。")
+	var tools := GridContainer.new()
+	tools.columns = 3
+	box.add_child(tools)
+	for i in range(TOOL_NAMES.size()):
+		var choice := button(TOOL_NAMES[i], func(): choose_tool(i), Vector2(130, 44))
+		choice.name = "Tool%d" % i
+		var icon := AtlasTexture.new()
+		icon.atlas = preload("res://assets/tools.png")
+		icon.region = Rect2(i * 16, 0, 16, 16)
+		choice.icon = icon
+		tools.add_child(choice)

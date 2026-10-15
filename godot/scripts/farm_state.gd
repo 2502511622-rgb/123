@@ -336,7 +336,9 @@ func craft(which: String) -> String:
 	return "未知配方。"
 
 func prepare_enemies() -> void:
-	if enemy_day == day: return
+	if enemy_day == day:
+		prepare_forest_extension()
+		return
 	enemy_day = day
 	enemies = enemies.filter(func(e): return (e.zone == "farm" and not e.dead) or e.kind in ["well_boss", "opera_boss"] or (e.zone == "village" and int(e.get("raid", 0)) > 0 and not e.dead))
 	for i in range(5):
@@ -354,6 +356,16 @@ func prepare_enemies() -> void:
 		var kind: String = ["archer", "lantern", "gunner", "brute"][i % 4]
 		var at := Vector2(480 + (i % 4) * 360, 240 + int(i / 4) * 240)
 		spawn_record(kind, "forest", at, 2 + int(i / 8) + int((day - 1) / 4), i in [6, 15])
+
+	prepare_forest_extension()
+
+func prepare_forest_extension() -> void:
+	if enemies.any(func(e): return e.zone == "forest" and e.get("forest_extension", false)): return
+	# Three connected eastern landmarks, with encounters off the main trail.
+	for i in range(12):
+		var at := Vector2(2112 + (i % 3) * 256, 320 + int(i / 3) * 384)
+		var added: Dictionary = spawn_record(["bone", "gunner", "brute", "lantern"][i % 4], "forest", at, 4 + int((day - 1) / 4), i in [5, 11])
+		added.forest_extension = true
 
 func spawn_record(kind: String, zone_name: String, at: Vector2, level_value: int, elite: bool = false) -> Dictionary:
 	var stats: Dictionary = YinBalance.enemy(kind, level_value, elite)
@@ -401,9 +413,6 @@ func process_remains(id: int, method: String, plot_index: int = -1) -> String:
 		"refine":
 			if r.integrity < 60: return "完整度不足 60，不能炼成完整役灵。"
 			if spirits.size() >= capacity(): return "安置位不足。可先扩建或选择其他用途。"
-			var cost: int = 6 if r.kind in YinAbilities.BOSSES else 2
-			if oil < cost: return "炼化需要 %d 灯油。" % cost
-			oil -= cost
 			var spirit: Dictionary = make_spirit(r.kind, r.fierceness)
 			spirit.level = clampi(int(r.get("source_level", 1)), 1, 10)
 			spirit.max_hp = YinAbilities.spirit_hp(r.kind, spirit.level)
@@ -502,7 +511,7 @@ static func valid_int(value: Variant, minimum: int, maximum: int = 100000000) ->
 	return (value is int or value is float) and is_finite(float(value)) and float(value) == floor(float(value)) and value >= minimum and value <= maximum
 
 static func valid_point(value: Variant) -> bool:
-	return value is Array and value.size() == 2 and (value[0] is float or value[0] is int) and (value[1] is float or value[1] is int) and is_finite(float(value[0])) and is_finite(float(value[1])) and value[0] >= 0 and value[0] <= 1920 and value[1] >= 0 and value[1] <= 1280
+	return value is Array and value.size() == 2 and (value[0] is float or value[0] is int) and (value[1] is float or value[1] is int) and is_finite(float(value[0])) and is_finite(float(value[1])) and value[0] >= 0 and value[0] <= 2880 and value[1] >= 0 and value[1] <= 1920
 
 func restore(data: Dictionary) -> bool:
 	if not valid_int(data.get("version"), 3, 6): return false
@@ -609,6 +618,13 @@ func restore(data: Dictionary) -> bool:
 			if e.has(key) and not valid_int(e[key], 0, 10000): return false
 		if e.has("level") and not valid_int(e.level, 1, 20): return false
 		if e.has("elite") and not e.elite is bool: return false
+		if e.has("forest_extension") and not e.forest_extension is bool: return false
+		if e.has("severed"):
+			if not e.severed is Array or e.severed.size() > 2: return false
+			var limbs: Array = []
+			for part in e.severed:
+				if part not in ["arm", "leg"] or part in limbs: return false
+				limbs.append(part)
 		if e.max_hp < 1 or e.hp > e.max_hp or e.integrity > 100: return false
 	for id in data.cargo:
 		if not valid_int(id, 1) or not data.remains.any(func(r): return r.id == id and r.zone == "cargo"): return false
@@ -699,8 +715,10 @@ func restore(data: Dictionary) -> bool:
 		for key in ["id", "hp", "max_hp"]: villager[key] = int(villager[key])
 	for letter in normalized.letters: letter.day = int(letter.day)
 	for gear in normalized.equipment:
+		if gear.weapon != "armor" and gear.affixes.is_empty(): gear.affixes = YinBalance.make_gear(gear.id, gear.weapon, gear.tier, gear.quality).affixes
 		for affix in gear.affixes: affix.value = int(affix.value)
 	for drop in normalized.gear_drops:
+		if drop.gear.weapon != "armor" and drop.gear.affixes.is_empty(): drop.gear.affixes = YinBalance.make_gear(drop.gear.id, drop.gear.weapon, drop.gear.tier, drop.gear.quality).affixes
 		for affix in drop.gear.affixes: affix.value = int(affix.value)
 	normalized.cargo = normalized.cargo.map(func(id): return int(id))
 	for key in save_keys(): set(key, normalized[key])
@@ -781,11 +799,6 @@ func reward_enemy(enemy: Dictionary, at: Vector2) -> void:
 		var weapon_roll: float = random.randf()
 		var weapon: String = "sword" if weapon_roll < 0.45 else ("armor" if weapon_roll < 0.90 else ("pistol" if weapon_roll < 0.97 else ("smg" if weapon_roll < 0.99 else "rifle")))
 		var gear := YinBalance.make_gear(next_gear_id, weapon, mini(20, level_value), quality)
-		if weapon != "armor" and (quality > 0 or random.randf() < 0.2):
-			gear.affixes.append({"id": "crit" if random.randf() < 0.5 else "bleed", "value": 8 + quality * 4})
-			if gear.affixes[0].id == "bleed": gear.affixes[0].value = 3 + mini(quality, 3)
-		if weapon != "armor" and quality >= 2:
-			gear.affixes.append({"id": "bleed" if gear.affixes[0].id == "crit" else "crit", "value": 4 if gear.affixes[0].id == "crit" else 16})
 		next_gear_id += 1
 		gear_drops.append({"id": next_id, "gear": gear, "zone": enemy.zone, "at": [at.x - 14, at.y + 10]})
 		next_id += 1
@@ -930,17 +943,3 @@ func settle_raid() -> void:
 		for letter in letters:
 			if letter.day == raid_day: letter.status = "failed"
 		add_log("未能守住青槐村：村庄完好度 -20，村民受伤。")
-
-func inscribe_gear(id: int, affix_id: String) -> String:
-	if affix_id not in YinAbilities.AFFIXES: return "没有此类词条。"
-	for gear in equipment:
-		if gear.id != id: continue
-		if gear.weapon == "armor": return "此符纹只用于武器。"
-		if gear.affixes.any(func(affix): return affix.id == affix_id): return "已有此词条，不能重复铭刻。"
-		if gear.affixes.size() >= 2: return "每件武器最多两个词条。"
-		if money < 20 or supplies.scrap < 2: return "铭刻需要 20 文与 2 零件。"
-		money -= 20
-		supplies.scrap -= 2
-		gear.affixes.append({"id": affix_id, "value": 12 if affix_id == "crit" else 4})
-		return "铭刻完成：" + YinAbilities.AFFIXES[affix_id]
-	return "没有这件武器。"

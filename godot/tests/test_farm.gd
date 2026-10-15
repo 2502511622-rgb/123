@@ -86,7 +86,7 @@ func _initialize() -> void:
 	remains.pickup(r3)
 	check(remains.cargo.size() == 2 and remains.find_remains(r3).zone == "graveyard", "cart capacity and ground persistence")
 	remains.process_remains(r1, "refine")
-	check(remains.spirits.size() == 1 and remains.oil == 6 and remains.cargo.size() == 1, "transported remains refined")
+	check(remains.spirits.size() == 1 and remains.oil == 8 and remains.cargo.size() == 1, "transported remains refined")
 	remains.process_remains(r2, "dismantle")
 	check(remains.bones == 2 and remains.ash == 1, "dismantle material output")
 	remains.process_remains(r3, "release")

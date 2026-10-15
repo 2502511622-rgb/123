@@ -7,6 +7,9 @@ var cooldown: float = 1
 var windup: float = 0
 var attack_center := Vector2.ZERO
 var hit_flash: float = 0
+var hit_stop: float = 0
+var health_trail: float = -1
+var trail_delay: float = 0
 var knockback := Vector2.ZERO
 var burst_remaining: int = 0
 var burst_timer: float = 0
@@ -26,6 +29,9 @@ var hurtbox: YinHurtbox
 const TEXTURE = preload("res://assets/enemies.png")
 
 func _ready() -> void:
+	var flash_material := ShaderMaterial.new()
+	flash_material.shader = preload("res://shaders/hit_flash.gdshader")
+	material = flash_material
 	health_receiver = YinHealthReceiver.new()
 	health_receiver.name = "HealthReceiver"
 	health_receiver.bind_record(record)
@@ -34,6 +40,7 @@ func _ready() -> void:
 	hurtbox.name = "Hurtbox"
 	hurtbox.actor = self
 	add_child(hurtbox)
+	health_trail = float(record.hp)
 	shield = 20 if record.kind == "opera_boss" else 0
 	collision_layer = 4
 	collision_mask = 7
@@ -46,6 +53,14 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	if game.modal != null or record.dead or is_queued_for_deletion(): return
+	hit_flash = maxf(0, hit_flash - delta)
+	material.set_shader_parameter("flash", 1.0 if hit_flash > 0.065 else 0.0)
+	trail_delay = maxf(0, trail_delay - delta)
+	if trail_delay <= 0: health_trail = move_toward(health_trail, float(record.hp), delta * record.max_hp)
+	queue_redraw()
+	if hit_stop > 0:
+		hit_stop -= delta
+		return
 	var active_world: Node2D = game.world
 	victim = game.closest_ally(position)
 	if victim == null: return
@@ -64,10 +79,10 @@ func _physics_process(delta: float) -> void:
 			passive_clock = 0
 		elif record.kind != "opera_boss": passive_clock = 0
 	stun = maxf(0, stun - delta)
-	hit_flash = maxf(0, hit_flash - delta)
 	cooldown = maxf(0, cooldown - delta)
 	var spec: Dictionary = YinBalance.MONSTERS[record.kind].duplicate()
 	spec.pattern = YinAbilities.meta(record.kind).pattern
+	if "leg" in record.get("severed", []): spec.speed *= 0.62
 	var boss: bool = record.kind in YinAbilities.BOSSES
 	var ranged: bool = spec.pattern in ["fan", "ring", "burst", "tide", "opera", "cold"]
 	var distance: float = position.distance_to(victim.position)
@@ -76,7 +91,7 @@ func _physics_process(delta: float) -> void:
 	repath -= delta
 	if charge_time > 0:
 		charge_time -= delta
-		velocity = charge_direction * 210
+		velocity = charge_direction * (130 if "leg" in record.get("severed", []) else 210)
 		if not charge_hit and position.distance_to(victim.position) < 32:
 			hurt_victim(int(record.get("damage", spec.damage)))
 			charge_hit = true
@@ -129,7 +144,7 @@ func _physics_process(delta: float) -> void:
 	queue_redraw()
 func fire_bullet(direction: Vector2, speed: float = 160) -> void:
 	var spec: Dictionary = YinBalance.MONSTERS[record.kind]
-	game.world.projectiles.spawn(position + Vector2(0, -4), direction, false, int(record.get("damage", spec.damage)) + (2 if record.kind == "archer" else 0), speed, 760, Color("c78882") if record.kind != "lantern" else Color("8bc5b1"))
+	game.world.projectiles.spawn(position + Vector2(0, -4), direction, false, roundi(int(record.get("damage", spec.damage)) * (0.75 if "arm" in record.get("severed", []) else 1.0)) + (2 if record.kind == "archer" else 0), speed, 760, Color("c78882") if record.kind != "lantern" else Color("8bc5b1"))
 func volley(pattern: String) -> void:
 	var aim: Vector2 = position.direction_to(attack_center)
 	match pattern:
@@ -166,8 +181,15 @@ func receive_hit(damage: int, method: String = "sword") -> void:
 		adjusted -= absorbed
 	var dealt: int = health_receiver.apply(adjusted, method)
 	game.world.damage_number(position, dealt, Color("edb779") if method == "fire" else Color("eee0b4"))
-	game.world.effect(position + Vector2(0, -16), Color("d7cba6"))
-	hit_flash = 0.15
+	if dealt > 0:
+		trail_delay = 0.3
+		hit_flash = 0.13
+		material.set_shader_parameter("flash", 1.0)
+		if method not in ["bleed", "seal"]:
+			hit_stop = 0.035 if record.kind in YinAbilities.BOSSES else 0.045
+			game.world.impact(position + Vector2(0, -20), game.player.position.direction_to(position), method)
+			if method in ["sword", "bullet"]: update_dismemberment()
+
 	if method == "fire":
 		record.integrity = maxi(0, record.integrity - 35)
 		stun = 0.2
@@ -176,7 +198,10 @@ func receive_hit(damage: int, method: String = "sword") -> void:
 		stun = 0.65 if record.kind in YinAbilities.BOSSES else 3
 		windup = 0
 		burst_remaining = 0
-	elif method in ["bullet", "bleed"] or record.kind in YinAbilities.BOSSES:
+	elif method == "bullet":
+		knockback = game.player.position.direction_to(position) * (18 if record.kind in YinAbilities.BOSSES else 42)
+		stun = maxf(stun, 0.045)
+	elif method == "bleed" or record.kind in YinAbilities.BOSSES:
 		pass
 	else:
 		windup = 0
@@ -188,7 +213,7 @@ func receive_hit(damage: int, method: String = "sword") -> void:
 		game.spawn_remains_visuals()
 		game.spawn_pickups()
 		game.spawn_gear_pickups()
-		game.notify_action("鬼物倒下，遗骸留在原地。靠近按 E，亲自处理。")
+		game.persist()
 		queue_free()
 
 func _draw() -> void:
@@ -196,8 +221,14 @@ func _draw() -> void:
 	draw_rect(Rect2(-12, -3, 24, 5), Color("253b3a66"))
 	var row: int = {"water": 0, "bone": 1, "boss": 2, "archer": 3, "lantern": 4, "gunner": 5, "brute": 6, "well_boss": 0, "opera_boss": 5}.get(record.kind, 0)
 	var scale_value: float = 3 if record.kind in ["boss", "well_boss", "opera_boss"] else 2
-	var tint := Color("eab498") if hit_flash > 0 else (Color("8eafd0") if stun > 0.3 else Color.WHITE)
-	draw_texture_rect_region(TEXTURE, Rect2(-8 * scale_value, -22 * scale_value, 16 * scale_value, 24 * scale_value), Rect2(0, row * 24, 16, 24), tint)
+	var tint := Color.WHITE if hit_flash > 0.065 else (Color("d79279") if hit_flash > 0 else (Color("8eafd0") if stun > 0.3 else Color.WHITE))
+	var missing: Array = record.get("severed", [])
+	# Draw the original sprite in non-overlapping pieces so missing limbs stay absent.
+	for part in [Rect2(0, 0, 16, 8), Rect2(4, 8, 8, 10), Rect2(0, 8, 4, 10), Rect2(12, 8, 4, 10), Rect2(0, 18, 8, 6), Rect2(8, 18, 8, 6)]:
+		if part.position == Vector2(12, 8) and "arm" in missing: continue
+		if part.position == Vector2(8, 18) and "leg" in missing: continue
+		var destination := Rect2(Vector2(-8, -22) * scale_value + part.position * scale_value, part.size * scale_value)
+		draw_texture_rect_region(TEXTURE, destination, Rect2(part.position + Vector2(0, row * 24), part.size), tint)
 	if record.kind == "well_boss":
 		draw_arc(Vector2(0, -18), 24, 0, TAU, 16, Color("85c9ce"), 3)
 		draw_rect(Rect2(-20, -70, 40, 8), Color("366777"))
@@ -206,6 +237,7 @@ func _draw() -> void:
 		draw_rect(Rect2(-9, -56, 18, 4), Color("9d495c"))
 		for side in [-1, 1]: draw_line(Vector2(side * 15, -38), Vector2(side * 31, -7), Color("c26f85"), 4)
 	draw_rect(Rect2(-16, -50 * (1.4 if row == 2 else 1), 32, 3), Color("413e3e"))
+	draw_rect(Rect2(-16, -50 * (1.4 if row == 2 else 1), 32 * health_trail / record.max_hp, 3), Color("e6bb83"))
 	draw_rect(Rect2(-16, -50 * (1.4 if row == 2 else 1), 32 * float(record.hp) / record.max_hp, 3), Color("aa7164"))
 	if shield > 0: draw_arc(Vector2(0, -25), 25, 0, TAU, 20, Color("96c0db"), 2)
 	if bleed_time > 0: draw_rect(Rect2(-3, -56, 6, 6), Color("b54e5c"))
@@ -223,9 +255,25 @@ func _draw() -> void:
 
 func hurt_victim(damage: int) -> void:
 	if not is_instance_valid(victim): return
+	if "arm" in record.get("severed", []): damage = maxi(1, roundi(damage * 0.75))
 	if record.kind == "brute" and record.hp < record.max_hp / 2: damage = roundi(damage * 1.2)
 	if victim == game.player: game.take_damage(damage)
 	else: victim.receive_hit(damage)
 func apply_bleed(duration: float, damage: int) -> void:
 	bleed_time = maxf(bleed_time, duration)
 	bleed_damage = maxi(bleed_damage, damage)
+
+func update_dismemberment() -> void:
+	if not record.has("severed"): record.severed = []
+	var ratio: float = float(record.hp) / record.max_hp
+	for part in ["arm", "leg"]:
+		if part in record.severed or ratio > (0.60 if part == "arm" else 0.30): continue
+		record.severed.append(part)
+		var fragment := YinSeveredLimb.new()
+		fragment.part = part
+		fragment.row = {"water": 0, "bone": 1, "boss": 2, "archer": 3, "lantern": 4, "gunner": 5, "brute": 6, "well_boss": 0, "opera_boss": 5}.get(record.kind, 0)
+		fragment.sprite_scale = 3.0 if record.kind in YinAbilities.BOSSES else 2.0
+		fragment.position = position + Vector2(10, -20 if part == "arm" else -2)
+		fragment.velocity = game.player.position.direction_to(position).rotated(-0.6 if part == "arm" else 0.6) * 85
+		game.world.feedback.add_child(fragment)
+		game.world.effect(fragment.position, Color("a57465"))

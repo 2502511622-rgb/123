@@ -53,8 +53,8 @@ func _initialize() -> void:
 	var boss: Dictionary = state.spawn_record("boss", "farm", Vector2(400, 350), 4, true)
 	state.kill_enemy(boss.id, Vector2(400, 350))
 	var remains_id: int = state.remains[-1].id
-	state.oil = 5
-	check("6 灯油" in state.process_remains(remains_id, "refine") and not state.find_remains(remains_id).is_empty(), "boss refinement requires six oil without destroying corpse on failure")
+	state.oil = 0
+	check("完成" in state.process_remains(remains_id, "refine") and state.oil == 0, "boss refinement works without oil")
 	state.oil = 20
 	state.process_remains(remains_id, "refine")
 	var follower: Dictionary = state.spirits[0]
@@ -103,13 +103,11 @@ func _initialize() -> void:
 			elite_rolls += 1
 			elite_magic = elite_magic and drop.gear.quality >= 1
 	check(elite_rolls > 60 and elite_rolls < 150 and elite_magic, "elite equipment is probabilistic and preserves quality floor")
-	var weapon: Dictionary = state.current_gear()
-	state.money = 50
-	state.supplies.scrap = 4
-	check("完成" in state.inscribe_gear(weapon.id, "crit") and state.money == 30 and state.supplies.scrap == 2, "weapon inscription consumes exact money and parts")
-	check("重复" in state.inscribe_gear(weapon.id, "crit") and state.money == 30, "duplicate affix inscription preserves resources")
-	check("完成" in state.inscribe_gear(weapon.id, "bleed") and weapon.affixes.size() == 2, "weapon can carry both critical and heavy wound")
-	check(FarmState.valid_gear(weapon), "inscribed weapon satisfies save schema")
+	var weapon: Dictionary = state.grant_gear("rifle", 3, 2)
+	check(weapon.affixes.size() == 2, "rare weapons arrive with two innate affixes")
+	check(weapon.affixes[0].id != weapon.affixes[1].id, "innate affixes never duplicate")
+	check(FarmState.valid_gear(weapon), "innate weapon satisfies save schema")
+	check(not state.has_method("inscribe_gear"), "inscription economy has been removed")
 	var village := FarmState.new()
 	village.next_day()
 	village.next_day()

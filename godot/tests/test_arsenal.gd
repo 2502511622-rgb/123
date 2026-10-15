@@ -74,8 +74,8 @@ func run() -> void:
  check(YinBalance.enemy("brute", 3, true).hp > YinBalance.enemy("brute", 1).hp, "elite and level scale enemy durability")
  var s := FarmState.new()
  s.prepare_enemies()
- check(s.enemies.filter(func(e): return e.zone == "forest").size() == 16, "expanded forest population")
- check(s.enemies.filter(func(e): return e.zone == "forest" and e.elite).size() == 2, "two forest elites")
+ check(s.enemies.filter(func(e): return e.zone == "forest").size() == 28, "expanded forest population")
+ check(s.enemies.filter(func(e): return e.zone == "forest" and e.elite).size() == 4, "four forest elites")
  var elite: Dictionary = s.enemies.filter(func(e): return e.zone == "forest" and e.elite)[0]
  s.kill_enemy(elite.id, Vector2(1100, 700))
  check(s.gear_drops.all(func(drop): return drop.gear.quality >= 1), "elite equipment, when rolled, has magic quality or better")
@@ -146,6 +146,7 @@ func run() -> void:
  check(target.record.hp == 100, "seed packet does not silently attack as a sword")
  await key(KEY_8)
  check(game.state.current_gear().weapon == "pistol" and game.player.held_item == "pistol", "pistol shortcut changes equipped and visible weapon")
+ game.state.current_gear().affixes.clear() # This fixture isolates base bullet damage from innate procs.
  var reserve: int = game.state.supplies.light_ammo
  await key(KEY_U)
  await frames(24)
@@ -158,6 +159,7 @@ func run() -> void:
  check(target.record.integrity == 100, "ballistic kill preparation preserves remains")
  var ammo_total: int = game.state.supplies.light_ammo
  var smg: Dictionary = game.state.grant_gear("smg")
+ smg.affixes.clear()
  await key(KEY_9)
  await key(KEY_U)
  await frames(32)
@@ -175,6 +177,7 @@ func run() -> void:
  check(smg.magazine + game.state.supplies.light_ammo == ammo_total - shots and shots >= 4, "automatic fire consumes exactly one round per spawned bullet")
  game.world.projectiles.projectile_spawned.disconnect(count_shots)
  var rifle: Dictionary = game.state.grant_gear("rifle")
+ rifle.affixes.clear()
  game.state.supplies.rifle_ammo = 12
  await key(KEY_0)
  await key(KEY_U)
@@ -259,7 +262,7 @@ func run() -> void:
  check(not game.world.projectiles.spawn(Vector2(800, 450), Vector2.RIGHT, true, 1, 100, 500, Color.WHITE), "projectile limit prevents unbounded allocations")
  game.travel("forest")
  await frames(3)
- check(game.world.level_size == Vector2(1920, 1280) and game.player.get_node("Camera2D").limit_right == 1920, "expanded forest has matching camera and collision bounds")
+ check(game.world.level_size == Vector2(2880, 1920) and game.player.get_node("Camera2D").limit_right == 2880, "expanded forest has matching camera and collision bounds")
  check(game.world.projectiles.bullets.is_empty(), "scene switch clears old projectiles")
  check(not game.world.is_safe_position(Vector2(980, 300)) and game.world.is_safe_position(Vector2(980, 580)), "expanded river only permits bridge crossing")
  game.state.player_position = Vector2(1500, 800)

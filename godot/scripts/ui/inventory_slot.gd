@@ -2,6 +2,7 @@ class_name YinInventorySlot
 extends Button
 signal selected(slot: YinInventorySlot, half: bool)
 signal transferred
+var cell_width: float = 43
 var model: YinInventoryModel
 var index: int
 var picture: TextureRect
@@ -9,7 +10,7 @@ var name_label: Label
 var count_label: Label
 const ICON_IDS = ["candle_seeds", "vine_seeds", "gourd_seeds", "rice_seeds", "candle", "vine", "gourd", "rice", "oil", "talisman", "bone", "ash", "wood", "stone", "paper_lamp", "ward_stake", "light_ammo", "rifle_ammo", "scrap"]
 func _ready() -> void:
-	custom_minimum_size = Vector2(43, 38)
+	custom_minimum_size = Vector2(cell_width, 38)
 	focus_mode = Control.FOCUS_NONE
 	toggle_mode = true
 	var style := StyleBoxFlat.new()
@@ -28,7 +29,7 @@ func _ready() -> void:
 	add_child(picture)
 	name_label = Label.new()
 	name_label.position = Vector2(2, 23)
-	name_label.size = Vector2(39, 13)
+	name_label.size = Vector2(cell_width - 4, 13)
 	name_label.add_theme_font_size_override("font_size", 8)
 	name_label.add_theme_color_override("font_color", Color("3b4f44"))
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -36,7 +37,7 @@ func _ready() -> void:
 	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(name_label)
 	count_label = Label.new()
-	count_label.position = Vector2(21, 5)
+	count_label.position = Vector2(cell_width - 22, 5)
 	count_label.size = Vector2(20, 12)
 	count_label.add_theme_font_size_override("font_size", 9)
 	count_label.add_theme_color_override("font_color", Color("3b4f44"))
@@ -48,7 +49,7 @@ func render() -> void:
 	var item: Dictionary = model.slots()[index]
 	text = ""
 	name_label.text = "" if item.id == "" else YinItemCatalog.spec(item.id).display_name
-	name_label.add_theme_font_size_override("font_size", 6 if name_label.text.length() > 4 else 8)
+	name_label.add_theme_font_size_override("font_size", 8 if cell_width >= 56 else (6 if name_label.text.length() > 4 else 8))
 	count_label.text = "·" if item.id == "" else str(item.count)
 	picture.texture = null
 	if item.id != "" and ICON_IDS.has(item.id):

@@ -10,13 +10,16 @@ var selected_slot: YinInventorySlot
 var selected_amount: int = -1
 var hint: Label
 var controls: Array[YinInventorySlot] = []
+var build_action: Button
+var drop_action: Button
 func _ready() -> void:
 	add_to_group("inventory_panels")
 	add_theme_constant_override("separation", 6)
 	hint = Label.new()
 	hint.add_theme_font_size_override("font_size", 10)
 	hint.add_theme_color_override("font_color", Color("48584a"))
-	hint.text = "左键选中并交换；右键取一半；支持拖拽。"
+	hint.text = ""
+	hint.visible = false
 	add_child(hint)
 	if show_chest:
 		var row := HBoxContainer.new()
@@ -25,8 +28,10 @@ func _ready() -> void:
 		create_grid(bag, "行囊 · 24 格", row)
 		create_grid(chest, "义庄仓箱 · 24 格", row)
 	else: create_grid(bag, "行囊 · 24 格", self)
+	var actions := HBoxContainer.new()
+	add_child(actions)
 	var organize := Button.new()
-	organize.text = "整理并合并堆叠"
+	organize.text = "整理"
 	organize.pressed.connect(func():
 		bag.compact()
 		if show_chest: chest.compact()
@@ -34,24 +39,28 @@ func _ready() -> void:
 		refresh()
 		mutated.emit()
 	)
-	add_child(organize)
+	actions.add_child(organize)
 	var build := Button.new()
-	build.text = "放置选中的纸灯 / 阵桩"
+	build.text = "放置"
+	build_action = build
+	build.visible = false
 	build.pressed.connect(func():
 		if selected_slot != null and selected_slot.model.container == "bag":
 			var id: String = selected_slot.model.slots()[selected_slot.index].id
 			if id in ["paper_lamp", "ward_stake"]: use_item.emit(id)
 			else: hint.text = "请选择行囊里的纸灯或阵桩。"
 	)
-	add_child(build)
+	actions.add_child(build)
 	var drop := Button.new()
-	drop.text = "丢下选中的一份物品（保留在地图中）"
+	drop.text = "放下一个"
+	drop_action = drop
+	drop.visible = false
 	drop.pressed.connect(func():
 		if selected_slot != null and selected_slot.model.container == "bag":
 			var id: String = selected_slot.model.slots()[selected_slot.index].id
 			if id != "": drop_item.emit(id)
 	)
-	add_child(drop)
+	actions.add_child(drop)
 func create_grid(model: YinInventoryModel, name_text: String, parent: Node) -> void:
 	model.sync()
 	var column := VBoxContainer.new()
@@ -62,12 +71,13 @@ func create_grid(model: YinInventoryModel, name_text: String, parent: Node) -> v
 	title.add_theme_color_override("font_color", Color("48584a"))
 	column.add_child(title)
 	var grid := GridContainer.new()
-	grid.columns = 6
+	grid.columns = 6 if show_chest else 8
 	grid.add_theme_constant_override("h_separation", 3)
 	grid.add_theme_constant_override("v_separation", 4)
 	column.add_child(grid)
 	for i in range(YinInventoryModel.CAPACITY):
 		var slot := YinInventorySlot.new()
+		slot.cell_width = 43 if show_chest else 56
 		slot.model = model
 		slot.index = i
 		slot.selected.connect(select)
@@ -82,6 +92,7 @@ func select(slot: YinInventorySlot, half: bool) -> void:
 	if selected_slot == null or selected_slot == slot:
 		selected_slot = slot if cell.id != "" else null
 		selected_amount = maxi(1, int(cell.count / 2)) if half else -1
+		hint.visible = true
 		hint.text = "选中 %s，点击目标格。Esc 关闭不会丢失物品。" % YinItemCatalog.spec(cell.id).display_name if cell.id != "" else "这是空格。"
 		refresh()
 	else:
@@ -91,6 +102,10 @@ func select(slot: YinInventorySlot, half: bool) -> void:
 		refresh()
 		if ok: mutated.emit()
 func refresh() -> void:
+	var id: String = selected_slot.model.slots()[selected_slot.index].id if selected_slot != null else ""
+	var from_bag: bool = selected_slot != null and selected_slot.model.container == "bag"
+	if is_instance_valid(build_action): build_action.visible = from_bag and id in ["paper_lamp", "ward_stake"]
+	if is_instance_valid(drop_action): drop_action.visible = from_bag and id != ""
 	for slot in controls:
 		slot.render()
 		slot.set_pressed_no_signal(slot == selected_slot)

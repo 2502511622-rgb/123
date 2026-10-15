@@ -29,7 +29,14 @@ static func damage(base: int, actor_level: int, gear: Dictionary = {}, armor: in
  var raw: float = base * (1 + 0.07 * (tier - 1) + 0.02 * (actor_level - 1)) * (1 + bonus / 100.0)
  return maxi(1, roundi(raw * 100.0 / (100 + maxi(0, armor))))
 static func make_gear(id: int, weapon: String, tier: int = 1, quality: int = 0) -> Dictionary:
- return {"id": id, "weapon": weapon, "tier": tier, "quality": quality, "bonus": quality * 8, "magazine": 0, "affixes": []}
+ var affixes: Array = []
+ # Stable innate rolls: purchased, granted and dropped gear use one generation path.
+ if weapon != "armor":
+  var first: String = "crit" if (id + tier) % 2 == 0 else "bleed"
+  affixes.append({"id": first, "value": 8 + quality * 4 if first == "crit" else 3 + mini(quality, 3)})
+  if quality >= 2:
+   affixes.append({"id": "bleed" if first == "crit" else "crit", "value": 4 if first == "crit" else 16})
+ return {"id": id, "weapon": weapon, "tier": tier, "quality": quality, "bonus": quality * 8, "magazine": 0, "affixes": affixes}
 static func gear_name(gear: Dictionary) -> String:
  return "%s·%s T%d" % [QUALITY[int(gear.quality)], WEAPONS[gear.weapon].name, gear.tier]
 static func armor_value(gear: Dictionary) -> int:

@@ -1,17 +1,17 @@
 class_name YinPixelTheme
 extends RefCounted
-static func box(bg: String = "e1d2ae", border: String = "514b40") -> StyleBoxFlat:
+static func box(bg: String = "e9e0c9", border: String = "798274") -> StyleBoxFlat:
 	var s := StyleBoxFlat.new()
 	s.bg_color = Color(bg)
 	s.border_color = Color(border)
-	s.set_border_width_all(2)
+	s.set_border_width_all(1)
 	s.set_corner_radius_all(0)
 	s.content_margin_left = 8
 	s.content_margin_right = 8
 	s.content_margin_top = 5
 	s.content_margin_bottom = 5
 	s.shadow_color = Color("1e292bcc")
-	s.shadow_size = 2
+	s.shadow_size = 0
 	s.shadow_offset = Vector2(2, 2)
 	return s
 static func install() -> Theme:

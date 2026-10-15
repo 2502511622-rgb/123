@@ -40,7 +40,7 @@ func _ready() -> void:
 	feedback.z_index = 20
 	add_child(feedback)
 	add_child(actors)
-	level_size = Vector2(1920, 1280) if state.zone == "forest" else (Vector2(1280, 960) if state.zone in ["sunken", "theatre", "village"] else SIZE)
+	level_size = Vector2(2880, 1920) if state.zone == "forest" else (Vector2(1280, 960) if state.zone in ["sunken", "theatre", "village"] else SIZE)
 	projectiles = YinProjectiles.new()
 	projectiles.name = "Projectiles"
 	projectiles.game = get_tree().get_first_node_in_group("yintian_game")
@@ -267,6 +267,8 @@ func _draw() -> void:
 	if state.zone == "forest":
 		draw_rect(Rect2(948, 544, 88, 96), Color("806a4d"))
 		for y in range(546, 638, 8): draw_rect(Rect2(950, y, 84, 5), Color("b19768"))
+		draw_rect(Rect2(948, 1360, 88, 96), Color("806a4d"))
+		for y in range(1362, 1454, 8): draw_rect(Rect2(950, y, 84, 5), Color("b19768"))
 		return
 	if state.zone == "graveyard":
 		draw_rect(Rect2(0, 0, 960, 640), Color(0.15, 0.21, 0.23, 0.24))
@@ -375,13 +377,14 @@ func build_forest() -> void:
 	for gate in [Vector2(1760, 250), Vector2(1760, 1050)]:
 		prop("lantern", gate, Vector2(-16, -48), Rect2(-4, -6, 8, 6))
 	boundary(Rect2(960, 0, 64, 544))
-	boundary(Rect2(960, 640, 64, 640))
-	for x in range(40, 1900, 64):
+	boundary(Rect2(960, 640, 64, 720))
+	boundary(Rect2(960, 1456, 64, 464))
+	for x in range(40, 2860, 64):
 		prop("tree", Vector2(x, 55), Vector2(-32, -88), Rect2(-8, -16, 16, 16))
-		prop("tree", Vector2(x, 1258), Vector2(-32, -88), Rect2(-8, -16, 16, 16))
-	for y in range(160, 1200, 112):
+		prop("tree", Vector2(x, 1898), Vector2(-32, -88), Rect2(-8, -16, 16, 16))
+	for y in range(160, 1840, 112):
 		prop("tree", Vector2(40, y), Vector2(-32, -88), Rect2(-8, -16, 16, 16))
-		prop("tree", Vector2(1880, y), Vector2(-32, -88), Rect2(-8, -16, 16, 16))
+		prop("tree", Vector2(2840, y), Vector2(-32, -88), Rect2(-8, -16, 16, 16))
 	for at in [Vector2(350, 320), Vector2(620, 680), Vector2(780, 950), Vector2(1120, 370), Vector2(1380, 660), Vector2(1720, 1090)]:
 		for offset in [Vector2.ZERO, Vector2(34, -18), Vector2(-30, 18)]: prop("tree", at + offset, Vector2(-32, -88), Rect2(-8, -16, 16, 16))
 	for at in [Vector2(700, 180), Vector2(1400, 880), Vector2(1520, 440), Vector2(300, 400)]:
@@ -389,6 +392,18 @@ func build_forest() -> void:
 	prop("lantern", Vector2(155, 1140), Vector2(-16, -48), Rect2(-4, -6, 8, 6))
 	add_sign(Vector2(125, 1152), "返回乱葬坡 ↓")
 	add_sign(Vector2(160, 1070), "后山铳林 · T2–T5 · 远程弹幕与精英")
+	# Open trails connect the old eastern exits to three new encounter landmarks.
+	add_sign(Vector2(1900, 570), "东行 · 断碑营地 / 枯井 / 山门")
+	for center in [Vector2(2304, 384), Vector2(2432, 1024), Vector2(2304, 1632)]:
+		for offset in [Vector2(-112, -80), Vector2(112, -80), Vector2(-112, 80), Vector2(112, 80)]:
+			prop("grave", center + offset, Vector2(-16, -48), Rect2(-12, -16, 24, 16))
+		prop("lantern", center + Vector2(-72, 40), Vector2(-16, -48), Rect2(-4, -6, 8, 6))
+	add_sign(Vector2(2220, 400), "断碑营地 · 纸铳兵")
+	add_sign(Vector2(2350, 1040), "枯井 · 游魂盘踞")
+	add_sign(Vector2(2220, 1650), "山门遗址 · 精英山魈")
+	for at in [Vector2(2050, 640), Vector2(2700, 700), Vector2(2100, 1280), Vector2(2680, 1480)]:
+		prop("tree", at, Vector2(-32, -88), Rect2(-8, -16, 16, 16))
+		prop("rock", at + Vector2(48, 35), Vector2(-20, -28), Rect2(-14, -15, 28, 15))
 	for placed in state.placements:
 		if placed.zone == "forest": install_placement(placed)
 
@@ -443,3 +458,15 @@ func path_to(start: Vector2, end: Vector2) -> PackedVector2Array:
 				from_cell = cell
 				break
 	return combat_navigation.get_point_path(from_cell, to_cell, true)
+
+func impact(at: Vector2, direction: Vector2, method: String) -> void:
+	var spark := Line2D.new()
+	var cross := direction.normalized() * (16 if method == "sword" else 9)
+	spark.points = PackedVector2Array([at - cross, at + cross])
+	spark.width = 3 if method == "sword" else 2
+	spark.default_color = Color("ffe7b5") if method != "fire" else Color("e5a166")
+	feedback.add_child(spark)
+	var tween := spark.create_tween()
+	tween.tween_property(spark, "modulate:a", 0.0, 0.14)
+	tween.tween_callback(spark.queue_free)
+	effect(at, Color("e0b490"))

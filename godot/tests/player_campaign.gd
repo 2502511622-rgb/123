@@ -171,7 +171,7 @@ func run() -> void:
  await wheel(1)
  check(game.player.held_item == "rifle" and game.state.smart_farming == smart, "wheel returns to primary without switching farm tools")
  await key(KEY_I)
- check(await choose("技能") and await choose("学习 / 升阶 符火"), "learns fire in skill tree by mouse")
+ check(await choose("修行") and await choose("学习 / 升阶 符火"), "learns fire in skill tree by mouse")
  check(game.state.skill_ranks.fire == 1 and game.state.skill_points() == 0, "learning consumes one real skill point")
  await screenshot("skill-tree")
  await key(KEY_ESCAPE)
@@ -203,6 +203,7 @@ func run() -> void:
  check(game.state.spirits.size() == 1 and game.state.spirits[0].hp > 0, "V refines corpse into follower with independent health")
  if game.state.spirits.is_empty(): quit(1); return
  await key(KEY_H)
+ await choose("管理 · ")
  check(game.character_tab == "随从" and await choose("训练升级"), "opens follower manager and trains through GUI")
  check(game.state.spirits[0].level == 2, "trained follower levels up and retains source abilities")
  await screenshot("companions")
@@ -251,6 +252,7 @@ func run() -> void:
  await frames(2)
  check(game.state.spirits[0].hp == 0 and not game.state.spirits[0].active, "follower can be defeated and recalled instead of being immortal")
  await key(KEY_H)
+ await choose("管理 · ")
  check(await choose("疗养") and game.state.spirits[0].hp == game.state.spirits[0].max_hp, "heals fallen follower in management panel")
  check(await choose("出战") and game.state.spirits[0].active, "redeploys recovered follower without duplicating actor")
  await key(KEY_ESCAPE)
@@ -260,9 +262,12 @@ func run() -> void:
  game.state.spirits[0].active = false
  game.spawn_spirits()
  await frames(3)
- var gear: Dictionary = game.state.current_gear()
+ var gear: Dictionary = game.state.grant_gear("rifle", 3, 2)
+ game.state.equip(gear.id)
+ game.player.held_item = "rifle"
+ gear.magazine = 12
  await key(KEY_B)
- check(await choose("铭刻词条 · " + YinBalance.gear_name(gear)) and await choose("铭刻暴击") and await choose("铭刻重伤"), "adds both weapon affixes through actual inscription UI")
+ check(gear.affixes.size() == 2 and not buttons(game.modal).any(func(b): return "铭刻" in b.text), "rare rifle has innate affixes and no inscription action")
  await key(KEY_ESCAPE)
  game.combat.random.seed = 123
  var crit_rolls: int = 0
@@ -271,7 +276,7 @@ func run() -> void:
   var rolled: Dictionary = game.combat.roll_hit(31, gear)
   if rolled.critical: crit_rolls += 1
   if rolled.bleed > 0: bleed_rolls += 1
- check(crit_rolls > 70 and crit_rolls < 170, "critical affix changes actual hit rolls at bounded probability")
+ check(crit_rolls > 100 and crit_rolls < 210, "critical affix changes actual hit rolls at bounded probability")
  check(bleed_rolls > 180 and bleed_rolls < 320, "heavy-wound affix rolls actual timed injury")
  target_record = game.state.spawn_record("bone", "farm", game.player.position + Vector2(55, 0), 1)
  target_record.hp = 2000
@@ -305,9 +310,9 @@ func run() -> void:
  await frames(75)
  check(target_record.hp < before_dot, "injured enemy keeps losing health after player stops shooting")
  await key(KEY_B)
- check(game.modal.find_children("*", "Label", true, false).any(func(l): return "暴击 12%" in l.text and "重伤 4秒" in l.text), "equipment UI shows both rolled affixes clearly")
- for label_node in game.modal.find_children("*", "Label", true, false):
-  if "暴击 12%" in label_node.text:
+ check(buttons(game.modal).any(func(l): return "暴击 16%" in l.text and "重伤" in l.text), "equipment UI shows both rolled affixes clearly")
+ for label_node in buttons(game.modal):
+  if "暴击 16%" in label_node.text:
    var ancestor: Node = label_node.get_parent()
    while ancestor != null:
     if ancestor is ScrollContainer: ancestor.ensure_control_visible(label_node)
