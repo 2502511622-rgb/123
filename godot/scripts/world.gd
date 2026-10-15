@@ -40,7 +40,7 @@ func _ready() -> void:
 	feedback.z_index = 20
 	add_child(feedback)
 	add_child(actors)
-	level_size = Vector2(2880, 1920) if state.zone == "forest" else (Vector2(1280, 960) if state.zone in ["sunken", "theatre", "village"] else SIZE)
+	level_size = Vector2(2240, 1600) if state.zone == "island" else Vector2(2880, 1920) if state.zone == "forest" else (Vector2(1280, 960) if state.zone in ["sunken", "theatre", "village"] else SIZE)
 	projectiles = YinProjectiles.new()
 	projectiles.name = "Projectiles"
 	projectiles.game = get_tree().get_first_node_in_group("yintian_game")
@@ -51,6 +51,9 @@ func _ready() -> void:
 	boundary(Rect2(-32, level_size.y, level_size.x + 64, 32))
 	boundary(Rect2(-32, 0, 32, level_size.y))
 	boundary(Rect2(level_size.x, 0, 32, level_size.y))
+	if state.zone == "island":
+		build_island()
+		return
 	if state.zone == "village":
 		build_village()
 		return
@@ -199,7 +202,9 @@ func front_plot() -> int:
 
 func nearest_interaction() -> String:
 	if nearest_chest() != "": return "treasure"
+	if state.zone == "island": return "island_return" if player.position.distance_to(Vector2(180, 1440)) < 47 else ""
 	if state.zone == "village":
+		if player.position.distance_to(Vector2(1180, 820)) < 47: return "island_ferry"
 		if player.position.distance_to(Vector2(155, 820)) < 47: return "village_return"
 		for villager in get_tree().get_nodes_in_group("villagers"):
 			if not villager.is_queued_for_deletion() and player.position.distance_to(villager.position) < 56: return "villager"
@@ -249,6 +254,9 @@ func tile(id: int, at: Vector2) -> void:
 
 func _draw() -> void:
 	if state == null:
+		return
+	if state.zone == "island":
+		draw_island()
 		return
 	if state.zone in ["hall", "shop"]:
 		draw_rect(Rect2(0, 0, 960, 120), Color("293b3b"))
@@ -427,6 +435,8 @@ func build_branch() -> void:
 			prop("grave", at, Vector2(-16, -48), Rect2(-12, -16, 24, 16))
 
 func build_village() -> void:
+	add_sign(Vector2(1080, 790), "东码头 · 岛国 → E")
+	prop("lantern", Vector2(1200, 820), Vector2(-16, -48), Rect2(-4, -6, 8, 6))
 	prop("lantern", Vector2(155, 820), Vector2(-16, -48), Rect2(-4, -6, 8, 6))
 	add_sign(Vector2(110, 842), "义庄田园 ↓ E")
 	add_sign(Vector2(280, 820), "青槐村 · 村民与求救书信")
@@ -488,3 +498,63 @@ func install_chests(game: Node2D) -> void:
 		chest.game = game
 		chest.position = YinAdventure.CHESTS[id].at
 		actors.add_child(chest)
+
+func build_island() -> void:
+	boundary(Rect2(0, 0, 2240, 64))
+	boundary(Rect2(0, 1536, 2240, 64))
+	boundary(Rect2(0, 0, 64, 1600))
+	boundary(Rect2(2176, 0, 64, 1600))
+	boundary(Rect2(960, 64, 64, 640))
+	boundary(Rect2(960, 832, 64, 384))
+	boundary(Rect2(960, 1312, 64, 224))
+	boundary(Rect2(352, 832, 192, 128))
+	prop("lantern", Vector2(180, 1440), Vector2(-16, -48), Rect2(-4, -6, 8, 6))
+	add_sign(Vector2(110, 1460), "渡船 · 返回青槐村 E")
+	for at in [Vector2(320, 1280), Vector2(800, 1040), Vector2(304, 448), Vector2(1280, 384), Vector2(1376, 1040), Vector2(2080, 1216), Vector2(1856, 240)]:
+		prop("tree", at, Vector2(-32, -88), Rect2(-8, -16, 16, 16))
+	for at in [Vector2(624, 288), Vector2(784, 288), Vector2(624, 432), Vector2(784, 432)]:
+		prop("grave", at, Vector2(-16, -48), Rect2(-12, -16, 24, 16))
+	for at in [Vector2(1200, 496), Vector2(1440, 432), Vector2(1680, 480), Vector2(1616, 1056)]:
+		prop("rock", at, Vector2(-20, -28), Rect2(-14, -15, 28, 15))
+	add_sign(Vector2(288, 1344), "岛国 · 异乡地貌在裂海中缝合")
+	add_sign(Vector2(560, 1024), "苇岸 · 河童依水，封皿可制")
+	add_sign(Vector2(560, 496), "荒冢 ↑ 以津真天 · 先超度亡骸")
+	add_sign(Vector2(1040, 768), "渡桥向北 → 风山")
+	add_sign(Vector2(1440, 512), "风山 ↑ 大天狗 · 镇符破风障")
+	add_sign(Vector2(1664, 1376), "双面社 ↑ 两面宿傩 · 剑弓交替")
+func draw_island() -> void:
+	for y_range in [Vector2i(704, 832), Vector2i(1216, 1312)]:
+		draw_rect(Rect2(948, y_range.x, 88, y_range.y - y_range.x), Color("927454"))
+		for y in range(y_range.x, y_range.y, 8): draw_rect(Rect2(948, y, 88, 5), Color("c1a16f"))
+	for at in [Vector2(700, 288), Vector2(1568, 256), Vector2(1824, 1120)]:
+		draw_rect(Rect2(at + Vector2(-42, -72), Vector2(8, 76)), Color("935b4e"))
+		draw_rect(Rect2(at + Vector2(34, -72), Vector2(8, 76)), Color("935b4e"))
+		draw_rect(Rect2(at + Vector2(-54, -80), Vector2(108, 8)), Color("483e3d"))
+		draw_rect(Rect2(at + Vector2(-48, -60), Vector2(96, 6)), Color("b0775b"))
+	for kind in ["daitengu", "ryomen_sukuna"]:
+		if not YinIsland.available(state, kind):
+			var at: Vector2 = YinIsland.ARENAS[kind]
+			draw_arc(at, 90, 0, TAU, 32, Color("80a7b2"), 3)
+			draw_string(ThemeDB.fallback_font, at + Vector2(-60, 0), "前一祭场尚未平息", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color("ced7be"))
+func shock_ring(at: Vector2, radius: float, tint: Color) -> void:
+	var ring := Line2D.new()
+	for i in range(33): ring.add_point(at + Vector2.from_angle(TAU * i / 32) * radius)
+	ring.width = 2
+	ring.default_color = tint
+	feedback.add_child(ring)
+	var tween := ring.create_tween()
+	tween.tween_property(ring, "modulate:a", 0.0, 0.4)
+	tween.tween_callback(ring.queue_free)
+func artifact_sweep(at: Vector2, facing: Vector2, reach: float, level_value: int) -> void:
+	for layer in range(3):
+		var slash := Line2D.new()
+		slash.add_to_group("ipetam_slashes")
+		slash.width = 3 if layer == 0 else 1
+		slash.default_color = Color("da6c79") if layer != 1 else Color("9dd7ce")
+		for i in range(17):
+			var angle: float = facing.angle() - 0.85 + float(i) / 16 * 1.7
+			slash.add_point(at + Vector2.from_angle(angle) * (reach - layer * 9))
+		feedback.add_child(slash)
+		var tween := slash.create_tween()
+		tween.tween_property(slash, "modulate:a", 0.0, 0.24 + level_value * 0.005)
+		tween.tween_callback(slash.queue_free)

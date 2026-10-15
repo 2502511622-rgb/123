@@ -2,7 +2,7 @@ class_name YinMinimap
 extends Control
 var game: Node2D
 var expanded: bool = false
-const NAMES = {"village": "青槐村", "farm": "义庄田园", "graveyard": "乱葬坡", "forest": "后山铳林", "sunken": "沉水村", "theatre": "废戏台", "hall": "义庄", "shop": "杂货铺"}
+const NAMES = {"island": "岛国 · 缝合海域","village": "青槐村", "farm": "义庄田园", "graveyard": "乱葬坡", "forest": "后山铳林", "sunken": "沉水村", "theatre": "废戏台", "hall": "义庄", "shop": "杂货铺"}
 func _process(_delta: float) -> void: queue_redraw()
 func point(at: Vector2) -> Vector2: return Vector2(5, 17) + at / game.world.level_size * (size - Vector2(10, 23))
 func _draw() -> void:
@@ -16,6 +16,11 @@ func _draw() -> void:
 		var spec: Dictionary = YinAdventure.CHESTS[id]
 		if spec.zone == game.state.zone and id not in game.state.opened_chests:
 			draw_rect(Rect2(point(spec.at) - Vector2(2, 2), Vector2(4, 4)), Color("d9a552"), false, 1)
+	if game.state.zone == "island":
+		for name_value in YinIsland.REGIONS:
+			var at: Vector2 = point(YinIsland.REGIONS[name_value])
+			draw_circle(at, 2, Color("d8b77d"))
+			if size.x > 200: draw_string(ThemeDB.fallback_font, at + Vector2(4, 0), name_value, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color("d3d0b0"))
 	if game.state.zone == "forest":
 		for id in YinAdventure.LANDMARKS:
 			var spec: Dictionary = YinAdventure.LANDMARKS[id]
@@ -33,7 +38,8 @@ func _draw() -> void:
 	draw_rect(Rect2(point(game.player.position) - Vector2(2, 2), Vector2(4, 4)), Color("fff1c1"))
 func gates() -> Array:
 	match game.state.zone:
-		"village": return [Vector2(155, 820)]
+		"island": return [Vector2(180, 1440)]
+		"village": return [Vector2(155, 820), Vector2(1180, 820)]
 		"forest": return [Vector2(155, 1140), Vector2(1760, 250), Vector2(1760, 1050)]
 		"sunken", "theatre": return [Vector2(155, 820)]
 		"graveyard": return [Vector2(155, 547), Vector2(850, 530)]

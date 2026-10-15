@@ -7,6 +7,11 @@ const SPEED: float = 92.0
 var facing := Vector2.DOWN
 var aim_direction := Vector2.RIGHT
 var held_item: String = "tool0"
+var snare_time: float = 0
+var scorch_time: float = 0
+var poison_time: float = 0
+var status_tick: float = 0
+var wind_impulse := Vector2.ZERO
 var recoil_time: float = 0
 var animation_time: float = 0.0
 var frozen: bool = false
@@ -44,6 +49,16 @@ func _physics_process(delta: float) -> void:
 		return
 	var input_direction := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	var direction: Vector2 = state_machine.update(delta, input_direction, false)
+	snare_time = maxf(0, snare_time - delta)
+	scorch_time = maxf(0, scorch_time - delta)
+	poison_time = maxf(0, poison_time - delta)
+	status_tick -= delta
+	if status_tick <= 0 and (scorch_time > 0 or poison_time > 0):
+		status_tick = 1
+		var game := get_tree().get_first_node_in_group("yintian_game")
+		if game != null:
+			game.take_damage(2 if poison_time > 0 else 3)
+			if game.player != self: return
 	recoil_time = maxf(0, recoil_time - delta)
 	hit_feedback = maxf(0, hit_feedback - delta)
 	for ghost in ghosts: ghost.age += delta
@@ -54,6 +69,9 @@ func _physics_process(delta: float) -> void:
 	attack_time = maxf(0, attack_time - delta)
 	dodge_time = maxf(0, dodge_time - delta)
 	velocity = direction * SPEED * (0.62 if burden else 1.0)
+	if snare_time > 0: velocity *= 0.45
+	velocity += wind_impulse
+	wind_impulse = wind_impulse.move_toward(Vector2.ZERO, delta * 180)
 	if dodge_time > 0 and not frozen:
 		velocity = dodge_direction * 250
 	if direction != Vector2.ZERO:

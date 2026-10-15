@@ -2,6 +2,7 @@ class_name YinSceneRouter
 extends Node
 signal scene_changed(zone: String, world: Node2D)
 const ROUTES = {
+	"island": preload("res://scenes/maps/island.tscn"),
 	"village": preload("res://scenes/maps/village.tscn"),
 	"sunken": preload("res://scenes/maps/sunken.tscn"),
 	"theatre": preload("res://scenes/maps/theatre.tscn"),

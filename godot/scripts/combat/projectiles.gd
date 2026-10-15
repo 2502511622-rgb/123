@@ -28,7 +28,14 @@ func _physics_process(delta: float) -> void:
    elif not bullet.friendly and hit.collider is YinAllyHurtbox:
     hit.collider.actor.receive_hit(bullet.damage)
    elif not bullet.friendly and hit.collider == game.player:
+    var before: int = game.state.health
     game.take_damage(bullet.damage)
+    if game.world == world and game.state.health < before:
+     game.player.snare_time = maxf(game.player.snare_time, float(bullet.payload.get("snare", 0)))
+     game.player.scorch_time = maxf(game.player.scorch_time, float(bullet.payload.get("scorch", 0)))
+     game.player.poison_time = maxf(game.player.poison_time, float(bullet.payload.get("poison", 0)))
+     game.state.energy = maxi(0, game.state.energy - int(bullet.payload.get("drain", 0)))
+     game.player.wind_impulse += bullet.direction * float(bullet.payload.get("push", 0))
    if game.world != world: return
    world.effect(hit.position - Vector2(0, 14), bullet.color)
    bullets.remove_at(index)

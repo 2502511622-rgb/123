@@ -15,6 +15,12 @@ const LANDMARKS = {
 	"temple": {"name": "山门遗址", "at": Vector2(2304, 1632)}
 }
 const QUESTS = {
+	"island_arrival": {"npc": 6, "name": "裂海异乡", "kind": "island_visit", "target": 1, "money": 35, "weapon": "", "description": "从青槐村东码头乘船抵达岛国，再向砚青讲述缝合海岸。"},
+	"island_catalog": {"npc": 6, "name": "五妖异闻", "kind": "island_hunt", "target": 5, "money": 80, "weapon": "", "parent": "island_arrival", "description": "分别击败河童、提灯妖怪、一本踏鞴、络新妇、丛原火，记录它们的特点。"},
+	"island_lament": {"npc": 2, "name": "何时安葬", "kind": "island_boss", "boss": "itsumade", "target": 1, "money": 100, "weapon": "", "parent": "island_catalog", "description": "找秋婶接续异闻；超度荒冢附近遗骸可削弱以津真天，平息金羽毒鸣后复命。"},
+	"island_gale": {"npc": 6, "name": "风山修验", "kind": "island_boss", "boss": "daitengu", "target": 1, "money": 120, "weapon": "", "parent": "island_lament", "description": "砚青请你登风山。镇符可打断大天狗的风障蓄势；击败后归还山路。"},
+	"island_dual": {"npc": 1, "name": "双面四臂", "kind": "island_boss", "boss": "ryomen_sukuna", "target": 1, "money": 150, "weapon": "", "parent": "island_gale", "description": "向柳伯接令，进入双面社，避开两面宿傩交替的双向剑弓，完成武人试炼。"},
+	"island_blade": {"npc": 3, "name": "饥刃缔约", "kind": "island_relic", "target": 1, "money": 60, "weapon": "ipetam", "parent": "island_dual", "description": "带三处祭场平息的见闻找阿祁，由他见证与嗜血神器伊佩塔姆的契约。"},
 	"grave_patrol": {"npc": 1, "name": "清理乱葬坡", "kind": "hunt", "target": 4, "money": 65, "weapon": "whip", "description": "在乱葬坡击败四只鬼物，回村向柳伯复命。"},
 	"lamp_supplies": {"npc": 4, "name": "修复村口纸灯", "kind": "delivery", "target": 3, "item": "wood", "money": 45, "weapon": "revolver", "description": "交给灯匠小满三份槐木，修好村口纸灯。"},
 	"forge_supplies": {"npc": 3, "name": "重铸银剑", "kind": "delivery", "target": 3, "item": "scrap", "money": 30, "weapon": "silver_sword", "description": "交给铁匠阿祁三份零件，换取一把银剑。"},
@@ -22,6 +28,7 @@ const QUESTS = {
 }
 static func accept(state, id: String) -> String:
 	if not QUESTS.has(id): return "没有这项委托。"
+	if not available(state, id): return "前置委托尚未复命。"
 	if state.quests.has(id): return "这项委托已经接取。"
 	state.quests[id] = {"progress": 0, "claimed": false}
 	state.tracked_quest = id
@@ -29,6 +36,10 @@ static func accept(state, id: String) -> String:
 static func progress(state, id: String) -> int:
 	if not state.quests.has(id) or not QUESTS.has(id): return 0
 	var spec: Dictionary = QUESTS[id]
+	if spec.kind == "island_visit": return 1 if state.island_journal.visited else 0
+	if spec.kind == "island_hunt": return state.island_journal.hunted.size()
+	if spec.kind == "island_boss": return 1 if spec.boss in state.island_journal.defeated else 0
+	if spec.kind == "island_relic": return 1 if "ryomen_sukuna" in state.island_journal.defeated else 0
 	if spec.kind == "delivery": return mini(spec.target, state.container_count("bag", spec.item))
 	if spec.kind == "survey": return mini(spec.target, state.visited_landmarks.size())
 	return mini(spec.target, int(state.quests[id].progress))
@@ -42,14 +53,15 @@ static func claim(state, id: String, npc_id: int) -> String:
 	if spec.npc != npc_id: return "请向委托人复命。"
 	if state.quests[id].claimed: return "奖励已经领取。"
 	if progress(state, id) < spec.target: return "委托尚未完成。"
-	if state.equipment.size() >= 20: return "装备位已满，请先整理，再来领取。"
+	if spec.weapon != "" and state.equipment.size() >= 20: return "装备位已满，请先整理，再来领取。"
 	if spec.kind == "delivery": state.set_container_count("bag", spec.item, state.container_count("bag", spec.item) - spec.target)
-	state.grant_gear(spec.weapon, 2, 1)
+	if spec.weapon != "":
+		if spec.weapon != "ipetam" or not state.equipment.any(func(g): return g.weapon == "ipetam"): state.grant_gear(spec.weapon, 2, 1)
 	state.money += spec.money
 	state.quests[id].claimed = true
 	if state.tracked_quest == id: state.tracked_quest = ""
 	state.add_log("完成委托：" + spec.name)
-	return "委托完成：%d 文与%s。" % [spec.money, YinBalance.WEAPONS[spec.weapon].name]
+	return "委托完成：%d 文%s。" % [spec.money, "与" + YinBalance.WEAPONS[spec.weapon].name if spec.weapon != "" else ""]
 static func open_chest(state, id: String, player_at: Vector2) -> String:
 	if not CHESTS.has(id): return "没有这个宝箱。"
 	var spec: Dictionary = CHESTS[id]
@@ -76,3 +88,8 @@ static func validate(data: Dictionary) -> bool:
 		var quest: Dictionary = data.quests[id]
 		if not quest.get("claimed") is bool or not FarmState.valid_int(quest.get("progress"), 0, QUESTS[id].target): return false
 	return data.tracked_quest == "" or (data.quests.has(data.tracked_quest) and not data.quests[data.tracked_quest].claimed)
+
+static func available(state, id: String) -> bool:
+	if not QUESTS.has(id): return false
+	var parent: String = QUESTS[id].get("parent", "")
+	return parent == "" or (state.quests.has(parent) and state.quests[parent].claimed)

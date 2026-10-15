@@ -7,7 +7,7 @@ var velocity := Vector2.ZERO
 var height: float = 12
 var lift: float = 95
 var age: float = 0
-const TEXTURE = preload("res://assets/enemies.png")
+var source_texture: Texture2D = preload("res://assets/enemies.png")
 func _process(delta: float) -> void:
 	var game := get_tree().get_first_node_in_group("yintian_game")
 	if game != null and game.modal != null: return
@@ -27,4 +27,4 @@ func _process(delta: float) -> void:
 	queue_redraw()
 func _draw() -> void:
 	var region: Rect2 = {"arm": Rect2(12, row * 24 + 8, 4, 10), "leg": Rect2(8, row * 24 + 18, 8, 6), "head": Rect2(0, row * 24, 16, 8)}[part]
-	draw_texture_rect_region(TEXTURE, Rect2(-region.size * sprite_scale / 2 - Vector2(0, height), region.size * sprite_scale), region)
+	draw_texture_rect_region(source_texture, Rect2(-region.size * sprite_scale / 2 - Vector2(0, height), region.size * sprite_scale), region)

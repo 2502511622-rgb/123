@@ -71,7 +71,7 @@ func _ready() -> void:
 	clock.minute_changed.connect(func(_day, _hour, _minute): update_labels())
 	refresh("存档损坏，新建义庄；原文件在首次保存前保留。" if not loaded else "槐阴村的风，带着纸灰的味道。")
 	if not state.intro_seen:
-		var box := open_modal("阴田录 · 师父遗书", "你刚刚出师，来到槐阴村接管破败义庄与荒田。\n\n田里长出人声，不要答应。\n驱使的东西，每夜都要点名。\n祠堂里的神，不是祖宗。\n\nWASD 移动，空格劳作，E 互动。\n7 剑 / 8 手枪 / J 手持攻击 / U 装填。\nShift 闪避 / F 镇符 / G 符火。")
+		var box := open_modal("阴田录 · 师父遗书", "裂海将异乡传说缝进此世。你刚刚出师，来到槐阴村接管破败义庄与荒田。\n\n田里长出人声，不要答应。\n驱使的东西，每夜都要点名。\n祠堂里的神，不是祖宗。\n\nWASD 移动，空格劳作，E 互动。\n7 剑 / 8 手枪 / J 手持攻击 / U 装填。\nShift 闪避 / F 镇符 / G 符火。")
 		box.add_child(button("收起遗书，走进义庄", func():
 			state.intro_seen = true
 			close_modal()
@@ -98,7 +98,7 @@ func build_zone(zone_name: String, at: Vector2) -> void:
 	player.health_receiver.bind_source(state, "health")
 	world.player = player
 	player.aim_direction = state.saved_facing
-	player.held_item = state.current_gear().weapon if zone_name in ["graveyard", "forest", "sunken", "theatre", "village"] else "tool%d" % tool
+	player.held_item = state.current_gear().weapon if zone_name in ["graveyard", "forest", "sunken", "theatre", "village", "island"] else "tool%d" % tool
 	var camera: Camera2D = player.get_node("Camera2D")
 	camera.limit_right = int(world.level_size.x)
 	camera.limit_bottom = int(world.level_size.y)
@@ -120,13 +120,17 @@ func build_zone(zone_name: String, at: Vector2) -> void:
 func travel(zone_name: String) -> void:
 	close_modal()
 	var origin: String = state.zone
-	var at: Vector2 = {"village": Vector2(180, 800), "sunken": Vector2(180, 800), "theatre": Vector2(180, 800), "forest": Vector2(180, 1120), "graveyard": Vector2(810, 535) if origin == "forest" else Vector2(182, 533), "hall": Vector2(480, 435), "shop": Vector2(480, 435)}.get(zone_name, Vector2(160, 218) if origin == "hall" else (Vector2(780, 260) if origin == "shop" else Vector2(810, 538)))
+	var at: Vector2 = {"island": Vector2(224, 1408), "village": Vector2(180, 800), "sunken": Vector2(180, 800), "theatre": Vector2(180, 800), "forest": Vector2(180, 1120), "graveyard": Vector2(810, 535) if origin == "forest" else Vector2(182, 533), "hall": Vector2(480, 435), "shop": Vector2(480, 435)}.get(zone_name, Vector2(160, 218) if origin == "hall" else (Vector2(780, 260) if origin == "shop" else Vector2(810, 538)))
 	if zone_name == "forest" and origin in ["sunken", "theatre"]: at = Vector2(1700, 250 if origin == "sunken" else 1050)
+	if zone_name == "village" and origin == "island": at = Vector2(1180, 780)
 	if zone_name == "farm" and origin == "village": at = Vector2(855, 350)
 	build_zone(zone_name, at)
+	if zone_name == "island" and not state.island_journal.visited:
+		state.island_journal.visited = true
+		state.add_log("裂海异闻：抵达岛国，异乡民俗在此世相接。")
 	var entry: String = {"forest": "FromForest", "hall": "FromHall", "shop": "FromShop", "graveyard": "FromGraveyard"}.get(origin, "Entry") if zone_name in ["farm", "graveyard"] else "Entry"
-	player.position = at if (zone_name == "forest" and origin in ["sunken", "theatre"]) or (zone_name == "farm" and origin == "village") else router.spawn(entry, at)
-	notify_action({"forest": "后山铳林：远程弹幕与精英。B 穿戴装备，8 手枪 / 9 冲锋枪 / 0 步枪，U 装填。", "graveyard": "乱葬坡：留意攻击预兆，装车后从纸灯处返回。", "hall": "义庄：案台炼骸，仓箱存取，卧榻休息。靠近按 E。", "shop": "杂货铺：走近柜台按 E 购买阴种与灯油。", "farm": "回到院落。进入义庄，在案台处理载骸。"}.get(zone_name, ""))
+	player.position = at if (zone_name == "forest" and origin in ["sunken", "theatre"]) or (zone_name == "farm" and origin == "village") or (zone_name == "village" and origin == "island") else router.spawn(entry, at)
+	notify_action({"island": "岛国：苇岸、荒冢、风山与双面社。先平息以津真天，再循封印深入。", "forest": "后山铳林：远程弹幕与精英。B 穿戴装备，8 手枪 / 9 冲锋枪 / 0 步枪，U 装填。", "graveyard": "乱葬坡：留意攻击预兆，装车后从纸灯处返回。", "hall": "义庄：案台炼骸，仓箱存取，卧榻休息。靠近按 E。", "shop": "杂货铺：走近柜台按 E 购买阴种与灯油。", "farm": "回到院落。进入义庄，在案台处理载骸。"}.get(zone_name, ""))
 
 func spawn_enemies() -> void:
 	var existing: Array = []
@@ -135,6 +139,7 @@ func spawn_enemies() -> void:
 	for e in state.enemies:
 		if e.id in existing: continue
 		if e.zone != state.zone or e.dead: continue
+		if e.zone == "island" and not YinIsland.available(state, e.kind): continue
 		var enemy: YinEnemy = preload("res://scenes/actors/enemy.tscn").instantiate()
 		enemy.game = self
 		enemy.record = e
@@ -347,7 +352,7 @@ func update_labels() -> void:
 	seed_button.text = "Q %s × %d" % [FarmState.CROPS[state.selected_crop].display_name, state.seed_count(state.selected_crop)]
 	quest_label.text = "役灵 %d/%d  污染 %d\n镇守 %d  载骸 %d/2\n%s" % [state.spirits.size(), state.capacity(), state.pollution, state.ward, state.cargo.size(), "手札 L · 第一章已完成" if state.ending != "" else ("棺中客已倒下 · 十日赴约" if state.boss_defeated else ("夜袭进行中 · 不可安睡" if has_live_boss() else "每夜 R 点名 · C 役灵指令"))]
 	var kind: String = world.nearest_interaction()
-	var hints: Dictionary = {"treasure": "E 开启宝箱 · 清理附近守卫后领取","village_gate": "E 青槐村 · 村民与夜袭求救", "village_return": "E 返回义庄田园", "villager": "E 与村民交谈","sunken_gate": "E 沉水村 · 支线首领井中龙婆", "theatre_gate": "E 废戏台 · 支线首领无面伶王", "branch_return": "E 返回后山铳林","forest_gate": "E 进入后山铳林 · 更大地图、精英与远程弹幕", "forest_return": "E 返回乱葬坡", "home": "E 进入义庄：案台、卧榻与仓箱", "shipping": "E 货箱：出售背包里的灵物", "shop": "E 进入杂货铺", "npc": "E 桥边阿婆：村庄秘密与十日抉择", "altar": "E 祭坛：先看收益和代价，也可不祭祀", "gate": "E 进入乱葬坡 · 携骸时移速下降", "return": "E 返回义庄，处理遗骸", "exit_interior": "E 返回院落", "workbench": "E 案台：炼骸、制符与役灵", "counter": "E 柜台：交易", "storage": "E 仓箱：存取、拆分与交换物品", "bed": "E 卧榻：休息至天亮"}
+	var hints: Dictionary = {"island_ferry": "E 乘船前往岛国 · 异乡缝合海岸", "island_return": "E 乘船返回青槐村", "treasure": "E 开启宝箱 · 清理附近守卫后领取","village_gate": "E 青槐村 · 村民与夜袭求救", "village_return": "E 返回义庄田园", "villager": "E 与村民交谈","sunken_gate": "E 沉水村 · 支线首领井中龙婆", "theatre_gate": "E 废戏台 · 支线首领无面伶王", "branch_return": "E 返回后山铳林","forest_gate": "E 进入后山铳林 · 更大地图、精英与远程弹幕", "forest_return": "E 返回乱葬坡", "home": "E 进入义庄：案台、卧榻与仓箱", "shipping": "E 货箱：出售背包里的灵物", "shop": "E 进入杂货铺", "npc": "E 桥边阿婆：村庄秘密与十日抉择", "altar": "E 祭坛：先看收益和代价，也可不祭祀", "gate": "E 进入乱葬坡 · 携骸时移速下降", "return": "E 返回义庄，处理遗骸", "exit_interior": "E 返回院落", "workbench": "E 案台：炼骸、制符与役灵", "counter": "E 柜台：交易", "storage": "E 仓箱：存取、拆分与交换物品", "bed": "E 卧榻：休息至天亮"}
 
 	var remains_hint: Dictionary = nearest_remains()
 	context_label.text = "V 免费炼化 · E 处理 · " + remains_hint.name if not remains_hint.is_empty() else hints.get(kind, "")
@@ -499,7 +504,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		if placement.selected != "":
 			if placement.place(world.get_global_mouse_position()): notify_action("放置完成。")
 			else: refresh("距离太远、田地或障碍物占用，未消耗物品。")
-		elif state.zone in ["graveyard", "forest", "sunken", "theatre", "village"] or nearest_enemy(player.position, 65) != null or player.held_item in YinBalance.GUNS:
+		elif state.zone in ["graveyard", "forest", "sunken", "theatre", "village", "island"] or nearest_enemy(player.position, 65) != null or player.held_item in YinBalance.GUNS:
 			var aim: Vector2 = player.position.direction_to(world.get_global_mouse_position())
 			if aim != Vector2.ZERO and player.state_machine.current in ["idle", "walk"]:
 				player.facing = aim
@@ -526,6 +531,8 @@ func interact() -> void:
 		"treasure":
 			var id: String = world.nearest_chest()
 			notify_action(YinAdventure.open_chest(state, id, player.position))
+		"island_ferry": travel("island")
+		"island_return": travel("village")
 		"village_gate": travel("village")
 		"village_return": travel("farm")
 		"villager": show_villager()
@@ -1052,7 +1059,7 @@ func show_character(tab: String = "背包") -> void:
 			atlas.custom_minimum_size = Vector2(410, 160)
 			box.add_child(atlas)
 			var route_label := Label.new()
-			route_label.text = "义庄 → 乱葬坡 → 后山铳林\n后山东北 → 沉水村【井中龙婆】\n后山东南 → 废戏台【无面伶王】\n后山向东 → 断碑营地 / 枯井 / 山门遗址\n黄点出口 · 红点敌人 · 蓝点役灵 · 白点自己"
+			route_label.text = "义庄 → 乱葬坡 → 后山铳林\n后山东北 → 沉水村【井中龙婆】\n后山东南 → 废戏台【无面伶王】\n后山向东 → 断碑营地 / 枯井 / 山门遗址\n村东码头 → 岛国【荒冢 / 风山 / 双面社】\n黄点出口 · 红点敌人 · 蓝点役灵 · 白点自己"
 			route_label.add_theme_font_size_override("font_size", 11)
 			route_label.add_theme_color_override("font_color", Color("424c42"))
 			box.add_child(route_label)
@@ -1202,6 +1209,9 @@ func show_tools() -> void:
 		tools.add_child(choice)
 
 func update_exploration() -> void:
+	if state.zone == "island" and not state.island_journal.visited:
+		state.island_journal.visited = true
+		notify_action("发现岛国：异乡地貌在裂海中缝合。可回村向砚青复命。")
 	if state.zone != "forest": return
 	for id in YinAdventure.LANDMARKS:
 		var spec: Dictionary = YinAdventure.LANDMARKS[id]
@@ -1217,7 +1227,7 @@ func update_quest_tracker() -> void:
 		return
 	var spec: Dictionary = YinAdventure.QUESTS[id]
 	var count: int = YinAdventure.progress(state, id)
-	quest_tracker.text = "O %s  %d/%d\n%s" % [spec.name, count, spec.target, "返回村庄复命" if count >= spec.target else {"hunt": "前往乱葬坡", "delivery": "收集物资后交给委托人", "survey": "探索后山三处遗址"}[spec.kind]]
+	quest_tracker.text = "O %s  %d/%d\n%s" % [spec.name, count, spec.target, "返回村庄复命" if count >= spec.target else {"hunt": "前往乱葬坡", "delivery": "收集物资后交给委托人", "survey": "探索后山三处遗址", "island_visit": "从村东码头乘船", "island_hunt": "岛国调查五类妖怪", "island_boss": "岛国祭场平息首领", "island_relic": "向阿祁缔结神器契约"}[spec.kind]]
 	quest_tracker.tooltip_text = spec.description
 func show_quests() -> void:
 	var box := open_modal("委托", "O 打开任务栏 · 一次追踪一项")
@@ -1244,10 +1254,10 @@ func show_npc_quests(record: Dictionary) -> void:
 	var offered: bool = false
 	for id in YinAdventure.QUESTS:
 		var spec: Dictionary = YinAdventure.QUESTS[id]
-		if spec.npc != int(record.id): continue
+		if spec.npc != int(record.id) or not YinAdventure.available(state, id): continue
 		offered = true
 		var detail := Label.new()
-		detail.text = "%s\n%s\n报酬：%d 文 + %s" % [spec.name, spec.description, spec.money, YinBalance.WEAPONS[spec.weapon].name]
+		detail.text = "%s\n%s\n报酬：%d 文 + %s" % [spec.name, spec.description, spec.money, YinBalance.WEAPONS[spec.weapon].name if spec.weapon != "" else "异闻进展"]
 		detail.custom_minimum_size.x = 410
 		detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		detail.add_theme_color_override("font_color", Color("424c42"))

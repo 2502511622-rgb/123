@@ -31,8 +31,8 @@ func build(zone_name: String) -> void:
 	ground = layer("Ground", terrain, -3, Vector2.ZERO)
 	soil = layer("TilledAndWatered", terrain, -2, FIELD)
 	crops = layer("CropStages", tileset(preload("res://assets/crops.png"), 6, 4), -1, FIELD - Vector2(0, 4))
-	for y in range(60 if zone == "forest" else (30 if zone in ["sunken", "theatre", "village"] else 20)):
-		for x in range(90 if zone == "forest" else (40 if zone in ["sunken", "theatre", "village"] else 30)):
+	for y in range(50 if zone == "island" else 60 if zone == "forest" else (30 if zone in ["sunken", "theatre", "village"] else 20)):
+		for x in range(70 if zone == "island" else 90 if zone == "forest" else (40 if zone in ["sunken", "theatre", "village"] else 30)):
 			var id: int = (x * 7 + y * 11) % 8
 			if y in [7, 8] or (x == 8 and y >= 6 and y <= 17) or (x >= 22 and x <= 25 and y >= 6 and y <= 11): id = 10
 			if x in [20, 21]: id = 11 if zone == "farm" else 8
@@ -48,6 +48,7 @@ func build(zone_name: String) -> void:
 			if zone == "sunken":
 				id = 11 if x == 18 and y in range(5, 23) and y not in range(12, 15) else (10 if y in [24, 25] else 4)
 			if zone == "theatre": id = 10 if x > 26 and y < 16 else (8 if (x + y) % 6 == 0 else 3)
+			if zone == "island": id = 11 if YinIsland.water_tile(x, y) else (10 if y >= 38 else (4 if x < 30 else 3))
 			ground.set_cell(Vector2i(x, y), 0, Vector2i(id, 0))
 	if zone == "forest":
 		for route in [
@@ -58,6 +59,9 @@ func build(zone_name: String) -> void:
 			[Vector2i(10, 35), Vector2i(10, 44), Vector2i(68, 44)],
 			[Vector2i(20, 18), Vector2i(20, 24)]
 		]:
+			for i in range(route.size() - 1): paint_road(route[i], route[i + 1])
+	if zone == "island":
+		for route in [[Vector2i(6, 44), Vector2i(24, 44), Vector2i(24, 24), Vector2i(24, 11), Vector2i(22, 11)], [Vector2i(24, 24), Vector2i(49, 24), Vector2i(49, 10)], [Vector2i(24, 39), Vector2i(57, 39), Vector2i(57, 37)]]:
 			for i in range(route.size() - 1): paint_road(route[i], route[i + 1])
 func paint_road(start: Vector2i, end: Vector2i) -> void:
 	var at: Vector2i = start

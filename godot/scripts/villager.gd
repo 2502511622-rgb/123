@@ -31,7 +31,7 @@ func receive_hit(damage: int) -> void:
 	if record.hp == 0: game.notify_action(record.name + "受伤倒下，需要保护其他村民。")
 func _draw() -> void:
 	for id in YinAdventure.QUESTS:
-		if YinAdventure.QUESTS[id].npc != int(record.id): continue
+		if YinAdventure.QUESTS[id].npc != int(record.id) or not YinAdventure.available(game.state, id): continue
 		var mark: String = "!" if not game.state.quests.has(id) else ("?" if not game.state.quests[id].claimed and YinAdventure.progress(game.state, id) >= YinAdventure.QUESTS[id].target else "")
 		if mark != "" and record.hp > 0: draw_string(ThemeDB.fallback_font, Vector2(-3, -65), mark, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("f1cf83"))
 	draw_texture_rect_region(preload("res://assets/npc.png"), Rect2(-16, -40, 32, 40), Rect2(0, 0, 16, 20), Color("98aaa0") if record.hp == 0 else Color.from_hsv(float(record.id) / 12, 0.15, 1))

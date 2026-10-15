@@ -108,7 +108,8 @@ func _draw() -> void:
 		draw_texture_rect_region(TEXTURE, Rect2(-16, -40 + roundf(sin(time * 2)), 32, 40), Rect2(0, row * 20, 16, 20), Color(1, 1, 1, 0.9))
 	else:
 		var source_row: int = {"archer": 3, "lantern": 4, "gunner": 5, "brute": 6, "boss": 2, "well_boss": 0, "opera_boss": 5}.get(record.source_kind, 1)
-		draw_texture_rect_region(preload("res://assets/enemies.png"), Rect2(-16, -44, 32, 48), Rect2(0, source_row * 24, 16, 24), Color("9ecdc7"))
+		source_row = YinIsland.ROWS.get(record.source_kind, source_row)
+		draw_texture_rect_region(YinIsland.texture(record.source_kind), Rect2(-16, -44, 32, 48), Rect2(0, source_row * 24, 16, 24), Color("9ecdc7"))
 
 	var fraction: float = float(record.hp) / record.max_hp
 	draw_rect(Rect2(-16, -46, 32, 4), Color("263938"))
@@ -134,7 +135,8 @@ func use_inherited_skill(enemy: YinEnemy) -> void:
 	var meta: Dictionary = YinAbilities.meta(record.source_kind)
 	var damage: int = attack_damage()
 	var direction: Vector2 = position.direction_to(enemy.position)
-	match meta.pattern:
+	var inherited: String = {"river": "cold", "tongue": "fan", "hammer": "slam", "web": "fan", "wicked_flame": "fan", "lament": "fan", "gale": "ring", "dual": "opera"}.get(meta.pattern, meta.pattern)
+	match inherited:
 		"cold", "fan":
 			for angle in [-0.12, 0.0, 0.12]: game.world.projectiles.spawn(position, direction.rotated(angle), true, maxi(1, int(damage * 0.6)), 180, 240, Color("8cc6b8"))
 		"burst":

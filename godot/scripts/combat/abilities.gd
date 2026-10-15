@@ -1,7 +1,15 @@
 class_name YinAbilities
 extends RefCounted
-const BOSSES = ["boss", "well_boss", "opera_boss"]
+const BOSSES = ["itsumade", "daitengu", "ryomen_sukuna", "boss", "well_boss", "opera_boss"]
 const MONSTERS = {
+ "kappa": {"active": "引水扑击", "passive": "头皿蓄水", "pattern": "river", "trait": "river"},
+ "chochin": {"active": "长舌惊吓", "passive": "纸灯易燃", "pattern": "tongue", "trait": "paper"},
+ "ippon_datara": {"active": "独足锻击", "passive": "山中独足", "pattern": "hammer", "trait": "hammer"},
+ "jorogumo": {"active": "缠丝蛛网", "passive": "蛛女牵制", "pattern": "web", "trait": "web"},
+ "sogenbi": {"active": "罪火飞散", "passive": "无躯妖火", "pattern": "wicked_flame", "trait": "flame"},
+ "itsumade": {"active": "金羽毒鸣", "passive": "未葬者之怨", "pattern": "lament", "trait": "lament"},
+ "daitengu": {"active": "羽扇山岚", "passive": "风障修验", "pattern": "gale", "trait": "gale"},
+ "ryomen_sukuna": {"active": "双面剑弓", "passive": "四臂武威", "pattern": "dual", "trait": "dual"},
  "water": {"active": "寒水喷涌", "passive": "湿腐再生", "pattern": "cold", "trait": "regen"},
  "bone": {"active": "裂骨重击", "passive": "骨甲", "pattern": "slam", "trait": "armor"},
  "archer": {"active": "吐骨扇射", "passive": "穿骨", "pattern": "fan", "trait": "pierce"},
@@ -28,6 +36,7 @@ static func spirit_damage(spirit: Dictionary) -> int:
 static func deployment_cost(kind: String) -> int:
  return 2 if kind in BOSSES else 1
 static func affix_text(gear: Dictionary) -> String:
+ if gear.get("weapon") == "ipetam": return "神器 Lv%d · 击杀 %d · 吸血 %.1f%%" % [YinBalance.artifact_level(gear), gear.artifact_kills, YinBalance.lifesteal(gear) * 100]
  var result: Array[String] = []
  for affix in gear.get("affixes", []):
   result.append("%s %d%s" % [AFFIXES.get(affix.id, ""), affix.value, "%" if affix.id == "crit" else "秒"])

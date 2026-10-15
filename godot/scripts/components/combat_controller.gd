@@ -39,7 +39,7 @@ func _physics_process(delta: float) -> void:
 	var strike: Dictionary = pending.duplicate()
 	pending.clear()
 	for target in game.player.hitbox.targets(strike.facing):
-		target.receive_hit(strike.damage, strike.get("method", "sword"))
+		target.receive_hit(strike.damage, strike.get("method", "sword"), int(strike.get("gear_id", 0)))
 		if is_instance_valid(target): apply_payload(target, strike.get("payload", {}))
 	game.persist()
 func visible(target: YinEnemy) -> bool:
@@ -84,7 +84,8 @@ func trigger(method: String) -> bool:
 		game.action_cooldown = spec.recovery
 		game.player.hitbox.radius = spec.reach
 		var rolled: Dictionary = roll_hit(spec.damage, {} if using_tool else game.state.current_gear())
-		pending = {"payload": rolled, "actor": game.player, "facing": game.player.facing, "damage": rolled.damage, "delay": 0.06, "method": "tool" if using_tool else "sword"}
+		pending = {"gear_id": 0 if using_tool else game.state.equipped_gear, "payload": rolled, "actor": game.player, "facing": game.player.facing, "damage": rolled.damage, "delay": 0.06, "method": "tool" if using_tool else "sword"}
+		if game.player.held_item == "ipetam": game.world.artifact_sweep(game.player.position, game.player.facing, spec.reach, YinBalance.artifact_level(game.state.current_gear()))
 	else:
 		var target: YinEnemy = spell_target(spec.reach)
 		if target == null:

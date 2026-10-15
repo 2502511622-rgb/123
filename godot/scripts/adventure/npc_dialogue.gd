@@ -5,6 +5,12 @@ var previous_topics: Dictionary = {}
 func reply(state, npc: Dictionary, message: String) -> String:
 	message = message.strip_edges().substr(0, 500)
 	if message == "": return "想问什么？可以聊委托、宝箱、武器或村里的近况。"
+	if "伊佩塔姆" in message or "神器" in message: return "那是裂海带来的阿伊努嗜血之刃。平息三处祭场后，经砚青、秋婶、柳伯的委托，找阿祁缔约。装备后亲手击杀使它成长，剑伤能回补命息。"
+	if "河童" in message: return "河童依赖头皿中的水，靠近水岸会恢复。镇符可令水皿失效，离水作战也能压住它。"
+	if "以津真天" in message: return "荒冢金鸟在问亡者何时安葬。附近未处理遗骸越多，毒鸣越强；先超度，再战。"
+	if "天狗" in message: return "风山修验者以羽扇起山岚。风障蓄势时子弹难进，镇符能打断它。"
+	if "宿傩" in message: return "双面四臂武人轮换双向剑斩与弓阵。贴身看双刃，远处避两面弓箭，别只盯着正面。"
+	if "岛国" in message or "世界" in message: return "这片世界由不同时地的诡异传说缝合。村东渡船通往岛国，苇岸、荒冢、风山、双面社各有异闻。先找砚青接裂海委托。"
 	var topic: String = "greeting"
 	if "委托" in message or "帮" in message or "任务" in message: topic = "quest"
 	elif "宝箱" in message or "探索" in message or "地图" in message: topic = "explore"
@@ -16,14 +22,17 @@ func reply(state, npc: Dictionary, message: String) -> String:
 	if npc.hp <= 0: return "我受伤了……先护住其他村民，等安全后帮我疗伤。"
 	match topic:
 		"quest":
+			var completed: bool = false
 			for id in YinAdventure.QUESTS:
 				var spec: Dictionary = YinAdventure.QUESTS[id]
-				if spec.npc != int(npc.id): continue
-				if not state.quests.has(id): return spec.description + " 你愿意接下吗？在委托菜单确认即可。"
-				if state.quests[id].claimed: return "上次的事多亏你了，报酬已经交给你。"
+				if spec.npc != int(npc.id) or not YinAdventure.available(state, id): continue
+				if not state.quests.has(id): return spec.description + " 在委托菜单确认即可。"
+				if state.quests[id].claimed:
+					completed = true
+					continue
 				if YinAdventure.progress(state, id) >= spec.target: return "事情办妥了。打开委托菜单复命，我把报酬交给你。"
 				return "还差一点。%s 目前 %d/%d。" % [spec.description, YinAdventure.progress(state, id), spec.target]
-			return "我暂时没有委托。柳伯、小满、阿祁和砚青正需要帮忙。"
+			return "上次的事多亏你了，报酬已经交给你。" if completed else "暂时没有新委托，找砚青了解裂海异闻。"
 		"explore": return "主路连接出入口，东侧支路通向断碑营地、枯井、山门。箱子附近有守卫，腾出行囊再去。"
 		"weapon": return "鞭子够远，银剑稳，左轮每发都得算着打。魔法书与娃娃耗气力。燃烧持续灼伤，冰冻减速，闪电跳跃；火冰会消解。"
 		"enemy": return "鬼物断腿会跛行，断头后会乱窜，无法再攻击；不过已经射出的弹丸仍有危险。"
