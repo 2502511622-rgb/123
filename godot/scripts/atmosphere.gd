@@ -25,20 +25,21 @@ func _process(delta: float) -> void:
 		if points.size() >= 24: break
 	var count: int = points.size()
 	while points.size() < 24: points.append(Vector4.ZERO)
+	var environment: YinEnvironment = game.world.environment
+	if environment != null:
+		lighting.set_shader_parameter("light_field", environment.light_field.viewport.get_texture())
+		lighting.set_shader_parameter("rain", environment.rain)
+		lighting.set_shader_parameter("wetness", environment.wetness)
+	lighting.set_shader_parameter("sunshine", clampf(1.0-absf(state.minutes-840)/480.0, 0, 1) if state.zone not in ["hall", "shop"] else 0.0)
+	lighting.set_shader_parameter("warmth", clampf(1.0-absf(state.minutes-1035)/150.0, 0, 1))
 	lighting.set_shader_parameter("lights", points)
 	lighting.set_shader_parameter("light_count", count)
 	lighting.set_shader_parameter("night", night_alpha() / 0.59)
-	lighting.set_shader_parameter("mist", 0.12 if state.zone in ["graveyard", "temple", "sunken"] else (0.07 if state.zone in ["forest", "island"] else 0.025))
+	lighting.set_shader_parameter("mist", 0.0 if environment != null and environment.indoor else 0.12 if state.zone in ["graveyard", "temple", "sunken"] else (0.07 if state.zone in ["forest", "island"] else 0.025))
 	lighting.set_shader_parameter("clock_time", time)
 	lighting.set_shader_parameter("world_offset", -transform.origin)
 	lighting.set_shader_parameter("hero", transform * game.player.position)
 	queue_redraw()
-func _draw() -> void:
-	if state != null and state.weather == "rain":
-		for i in range(65):
-			var x: float = fposmod(i * 97 - time * 45, 640)
-			var y: float = fposmod(i * 53 + time * 145, 360)
-			draw_line(Vector2(x, y), Vector2(x - 3, y + 7), Color(0.73, 0.85, 0.90, 0.35), 1)
 func night_alpha() -> float:
 	if state == null or state.zone in ["hall", "shop"]: return 0
 	var alpha: float = clampf((state.minutes - 1020) / 300, 0, 0.59)

@@ -2,6 +2,13 @@ class_name YinScenery
 extends Node2D
 var world: FarmWorld
 var details: Array = []
+var animation_clock: float = 0
+func _process(delta: float) -> void:
+	if world.environment == null: return
+	animation_clock += delta
+	if animation_clock >= 0.12:
+		animation_clock = 0
+		queue_redraw()
 func _ready() -> void:
 	call_deferred("bake")
 func bake() -> void:
@@ -56,7 +63,10 @@ func _draw() -> void:
 	if world.state.zone == "temple":
 		for rect in [Rect2(64, 64, 1472, 32), Rect2(64, 64, 32, 1024), Rect2(64, 1216, 1472, 32), Rect2(1504, 64, 32, 1152), Rect2(96, 736, 480, 32), Rect2(736, 736, 304, 32), Rect2(1216, 736, 288, 32), Rect2(992, 96, 32, 224), Rect2(992, 448, 32, 288)]: wall(rect)
 func stamp(at: Vector2, icon: int) -> void:
-	draw_texture_rect_region(YinArt.SCENERY, Rect2(at - Vector2(16, 28), Vector2(32, 32)), Rect2(icon * 32, 0, 32, 32))
+	var moving: bool = icon in [0, 1, 7] and world.environment != null
+	if moving: draw_set_transform(at, sin(world.environment.time * 1.6 + at.y) * world.environment.wind * 0.025)
+	draw_texture_rect_region(YinArt.SCENERY, Rect2(-Vector2(16, 28) if moving else at - Vector2(16, 28), Vector2(32, 32)), Rect2(icon * 32, 0, 32, 32))
+	if moving: draw_set_transform(Vector2.ZERO)
 func wall(rect: Rect2) -> void:
 	draw_rect(Rect2(rect.position + Vector2(6, 10), rect.size), Color("172e2c77"))
 	draw_rect(rect, Color("55655a"))

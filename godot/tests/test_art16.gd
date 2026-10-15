@@ -29,7 +29,7 @@ func run() -> void:
 	title.queue_free()
 	await frames()
 	check(YinArt.ENEMIES.get_height() == YinBalance.MONSTERS.size() * 48, "complete dense atlas matches all 23 enemy types")
-	check(YinArt.HERO.get_size() == Vector2(128, 160) and YinArt.VILLAGERS.get_size() == Vector2(192, 44), "hero gait and six resident portraits use intended source dimensions")
+	check(YinArt.HERO.get_size() == Vector2(128, 192) and YinArt.VILLAGERS.get_size() == Vector2(192, 44), "hero gait and six resident portraits use intended source dimensions")
 	game = load("res://scenes/main.tscn").instantiate()
 	root.add_child(game)
 	await frames()

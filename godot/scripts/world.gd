@@ -15,6 +15,8 @@ const RETURN_GATE = Vector2(155, 547)
 const TILE_TEXTURE = preload("res://assets/tiles.png")
 const CROP_TEXTURE = preload("res://assets/crops.png")
 var level_size := Vector2(960, 640)
+var environment_revision: int = 0
+var environment: YinEnvironment
 var projectiles: YinProjectiles
 var state: FarmState
 var tile_farm: YinTileFarm
@@ -46,6 +48,10 @@ func _ready() -> void:
 	scenery.z_index = -1
 	add_child(scenery)
 	level_size = Vector2(1600, 1280) if state.zone == "temple" else Vector2(2240, 1600) if state.zone == "island" else Vector2(2880, 1920) if state.zone == "forest" else (Vector2(1280, 960) if state.zone in ["sunken", "theatre", "village"] else SIZE)
+	environment = YinEnvironment.new()
+	environment.name = "Environment"
+	environment.world = self
+	add_child(environment)
 	projectiles = YinProjectiles.new()
 	projectiles.name = "Projectiles"
 	projectiles.game = get_tree().get_first_node_in_group("yintian_game")
@@ -136,6 +142,7 @@ func build_graveyard() -> void:
 
 func boundary(rect: Rect2) -> void:
 	obstacles.append(rect)
+	environment_revision += 1
 	var body := StaticBody2D.new()
 	body.position = rect.get_center()
 	var collision := CollisionShape2D.new()
@@ -161,9 +168,15 @@ func prop(name_text: String, at: Vector2, offset: Vector2, collision_rect: Rect2
 	else: body = StaticBody2D.new()
 	body.position = at
 	actors.add_child(body)
-	var sprite := Sprite2D.new()
+	var sprite: Sprite2D = YinWindSprite.new() if name_text == "tree" else Sprite2D.new()
+	if sprite is YinWindSprite:
+		sprite.world = self
+		body.add_to_group("wind_trees")
 	var detailed: bool = name_text in ["cottage", "store", "tree", "lantern", "fence", "rock", "grave", "chest", "altar", "bed", "workbench", "npc"]
 	sprite.texture = YinArt.texture(name_text) if detailed else load("res://assets/%s.png" % name_text)
+	sprite.name = "ArtSprite"
+	if name_text == "tree":
+		sprite.texture = YinArt.texture(["tree", "tree_autumn", "tree_pine"][absi(hash(at)) % 3])
 	sprite.centered = false
 	sprite.position = offset
 	sprite.scale = Vector2.ONE if detailed else Vector2(2, 2)
@@ -181,6 +194,7 @@ func prop(name_text: String, at: Vector2, offset: Vector2, collision_rect: Rect2
 	collision.shape = shape
 	body.add_child(collision)
 	obstacles.append(Rect2(at + collision_rect.position, collision_rect.size))
+	environment_revision += 1
 	get_node("ArtScenery").queue_redraw()
 
 func add_sign(at: Vector2, text: String) -> void:
@@ -457,6 +471,8 @@ func build_branch() -> void:
 			prop("grave", at, Vector2(-16, -48), Rect2(-12, -16, 24, 16))
 
 func build_village() -> void:
+	for at in [Vector2(416, 254), Vector2(716, 254), Vector2(1050, 570), Vector2(110, 480)]:
+		prop("tree", at, Vector2(-32, -88), Rect2(-8, -16, 16, 16))
 	add_sign(Vector2(1000, 135), "山道 · 大佛寺 ↑ E")
 	prop("lantern", Vector2(1152, 160), Vector2(-16, -48), Rect2(-4, -6, 8, 6))
 	add_sign(Vector2(1080, 790), "东码头 · 岛国 → E")

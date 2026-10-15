@@ -3,7 +3,7 @@ Requires Pillow for development only. All randomness is seeded for reproducible 
 """
 from pathlib import Path
 from PIL import Image, ImageDraw
-import random, re
+import random, re, math
 ROOT=Path(__file__).resolve().parents[1]
 OUT=ROOT/'godot/assets/art16'; OUT.mkdir(parents=True,exist_ok=True)
 rng=random.Random(14016)
@@ -13,6 +13,23 @@ def save(im,name): im.save(OUT/(name+'.png'))
 def mix(a,b,t):
     a=tuple(bytes.fromhex(a.lstrip('#'))); b=tuple(bytes.fromhex(b.lstrip('#')))
     return tuple(round(x*(1-t)+y*t) for x,y in zip(a,b))
+def sculpt(im,cell_w,cell_h):
+    # Original sprite construction pass: dark contour, lit upper edge and cloth ramps.
+    source=im.copy();px=source.load();out=im.load()
+    w,h=im.size
+    for y in range(h):
+        for x in range(w):
+            r,g,b,a=px[x,y]
+            if not a:continue
+            left=px[x-1,y][3] if x%cell_w else 0
+            above=px[x,y-1][3] if y%cell_h else 0
+            right=px[x+1,y][3] if x%cell_w<cell_w-1 else 0
+            factor=0.96+0.045*(1.0-(x%cell_w)/cell_w)
+            if not above:factor=1.12
+            elif not right:factor=0.78
+            elif not left:factor=0.91
+            out[x,y]=(min(255,round(r*factor)),min(255,round(g*factor)),min(255,round(b*factor)),a)
+    return im
 PALETTES={'farm':('#425d49','#8e927c'),'village':('#3b5748','#93917b'),'graveyard':('#354d49','#727e78'),'forest':('#2e4940','#7e8875'),'island':('#3e5750','#9c9682'),'temple':('#47574b','#96917b'),'sunken':('#364f4c','#7f8c84'),'theatre':('#434d46','#8a8274'),'hall':('#394640','#8b7c65'),'shop':('#3c4b42','#928269')}
 for zone,(grass,stone) in PALETTES.items():
     atlas=Image.new('RGBA',(32*32,32))
@@ -66,6 +83,9 @@ def house(name,w,h):
     im,d=canvas(w,h); front=int(h*.42); bottom=h-10
     d.polygon([(10,front),(w-15,front),(w-9,bottom),(8,bottom)],fill='#23342f')
     d.rectangle((14,front,w-16,bottom-6),fill='#ada282')
+    for j in range(100):
+        xx=16+(j*31)%(w-34); yy=front+3+(j*17)%max(4,bottom-front-13)
+        d.point((xx,yy),fill='#b8ad8c' if j%3 else '#918b70')
     for y in range(front+3,bottom-7,7):d.line((15,y,w-17,y),fill='#a09578')
     for x in [15,w//2-5,w-20]:
         d.rectangle((x,front,x+5,bottom-5),fill='#4c4438');d.line((x+1,front+3,x+1,bottom-8),fill='#76634b')
@@ -78,9 +98,14 @@ def house(name,w,h):
             d.rectangle((x,y,min(x+8,right),y+5),fill=c)
             d.line((x+1,y,x+7,y),fill='#657875')
             d.line((x+8,y+1,x+8,y+4),fill='#203437')
+            d.line((x+2,y+4,min(x+6,right),y+4),fill='#273f40')
+            if (x+row*7)%23<4:
+                d.line((x+1,y+3,min(x+5,right),y+3),fill='#718261')
+                d.point((x+2,y+2),fill='#96a07b')
     d.line((22,11,w-33,11),fill='#889288',width=2)
     d.line((3,front+7,w-5,front+7),fill='#192d2d',width=4)
     d.line((5,front+9,w-7,front+9),fill='#79654b')
+    d.rectangle((15,front+10,w-17,front+13),fill='#72745c')
     for x in [26,w-50]:
         d.rectangle((x-3,front+18,x+27,front+47),fill='#524739')
         d.rectangle((x,front+20,x+23,front+43),fill='#b78f55')
@@ -118,18 +143,36 @@ d.rounded_rectangle((7,11,25,29),radius=3,fill='#b5793b');d.rectangle((10,12,22,
 for x in [9,15,23]:d.line((x,12,x,28),fill='#b68542')
 d.rectangle((6,29,26,32),fill='#544b37');d.line((8,30,24,30),fill='#ab8e51');d.line((15,34,15,39),fill='#b26043')
 save(im,'lantern')
-# Clustered tree canopy with pixels, branching trunk, deep outline and moss.
-im,d=canvas(64,92)
-d.polygon([(27,45),(38,46),(37,76),(48,86),(35,88),(30,82),(22,88),(17,85),(28,74)],fill='#1b3330')
-d.line((33,46,33,80),fill='#6b6045',width=7);d.line((31,52,31,77),fill='#95815a',width=2)
-clusters=[(8,32,58,70,'#213f36'),(3,23,61,55,'#2d4b3b'),(13,9,54,48,'#36573f'),(20,3,45,35,'#416247'),(6,32,32,57,'#3c5e43'),(31,19,58,47,'#45674a')]
-for x0,y0,x1,y1,c in clusters:
-    d.polygon([(x0+6,y0),(x1-5,y0),(x1,y0+6),(x1,y1-6),(x1-6,y1),(x0+5,y1),(x0,y1-5),(x0,y0+7)],fill=c)
-    for j in range(24):
-        x=rng.randint(x0+3,x1-4);y=rng.randint(y0+2,y1-4)
-        d.line((x,y,x+rng.choice([2,3,4]),y),fill=mix(c,'#a5b27c',.22 if j%4 else .4))
-        if j%3==0:d.point((x-1,y+1),fill='#284536')
-save(im,'tree')
+# Organic leaf masses, articulated branches, lit leaf clusters and weathered bark.
+def detailed_tree(name,seed,autumn=False,pine=False):
+    local=random.Random(seed)
+    im,d=canvas(64,92)
+    d.polygon([(28,42),(37,42),(36,75),(47,85),(37,86),(31,82),(22,88),(16,86),(27,74)],fill='#1e3830')
+    for points,width,color in [([(32,80),(33,57),(28,37)],7,'#655c43'), ([(32,62),(17,44),(12,30)],4,'#534f3c'), ([(33,58),(48,41),(51,29)],4,'#736348')]:
+        d.line(points,fill=color,width=width)
+    d.line((30,52,30,76),fill='#b09a68',width=1)
+    for y in range(52,80,5):d.line((32,y,34,y+3),fill='#354b39')
+    mask=Image.new('L',(64,92));md=ImageDraw.Draw(mask)
+    clusters=[(17,4,45,32),(7,14,39,41),(27,15,59,43),(2,29,32,55),(21,27,61,58),(9,41,42,67),(29,42,56,64)]
+    if pine:clusters=[(23,2,40,23),(16,13,47,36),(10,27,54,49),(4,40,61,65)]
+    colors=['#344e3a','#3e5c3f','#4f7049','#617e51'] if not autumn else ['#645c3b','#7b7146','#929053','#a69b64']
+    for i,box in enumerate(clusters):
+        d.ellipse(box,fill=colors[min(3,(len(clusters)-i)//2)])
+        md.ellipse(box,fill=255)
+    # Pixel clusters follow the canopy silhouette, rather than a flat polygon fill.
+    for i in range(300):
+        x=local.randrange(3,60);y=local.randrange(4,67)
+        if not mask.getpixel((x,y)):continue
+        shade=colors[local.randrange(4)]
+        if x<35 and y<34 and i%3==0:shade='#92a672' if not autumn else '#c2b67c'
+        d.line((x,y,min(x+local.randrange(1,4),61),y),fill=shade)
+        if i%4==0:d.point((x,y+1),fill='#283f30' if not autumn else '#5c5a36')
+    for x,y in [(9,45),(20,60),(42,56),(54,37)]:
+        d.line((x,y,x-1,y+5),fill='#4b6544');d.point((x-1,y+5),fill='#9baa70')
+    save(im,name)
+detailed_tree('tree',15015)
+detailed_tree('tree_autumn',15016,autumn=True)
+detailed_tree('tree_pine',15017,pine=True)
 # Loose scenery atlas: grass tuft, reeds, pebbles, pots, baskets, firewood, red paper, lotus.
 im,d=canvas(32*8,32)
 for i in range(8):
@@ -158,13 +201,14 @@ for i in range(8):
     else:
         d.ellipse((x+5,19,x+28,29),fill='#496c53');d.polygon([(x+17,23),(x+25,19),(x+29,23)],fill='#274d49');d.rectangle((x+12,17,x+15,20),fill='#d9bf95')
 save(im,'scenery')
-# A travelling ritualist: four directions, four gait frames, 32x40 source cells.
-im,d=canvas(128,160)
+# A travelling ritualist: four directions, four gait frames, 32x48 source cells.
+im,d=canvas(128,192)
 for row in range(4):
     for f in range(4):
-        x=f*32;y=row*40;step=[0,1,0,-1][f]
-        def rect(box,c):d.rectangle(tuple(v+(x if i%2==0 else y) for i,v in enumerate(box)),fill=c)
-        def poly(points,c):d.polygon([(x+a,y+b) for a,b in points],fill=c)
+        x=f*32;y=row*48;step=[0,1,0,-1][f]
+        def sy(v):return v if v<18 else round(18+(v-18)*1.35)
+        def rect(box,c):d.rectangle(tuple(v+x if i%2==0 else sy(v)+y for i,v in enumerate(box)),fill=c)
+        def poly(points,c):d.polygon([(x+a,y+sy(b)) for a,b in points],fill=c)
         poly([(12,18),(22,18),(26,33),(22,36),(9,35)],'#172f35')
         rect((11,33,14,38+max(0,step)),'#263331');rect((20,33,23,38+max(0,-step)),'#263331')
         rect((10,38,15,39),'#817a60');rect((19,38,24,39),'#817a60')
@@ -182,7 +226,7 @@ for row in range(4):
         poly([(11,6),(20,4),(25,10),(22,12),(8,12)],'#1c3437')
         rect((10,10,24,11),'#5b7569');rect((16,5,19,9),'#bca566')
         if row==1:poly([(20,11),(25,16+step),(24,24),(21,20)],'#7e5c48')
-save(im,'hero')
+save(sculpt(im,32,48),'hero')
 # Six distinct residents, with shared light direction and proportions.
 im,d=canvas(32*6,44)
 for i,(robe,hat) in enumerate([('#59674f','#a49f81'),('#4f6f63','#b1b09a'),('#675b49','#4f4940'),('#6b6253','#354c47'),('#5a704f','#b5a06c'),('#496375','#273f45')]):
@@ -200,7 +244,7 @@ for i,(robe,hat) in enumerate([('#59674f','#a49f81'),('#4f6f63','#b1b09a'),('#67
     elif i==3:d.rectangle((x+24,26,x+29,34),fill='#d5b36d');d.rectangle((x+25,28,x+28,32),fill='#f0d392')
     elif i==4:d.polygon([(x+7,11),(x+17,3),(x+28,11)],fill=hat);d.line((x+8,11,x+27,11),fill='#d1b679')
     else:d.rectangle((x+12,3,x+23,9),fill=hat);d.rectangle((x+23,25,x+29,33),fill='#b5ac89');d.line((x+26,26,x+26,32),fill='#6a7b6e')
-save(im,'villagers')
+save(sculpt(im,32,44),'villagers')
 # All enemy bodies use one twice-density atlas, preserving anatomical cut regions.
 source=(ROOT/'godot/scripts/combat/balance.gd').read_text().split('const MONSTERS = {',1)[1].split('\n}',1)[0]
 kinds=re.findall(r'^ "([a-z_]+)":',source,re.M)
@@ -281,7 +325,7 @@ for row,kind in enumerate(kinds):
         rect((5,8,8,26),'#d0cfaf');rect((24,7,27,25),'#d0cfaf')
     elif kind=='brute':
         poly([(3,2),(10,6),(25,2),(23,12),(9,12)],'#ac9672');rect((10,23,23,35),'#58674e')
-save(im,'enemies')
+save(sculpt(im,32,48),'enemies')
 print('Generated',len(list(OUT.glob('*.png'))),'original 16-bit sheets;',len(kinds),'enemy silhouettes')
 # Carved Buddha and stupa silhouettes are independent reusable scene assets.
 im,d=canvas(208,192)

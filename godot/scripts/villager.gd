@@ -7,6 +7,8 @@ var invincible: float = 0
 var home: Vector2
 var brain_state: String = "work"
 func _ready() -> void:
+	material = ShaderMaterial.new()
+	material.shader = preload("res://shaders/hit_flash.gdshader")
 	home = position
 	collision_layer = 0
 	collision_mask = 1
