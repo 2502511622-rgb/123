@@ -15,7 +15,7 @@ varying float bend_amount;
 void vertex(){
 	root_at = INSTANCE_CUSTOM.yz * world_size;
 	seed = INSTANCE_CUSTOM.x;
-	float tip = 1.0-UV.y;
+	float tip = UV.y;
 	float push = 0.0;
 	for(int i=0;i<6;i++){
 		if(i>=actor_count){break;}
@@ -31,19 +31,21 @@ void vertex(){
 	}
 	push=clamp(push,-1.6,1.6);
 	bend_amount=abs(push);
-	float gust=sin(clock_time*1.7+root_at.x*0.025+root_at.y*0.013)*1.6+sin(clock_time*3.2+seed*25.0)*0.7;
-	VERTEX.y-=7.0;
-	VERTEX.x+=tip*tip*(gust*wind+push*5.5);
-	VERTEX.y+=tip*tip*abs(push)*3.0;
+	float gust=sin(clock_time*1.7+root_at.x*0.025+root_at.y*0.013)*0.7+sin(clock_time*3.2+seed*25.0)*0.3;
+	// Explicit UV-to-world geometry: UV 0 is always the planted root.
+	VERTEX.x=(UV.x-0.5)*2.2;
+	VERTEX.y=-tip*9.0;
+	VERTEX.x+=tip*tip*(gust*wind+push*3.2);
+	VERTEX.y+=tip*tip*abs(push)*2.0;
 }
 void fragment(){
-	float tip=1.0-UV.y;
+	float tip=UV.y;
 	float center=0.5+sin(tip*2.0+seed*5.0)*tip*0.13;
 	float width=mix(0.47,0.015,tip*tip);
 	if(abs(UV.x-center)>width){discard;}
 	if(foreground && (root_at.y<player_at.y || distance(root_at,player_at)>17.0)){discard;}
 	vec3 low=vec3(0.20,0.25,0.14);
-	vec3 high=mix(vec3(0.36,0.40,0.22),vec3(0.48,0.47,0.29),seed*0.65);
+	vec3 high=mix(vec3(0.28,0.33,0.19),vec3(0.34,0.36,0.23),seed*0.65);
 	vec3 color=mix(low,high,tip);
 	color*=0.88+seed*0.24;
 	color*=1.0-wetness*0.12;

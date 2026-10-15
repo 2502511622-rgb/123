@@ -58,12 +58,12 @@ func _initialize() -> void:
 	state.oil = 20
 	state.process_remains(remains_id, "refine")
 	var follower: Dictionary = state.spirits[0]
-	check(follower.source_kind == "boss" and follower.level == 4 and follower.hp == follower.max_hp and state.deployment_used() == 2, "boss refinement inherits source skills and bounded stats")
+	check(follower.source_kind == "boss" and follower.level == 4 and follower.hp == follower.max_hp and state.deployment_used() == 1, "boss refinement inherits source skills and bounded stats")
 	check(YinAbilities.spirit_damage(follower) < 12 and follower.max_hp < boss.max_hp / 2, "refined boss does not keep enemy boss power")
 	state.spirits.append(state.make_spirit("water", 10))
 	state.spirits.append(state.make_spirit("gunner", 10))
-	check(state.deployment_used() == 3 and not state.spirits[2].active, "excess recruited follower waits at home")
-	check("上限" in state.deploy_spirit(state.spirits[2].id, true), "deployment cap rejects a fourth power point")
+	check(state.deployment_used() == 3 and state.spirits[2].active, "all recruited followers can deploy without power cap")
+	check("出战" in state.deploy_spirit(state.spirits[2].id, true), "deployment has no power point restriction")
 	state.bones = 4
 	var old_hp: int = follower.max_hp
 	check("完成" in state.train_spirit(follower.id) and follower.level == 5 and follower.max_hp > old_hp and follower.source_kind == "boss", "training levels follower while retaining inherited abilities")

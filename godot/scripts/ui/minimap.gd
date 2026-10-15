@@ -46,7 +46,7 @@ func _draw() -> void:
 	for enemy in game.get_tree().get_nodes_in_group("enemies") + game.get_tree().get_nodes_in_group("faction_guards"):
 		if not enemy.is_queued_for_deletion(): draw_rect(Rect2(point(enemy.position) - Vector2.ONE, Vector2(2, 2)), YinFactions.COLORS.get(enemy.record.get("faction", ""), Color("d8776b")))
 	for spirit in game.get_tree().get_nodes_in_group("companions"):
-		if not spirit.is_queued_for_deletion(): draw_rect(Rect2(point(spirit.position) - Vector2.ONE, Vector2(2, 2)), Color("82bbc3"))
+		if not spirit.is_queued_for_deletion(): draw_rect(Rect2(point(spirit.position) - Vector2.ONE, Vector2(2, 2)), Color("d5c283") if spirit.record.get("assignment")=="village" else Color("82bbc3"))
 	for villager in game.get_tree().get_nodes_in_group("villagers"):
 		if not villager.is_queued_for_deletion(): draw_rect(Rect2(point(villager.position) - Vector2.ONE, Vector2(2, 2)), Color("d5b784"))
 	draw_rect(Rect2(point(game.player.position) - Vector2(2, 2), Vector2(4, 4)), Color("fff1c1"))

@@ -5,6 +5,7 @@ const HERO = preload("res://assets/actors16/hero.png")
 const ROSTER = preload("res://assets/jrpg/roster.png")
 const TENGU = preload("res://assets/jrpg/tengu.png")
 const HERO_WALK = preload("res://assets/jrpg/hero_walk.png")
+const HERO_WALK_ALT = preload("res://assets/jrpg/hero_walk_alt.png")
 const HERO_ATTACK = preload("res://assets/jrpg/hero_attack.png")
 const NPC = preload("res://assets/jrpg/npc.png")
 static var npc_cache: Dictionary = {}
@@ -36,7 +37,12 @@ static func contact_shadow(canvas: Node2D, radius: float = 10.0, phase: float = 
 static func framed_pose(texture_value: Texture2D, frame: Dictionary, reference: Dictionary, height: float) -> Dictionary:
 	var scale_value: float = height / float(reference.rect[3])
 	var source: Rect2 = rect_from(frame.rect)
-	return {"texture": texture_value, "source": source, "destination": Rect2(-Vector2(frame.anchor[0], frame.anchor[1]) * scale_value, source.size * scale_value), "flip": bool(frame.get("mirror",false))}
+	var result: Dictionary={"texture": texture_value, "source": source, "destination": Rect2(-Vector2(frame.anchor[0], frame.anchor[1]) * scale_value, source.size * scale_value), "flip": bool(frame.get("mirror",false))}
+	if frame.has("hand"):
+		var hand: Vector2=(Vector2(frame.hand[0],frame.hand[1])-Vector2(frame.anchor[0],frame.anchor[1]))*scale_value
+		if result.flip:hand.x=-hand.x
+		result.hand=hand
+	return result
 static func hero_motion_pose(direction: Vector2, walk: float, moving: bool, attack: float, hurt: float, duration: float = 0.22, body: int = 0) -> Dictionary:
 	var row: int = direction_row(direction)
 	var walking: Array = atlas().hero_walk_alt if body==1 else atlas().hero_walk
@@ -44,8 +50,9 @@ static func hero_motion_pose(direction: Vector2, walk: float, moving: bool, atta
 	if attack > 0 or hurt > 0.08:
 		var column: int = 1 if hurt>0.08 else clampi(int((1.0-attack/maxf(duration,0.01))*6),0,5)
 		return framed_pose(HERO_ATTACK,combat[row][column],combat[row][5],50)
-	var column: int = int(walk*16.0)%8 if moving else 0
-	return framed_pose(HERO_WALK,walking[row][column],walking[row][0],50)
+	if not moving:return framed_pose(HERO_ATTACK,combat[row][5],combat[row][5],50)
+	var column: int = int(walk*16.0)%8
+	return framed_pose(HERO_WALK_ALT if body==1 else HERO_WALK,walking[row][column],walking[row][0],50)
 
 static func npc_pose(id: int, clock: float, moving: bool, talking: bool = false) -> Dictionary:
 	var column: int = clampi(id-1, 0, 5)
@@ -74,7 +81,27 @@ static func draw_pose(canvas: CanvasItem, pose: Dictionary, color: Color = Color
 		var uv: Rect2 = Rect2(pose.source.position/size_value,pose.source.size/size_value)
 		canvas.draw_primitive(vertices,PackedColorArray([color,color,color,color]),PackedVector2Array([uv.position,Vector2(uv.end.x,uv.position.y),uv.end,Vector2(uv.position.x,uv.end.y)]),pose.texture)
 		return
-	var bands: int = 8 if pose.texture in [HERO, HERO_WALK, HERO_ATTACK, NPC] else 1
+	if pose.has("gait_phase") and float(pose.get("gait_strength",0))>0.01:
+		# Foot planting deforms the lower legs around fixed hip points, rather than
+		# translating the whole sprite. UVs stay on the authored walking frame.
+		var tex_size: Vector2=pose.texture.get_size()
+		for band in range(20):
+			for side in range(2):
+				var f0:=Vector2(float(side)*0.5,float(band)/20.0)
+				var f1:=f0+Vector2(0.5,1.0/20.0)
+				var fractions:=PackedVector2Array([f0,Vector2(f1.x,f0.y),f1,Vector2(f0.x,f1.y)])
+				var vertices:=PackedVector2Array()
+				var uvs:=PackedVector2Array()
+				var step: float=sin(float(pose.gait_phase)+(PI if side==0 else 0.0))
+				for f in fractions:
+					var vertex_value: Vector2=destination.position+destination.size*f
+					var foot_weight: float=smoothstep(0.66,1.0,f.y)*float(pose.gait_strength)*smoothstep(0.0,0.22,absf(f.x-0.5))
+					vertex_value+=Vector2(step*3.2,-maxf(0,step)*4.0)*foot_weight
+					vertices.append(vertex_value)
+					uvs.append((pose.source.position+pose.source.size*f)/tex_size)
+				canvas.draw_primitive(vertices,PackedColorArray([color,color,color,color]),uvs,pose.texture)
+		return
+	var bands: int = 8 if pose.texture in [HERO, HERO_WALK, HERO_WALK_ALT, HERO_ATTACK, NPC] else 1
 	for band in range(bands):
 		var fraction: float = float(band)/bands
 		var target := Rect2(destination.position+Vector2(0,destination.size.y*fraction),Vector2(destination.size.x,destination.size.y/bands))

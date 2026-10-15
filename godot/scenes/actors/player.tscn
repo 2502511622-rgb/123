@@ -15,4 +15,4 @@ limit_top = 0
 limit_right = 960
 limit_bottom = 640
 position_smoothing_enabled = true
-position_smoothing_speed = 8.0
+position_smoothing_speed = 12.0

@@ -58,6 +58,10 @@ func run() -> void:
 	game.state.energy = 41
 	var day_value: int = game.state.day
 	await frames(4)
+	# The calendar advances in _process; physics ticks can be batched under load.
+	for i in range(12):
+		if game.state.day>day_value:break
+		await process_frame
 	check(game.state.day == day_value + 1 and game.state.minutes < 370 and game.world == old_world and game.player.position == pose, "dawn settles calendar without forced travel")
 	check(game.state.health == 71 and game.state.energy == 41, "staying awake does not grant free sleep recovery")
 	var restored := FarmState.new()

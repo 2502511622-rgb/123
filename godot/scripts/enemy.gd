@@ -252,7 +252,7 @@ func receive_hit(damage: int, method: String = "sword", source_gear_id: int = 0)
 		if method not in ["bleed", "burn", "seal"]:
 			hit_stop = 0.035 if record.kind in YinAbilities.BOSSES else 0.045
 			if method == "sword": game.player.hit_pause = 0.045
-			game.world.impact(position + Vector2(0, -20), game.player.position.direction_to(position), method)
+			game.world.impact(position + Vector2(0, -20), game.player.position.direction_to(position), "heavy" if method=="sword" and game.player.heavy_attack else method)
 			if method in ["sword", "bullet"]: update_dismemberment()
 
 	if method == "fire":
@@ -418,7 +418,7 @@ func faction_target() -> Node2D:
 			if distance < best:
 				best = distance
 				target = actor
-	if target == null and record.faction != "village": return game.closest_ally(position)
+	if target == null and not YinFactions.friendly(game.state,record): return game.closest_ally(position)
 	return target
 
 func faction_tick(delta: float, spec: Dictionary) -> void:
@@ -456,6 +456,7 @@ func receive_faction_hit(damage: int) -> void:
 	if record.dead: return
 	health_receiver.apply(maxi(1, damage - int(record.get("armor", 0))), "war")
 	hit_flash = 0.13
+	game.world.impact(position+Vector2(0,-20),Vector2.RIGHT,"sword")
 	game.world.damage_number(position, damage, Color("e5c792"))
 	if record.hp <= 0:
 		record.dead = true

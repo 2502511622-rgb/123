@@ -84,6 +84,7 @@ static func enemy(kind: String, level_value: int, elite: bool = false) -> Dictio
 
 static var icon_cache: Dictionary = {}
 static func icon(weapon: String) -> AtlasTexture:
+ if weapon!="armor":return YinWeaponArt.icon(weapon)
  if icon_cache.has(weapon): return icon_cache[weapon]
  var index: int = ICON_ORDER.find(weapon)
  var texture := AtlasTexture.new()

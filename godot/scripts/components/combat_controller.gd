@@ -12,6 +12,7 @@ var reload_job: Dictionary = {}
 var random := RandomNumberGenerator.new()
 var spin_time: float = 0
 var buffered_until: float = 0
+var heavy_requested: bool = false
 func _physics_process(delta: float) -> void:
 	if not is_instance_valid(game) or game.modal != null: return
 	if buffered_until > 0:
@@ -49,11 +50,18 @@ func _physics_process(delta: float) -> void:
 	if pending.delay > 0: return
 	var strike: Dictionary = pending.duplicate()
 	pending.clear()
+	game.audio_manager.play_cue("swing")
 	if game.player.held_item == "prajna": game.world.prajna_sweep(game.player.position, strike.facing, game.player.hitbox.radius, YinBalance.level(game.state.cultivation))
 	if game.player.held_item == "ipetam": game.world.artifact_sweep(game.player.position, strike.facing, game.player.hitbox.radius, YinBalance.artifact_level(game.state.current_gear()))
 	for target in game.player.hitbox.targets(strike.facing):
 		target.receive_hit(strike.damage, strike.get("method", "sword"), int(strike.get("gear_id", 0)))
-		if is_instance_valid(target): apply_payload(target, strike.get("payload", {}))
+		if is_instance_valid(target):
+			apply_payload(target, strike.get("payload", {}))
+			if strike.get("heavy",false):
+				target.stun=maxf(target.stun,0.30 if target.record.kind not in YinAbilities.BOSSES else 0.10)
+				target.knockback=strike.facing*(125 if target.record.kind not in YinAbilities.BOSSES else 35)
+				game.player.hit_pause=0.075
+				game.player.impact_shake=0.16
 	game.persist()
 func visible(target: YinEnemy) -> bool:
 	var ray := PhysicsRayQueryParameters2D.create(game.player.global_position + Vector2(0, -4), target.global_position + Vector2(0, -4), 1)
@@ -95,6 +103,12 @@ func trigger(method: String) -> bool:
 		spec.action_time = 0.22 if game.player.held_item != "whip" else 0.3
 		spec.recovery = weapon.interval
 	if method == "sword":
+		game.player.heavy_attack=heavy_requested
+		if heavy_requested:
+			spec.action_time=0.62 if game.player.held_item!="whip" else 0.7
+			spec.recovery=maxf(spec.recovery,0.82)
+			spec.damage=roundi(spec.damage*2.15)
+			spec.reach+=12
 		if not game.player.state_machine.begin("attack", spec.action_time): return false
 		game.player.swing_direction = game.player.facing
 		game.player.swing_sign *= -1
@@ -103,7 +117,7 @@ func trigger(method: String) -> bool:
 		game.action_cooldown = spec.recovery
 		game.player.hitbox.radius = spec.reach
 		var rolled: Dictionary = roll_hit(spec.damage, {} if using_tool else game.state.current_gear())
-		pending = {"gear_id": 0 if using_tool else game.state.equipped_gear, "payload": rolled, "actor": game.player, "facing": game.player.facing, "damage": rolled.damage, "delay": spec.action_time * 0.46, "method": "tool" if using_tool else "sword"}
+		pending = {"gear_id": 0 if using_tool else game.state.equipped_gear, "payload": rolled, "actor": game.player, "facing": game.player.facing, "damage": rolled.damage, "heavy": heavy_requested, "delay": spec.action_time * 0.50, "method": "tool" if using_tool else "sword"}
 	else:
 		var target: YinEnemy = spell_target(spec.reach)
 		if target == null:
@@ -116,6 +130,11 @@ func trigger(method: String) -> bool:
 			game.refresh("体力或充能不足，调息并等待自动充能。")
 			return false
 		if not game.player.state_machine.begin("spell", spec.action_time): return false
+		game.player.heavy_attack=false
+		game.player.attack_duration=spec.action_time
+		game.player.attack_time=spec.action_time
+		game.player.swing_direction=game.player.position.direction_to(target.position)
+		game.player.facing=game.player.swing_direction
 		game.state.spend_skill(method)
 		game.action_cooldown = spec.recovery
 		game.world.spell_trace(game.player.position + Vector2(0, -20), target.position + Vector2(0, -20), method)
@@ -232,3 +251,15 @@ func cast_weapon() -> bool:
 	game.player.attack_time = 0.22
 	game.persist()
 	return true
+
+func heavy() -> bool:
+	if game.modal!=null or game.player.frozen or game.player.held_item not in YinBalance.MELEE:return false
+	if game.action_cooldown>0 or game.state.energy<14 or game.player.state_machine.current not in ["idle","walk"]:return false
+	buffered_until=0
+	heavy_requested=true
+	var started: bool=trigger("sword")
+	heavy_requested=false
+	if started:
+		game.state.energy-=14
+		game.persist()
+	return started

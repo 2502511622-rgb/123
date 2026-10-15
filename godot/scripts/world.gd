@@ -399,15 +399,14 @@ func damage_number(at: Vector2, amount: int, tint: Color) -> void:
 	tween.tween_property(text, "modulate:a", 0.0, 0.55)
 	tween.chain().tween_callback(text.queue_free)
 func spell_trace(start: Vector2, end: Vector2, method: String) -> void:
-	var line := Line2D.new()
-	line.points = PackedVector2Array([start, start.lerp(end, 0.5) + Vector2(0, -6), end])
-	line.width = 3
-	line.default_color = {"fire": Color("e5a166"), "lightning": Color("c4a7ef"), "curse": Color("c18ba9")}.get(method, Color("8dd8c7"))
-	feedback.add_child(line)
-	var tween := line.create_tween()
-	tween.tween_property(line, "modulate:a", 0.0, 0.22)
-	tween.tween_callback(line.queue_free)
-	effect(end, line.default_color)
+	var fx:=YinCombatVfx.new()
+	fx.position=start
+	fx.target=end-start
+	fx.direction=start.direction_to(end)
+	fx.kind=method
+	feedback.add_child(fx)
+	var game:=get_tree().get_first_node_in_group("yintian_game")
+	if game!=null:game.audio_manager.play_cue(method)
 
 func build_forest() -> void:
 	add_sign(Vector2(1700, 220), "沉水村 → E")
@@ -507,16 +506,13 @@ func path_to(start: Vector2, end: Vector2) -> PackedVector2Array:
 	return combat_navigation.get_point_path(from_cell, to_cell, true)
 
 func impact(at: Vector2, direction: Vector2, method: String) -> void:
-	var spark := Line2D.new()
-	var cross := direction.normalized() * (16 if method == "sword" else 9)
-	spark.points = PackedVector2Array([at - cross, at + cross])
-	spark.width = 3 if method == "sword" else 2
-	spark.default_color = Color("ffe7b5") if method != "fire" else Color("e5a166")
-	feedback.add_child(spark)
-	var tween := spark.create_tween()
-	tween.tween_property(spark, "modulate:a", 0.0, 0.14)
-	tween.tween_callback(spark.queue_free)
-	effect(at, Color("e0b490"))
+	var fx:=YinCombatVfx.new()
+	fx.position=at
+	fx.direction=direction
+	fx.kind=method
+	feedback.add_child(fx)
+	var game:=get_tree().get_first_node_in_group("yintian_game")
+	if game!=null:game.audio_manager.play_cue(method)
 
 func nearest_chest() -> String:
 	for id in YinAdventure.CHESTS:

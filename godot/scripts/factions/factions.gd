@@ -42,7 +42,7 @@ static func declare(s, attacker: String, defender: String) -> Dictionary:
 	var data: Dictionary = s.factions
 	if attacker not in IDS or defender not in IDS or attacker == defender or not data.wars.is_empty(): return {}
 	var ratio: float = float(strength(data, attacker)) / maxi(1, strength(data, defender))
-	var war: Dictionary = {"id": int(data.next_war), "day": s.day, "attacker": attacker, "defender": defender, "status": "warned", "attackers": clampi(roundi(3 + ratio * 2), 4, 9), "defenders": clampi(roundi(strength(data, defender) / 28.0), 3, 7)}
+	var war: Dictionary = {"id": int(data.next_war), "day": s.day, "attacker": attacker, "defender": defender, "status": "warned", "last_skirmish": float(s.day*1440+s.minutes), "player_side":"", "player_kills":0, "attackers": clampi(roundi(3 + ratio * 2), 4, 9), "defenders": clampi(roundi(strength(data, defender) / 28.0), 3, 7)}
 	data.next_war += 1
 	data.wars.append(war)
 	s.add_log("势力战报：%s将于正午进攻%s。P 查看局势。" % [NAMES[attacker], NAMES[defender]])
@@ -50,6 +50,7 @@ static func declare(s, attacker: String, defender: String) -> Dictionary:
 
 static func deploy(s, war: Dictionary) -> void:
 	war.status = "active"
+	war.last_skirmish=float(s.day*1440+s.minutes)
 	for side in ["attacker", "defender"]:
 		var id: String = war[side]
 		var count: int = int(war.attackers if side == "attacker" else war.defenders)
@@ -85,6 +86,12 @@ static func settle(s, war: Dictionary, attacker_won: bool) -> void:
 		for villager in s.villagers: villager.hp = maxi(1, int(villager.hp) - severity / 2)
 	for e in s.enemies:
 		if int(e.get("war_id", 0)) == int(war.id): e.dead = true
+	var contribution: bool=int(war.get("player_kills",0))>0 or (war.defender=="village" and not s.village_guards().is_empty())
+	if contribution:
+		s.money+=45
+		s.cultivation+=15
+		s.reputation+=1
+		s.add_log("参战贡献：45文、15修为。驻村随从与击杀均计入。")
 	var line: String = "第%d日：%s战胜%s，败方损失%d兵力、%d物资。" % [s.day, NAMES[winner], NAMES[loser], severity, loot]
 	data.history.push_front(line)
 	if data.history.size() > 12: data.history.resize(12)
@@ -98,6 +105,7 @@ static func tick(s) -> bool:
 			deploy(s, war)
 			changed = true
 		if war.status != "active": continue
+		simulate_offscreen(s,war)
 		var attackers: Array = survivors(s, war, "attacker")
 		var defenders: Array = survivors(s, war, "defender")
 		if attackers.is_empty() or defenders.is_empty():
@@ -130,6 +138,7 @@ static func report(s) -> String:
 		lines.append("%s   实力 %d   兵力 %d / 物资 %d" % [NAMES[id], strength(s.factions, id), p.troops, p.supply])
 	for war in s.factions.wars:
 		lines.append("%s → %s · %s · %d 对 %d\n正午开战，入夜结算；前往守方地图可参战。" % [NAMES[war.attacker], NAMES[war.defender], "行军中" if war.status == "warned" else "交战中", war.attackers, war.defenders])
+		if war.status=="active":lines.append("存活：攻方%d/%d · 守方%d/%d · 你的击杀%d\n支援：%s"%[survivors(s,war,"attacker").size(),war.attackers,survivors(s,war,"defender").size(),war.defenders,int(war.get("player_kills",0)),{"":"尚未选择","attacker":"攻方","defender":"守方"}.get(war.get("player_side",""),"无")])
 	if s.factions.wars.is_empty(): lines.append("当前休整。每天恢复兵力与物资，各方都有机会向其他势力出兵。")
 	lines.append("最近战报\n" + ("\n".join(s.factions.history) if not s.factions.history.is_empty() else "尚无战报。"))
 	return "\n\n".join(lines)
@@ -152,6 +161,9 @@ static func validate(data: Dictionary) -> bool:
 		if int(war.get("id", 0)) >= int(data.next_war): return false
 		if war.get("attacker") not in IDS or war.get("defender") not in IDS or war.attacker == war.defender: return false
 		if war.get("status") not in ["warned", "active"]: return false
+		if war.get("player_side","") not in ["","attacker","defender"] or not FarmState.valid_int(war.get("player_kills",0),0,1000):return false
+		var stamp: Variant=war.get("last_skirmish",0)
+		if not (stamp is float or stamp is int) or not is_finite(float(stamp)) or stamp<0 or stamp>100000000:return false
 		for key in ["id", "day", "attackers", "defenders"]:
 			if not FarmState.valid_int(war.get(key), 1, 9 if key in ["attackers", "defenders"] else 100000000): return false
 	return true
@@ -162,6 +174,7 @@ static func normalize(data: Dictionary) -> void:
 		for key in ["troops", "supply"]: p[key] = int(p[key])
 	for war in data.wars:
 		for key in ["id", "day", "attackers", "defenders"]: war[key] = int(war[key])
+		if war.has("player_kills"):war.player_kills=int(war.player_kills)
 
 static func aid_weakest(s) -> String:
 	if s.factions.sponsored_day == s.day: return "今日已援助过势力，明日再来。"
@@ -174,3 +187,51 @@ static func aid_weakest(s) -> String:
 	s.factions.powers[weakest].troops=mini(180,int(s.factions.powers[weakest].troops)+12)
 	s.factions.powers[weakest].supply=mini(140,int(s.factions.powers[weakest].supply)+15)
 	return "援助%s：兵力+12，物资+15。"%NAMES[weakest]
+
+static func friendly(s,record: Dictionary) -> bool:
+	if record.get("faction","")=="village":return true
+	for war in s.factions.wars:
+		if int(war.id)==int(record.get("war_id",0)) and war.get("player_side","")!="":return war.player_side==record.get("war_side","")
+	return false
+static func choose_side(s,id: int,side: String) -> String:
+	if side not in ["attacker","defender"]:return "无效阵营。"
+	for war in s.factions.wars:
+		if int(war.id)!=id:continue
+		if war.get("player_side","")!="" and war.player_side!=side:return "本场已经承诺支援一方，不能临阵反复。"
+		war.player_side=side
+		return "已支援%s；其军队不会将你视为敌人。"%NAMES[war[side]]
+	return "战事已结束。"
+static func simulate_offscreen(s,war: Dictionary) -> void:
+	var now: float=s.day*1440+s.minutes
+	if not war.has("last_skirmish"):
+		war.last_skirmish=now
+		return
+	var previous: float=float(war.last_skirmish)
+	if s.zone==war.defender:
+		war.last_skirmish=now
+		return
+	var turns: int=mini(24,int((now-previous)/20))
+	if turns<=0:return
+	war.last_skirmish=now
+	for turn in range(turns):
+		var attackers: Array=survivors(s,war,"attacker")
+		var defenders: Array=survivors(s,war,"defender")
+		if attackers.is_empty() or defenders.is_empty():break
+		var attacking_damage: int=0
+		var defending_damage: int=0
+		for e in attackers:attacking_damage+=maxi(1,int(e.damage)/3)
+		for e in defenders:defending_damage+=maxi(1,int(e.damage)/3)
+		var guards: Array=s.village_guards() if war.defender=="village" else []
+		for guard in guards:defending_damage+=YinAbilities.spirit_damage(guard)
+		var a: Dictionary=attackers[turn%attackers.size()]
+		var d: Dictionary=defenders[turn%defenders.size()]
+		a.hp=maxi(0,int(a.hp)-defending_damage)
+		d.hp=maxi(0,int(d.hp)-attacking_damage)
+		if a.hp==0:a.dead=true
+		if d.hp==0:d.dead=true
+		if not guards.is_empty():
+			var guard: Dictionary=guards[turn%guards.size()]
+			guard.hp=maxi(0,int(guard.hp)-2)
+			if guard.hp==0:guard.active=false;guard.assignment="rest"
+			if a.dead:
+				for helper in guards:s.gain_spirit_xp(helper,8)

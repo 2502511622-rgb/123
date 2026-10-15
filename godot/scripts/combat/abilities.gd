@@ -30,15 +30,15 @@ const SKILLS = {
  "seal": {"name": "镇符", "level": 1, "parent": "", "cost": 12, "recharge": 12.0, "description": "消耗 12 体力与 1 充能，压制敌人；首领抗控制。"},
  "fire": {"name": "符火", "level": 2, "parent": "seal", "cost": 22, "recharge": 18.0, "description": "消耗 22 体力与 1 充能；火焚降低遗骸完整度。"},
  "breath": {"name": "调息", "level": 2, "parent": "seal", "cost": 0, "recharge": 0.0, "description": "被动：加快体力恢复，每阶 +0.25 / 秒。"},
- "command": {"name": "统御", "level": 4, "parent": "breath", "cost": 0, "recharge": 0.0, "description": "被动：每阶额外增加 1 个安置位，出战上限仍为 3 点。"}
+ "command": {"name": "统御", "level": 4, "parent": "breath", "cost": 0, "recharge": 0.0, "description": "被动：每阶额外增加 1 个安置位，随从出战数量不限。"}
 }
 const AFFIXES = {"crit": "暴击", "bleed": "重伤"}
 static func meta(kind: String) -> Dictionary:
  return MONSTERS.get(kind, MONSTERS.lantern)
 static func spirit_hp(kind: String, level: int) -> int:
- return (90 + (level - 1) * 10) if kind in BOSSES else (42 + (level - 1) * 7)
+ return (100 + (level - 1) * 11) if kind in BOSSES else (48 + (level - 1) * 8)
 static func spirit_damage(spirit: Dictionary) -> int:
- return (7 if spirit.source_kind in BOSSES else 4) + int((spirit.level - 1) * 0.8) + int(spirit.affinity / 50)
+ return (8 if spirit.source_kind in BOSSES else 5) + int((spirit.level - 1) * 0.8) + int(spirit.affinity / 50)
 static func deployment_cost(kind: String) -> int:
  return 2 if kind in BOSSES else 1
 static func affix_text(gear: Dictionary, actor_level: int = 1) -> String:

@@ -236,7 +236,7 @@ func run() -> void:
   var corpse: Dictionary = boss_remains[0]
   check(await walk(Vector2(corpse.at[0], corpse.at[1])), "walks onto boss remains")
   await key(KEY_V)
- check(game.state.spirits.size() == 1 and game.state.spirits[0].source_kind == "boss" and game.state.deployment_used() == 2, "boss can be refined with inherited active and passive skills")
+ check(game.state.spirits.size() == 1 and game.state.spirits[0].source_kind == "boss" and game.state.deployment_used() == 1, "boss can be refined with inherited active and passive skills")
  await frames(4)
  var follower: CharacterBody2D = get_nodes_in_group("companions")[0]
  var life: int = follower.record.hp

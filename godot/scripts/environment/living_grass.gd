@@ -36,12 +36,12 @@ func bake() -> void:
 		for x in range(0, int(world.level_size.x), CHUNK):
 			var base := Vector2(x, y)
 			var blades: Array = []
-			for i in range(140):
+			for i in range(64):
 				var at: Vector2 = base + Vector2(random.randf_range(0, CHUNK), random.randf_range(0, CHUNK))
 				# Broad organic patches, with sparse bare soil between tufts.
 				var coverage: float = sin(at.x * 0.037 + cos(at.y * 0.021)) + sin(at.y * 0.029 + at.x * 0.013)
 				if coverage < -0.9 or not grass_at(at): continue
-				blades.append({"at": at-base, "height": random.randf_range(0.42, 0.88), "seed": random.randf()})
+				blades.append({"at": at-base, "height": random.randf_range(0.45, 0.78), "seed": random.randf()})
 			if blades.is_empty(): continue
 			var multi := MultiMesh.new()
 			multi.transform_format = MultiMesh.TRANSFORM_2D

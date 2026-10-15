@@ -12,7 +12,7 @@ void fragment(){
 	vec2 tile_uv=(floor(world_at/32.0)+0.5)/(map_size/32.0);
 	float tile=floor(texture(terrain_types,tile_uv).r*255.0+0.5);
 	vec2 local_uv=clamp(fract(world_at/256.0),vec2(0.002),vec2(0.998))*0.5;
-	vec3 turf=mix(vec3(0.20,0.235,0.15),texture(material_atlas,local_uv).rgb,0.43);
+	vec3 turf=mix(vec3(0.20,0.235,0.15),texture(material_atlas,local_uv).rgb,0.23);
 	float macro=0.96+0.035*sin(world_at.x*0.017+cos(world_at.y*0.012));
 	vec3 surface=turf*macro;
 	if(tile>=16.0 || tile==10.0){

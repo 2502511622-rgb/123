@@ -65,6 +65,7 @@ var spirits: Array = []
 var remains: Array = []
 var cargo: Array = [] # Legacy saves only; migrated to courtyard remains.
 var mainline_claimed: Array = []
+var defense_minute: float = 0
 var enemies: Array = []
 var enemy_day: int = 0
 var next_id: int = 1
@@ -180,7 +181,7 @@ func make_spirit(kind: String, risk: int, branch: String = "eat") -> Dictionary:
 	var spirit_name: String = SPIRITS.get(kind, "无名役灵")
 	if kind == "child":
 		spirit_name = {"eat": "食秽童", "light": "提灯童", "shadow": "伏影童"}.get(branch, "食秽童")
-	var spirit: Dictionary = {"id": next_id, "kind": kind, "name": spirit_name, "branch": branch, "job": "rest", "risk": clampi(risk, 0, 90), "affinity": 0, "level": 1, "source_kind": "lantern" if kind == "child" else kind, "hp": YinAbilities.spirit_hp(kind, 1), "max_hp": YinAbilities.spirit_hp(kind, 1), "xp": 0, "active": deployment_used() + YinAbilities.deployment_cost(kind) <= 3}
+	var spirit: Dictionary = {"id": next_id, "kind": kind, "name": spirit_name, "branch": branch, "job": "rest", "risk": clampi(risk, 0, 90), "affinity": 0, "level": 1, "source_kind": "lantern" if kind == "child" else kind, "hp": YinAbilities.spirit_hp(kind, 1), "max_hp": YinAbilities.spirit_hp(kind, 1), "xp": 0, "active": true, "assignment":"follow", "guard_villager":0}
 	next_id += 1
 	return spirit
 
@@ -390,6 +391,9 @@ func kill_enemy(id: int, at: Vector2, source_gear_id: int = 0) -> void:
 		if e.zone == "island" and not YinIsland.available(self, e.kind): return
 		if e.zone == "temple" and not YinTemple.available(self, e.kind): return
 		e.dead = true
+		if e.has("war_id"):
+			for war in factions.wars:
+				if int(war.id)==int(e.war_id):war.player_kills=int(war.get("player_kills",0))+1
 		YinAdventure.on_kill(self, e)
 		YinIsland.on_kill(self, e)
 		YinTemple.on_kill(self, e)
@@ -509,14 +513,14 @@ func choose_ending(choice: String) -> String:
 func snapshot() -> Dictionary:
 	YinInventoryModel.new(self, "bag").sync()
 	YinInventoryModel.new(self, "chest").sync()
-	var data: Dictionary = {"version": 12}
+	var data: Dictionary = {"version": 13}
 	for key in save_keys(): data[key] = get(key)
 	data.player_position = [player_position.x, player_position.y]
 	data.saved_facing = [saved_facing.x, saved_facing.y]
 	return data.duplicate(true)
 
 static func save_keys() -> Array:
-	return ["mainline_claimed", "appearance", "temple_journal", "factions", "island_journal", "opened_chests", "quests", "tracked_quest", "visited_landmarks", "weapon_slots", "active_slot", "skill_ranks", "skill_charges", "skill_timers", "villagers", "letters", "raid_day", "raid_status", "village_integrity", "equipment", "gear_drops", "equipped_gear", "equipped_armor", "next_gear_id", "smart_farming", "day", "money", "energy", "health", "minutes", "weather", "selected_crop", "inventory", "supplies", "storage", "bag_slots", "chest_slots", "terrain", "drops", "placements", "plots", "oil", "talismans", "bones", "ash", "reputation", "cultivation", "pollution", "ward", "hall_level", "spirits", "remains", "cargo", "enemies", "enemy_day", "next_id", "total_harvest", "called_day", "ritual_count", "ritual_path", "boss_spawned", "boss_defeated", "ending", "intro_seen", "zone", "journal", "last_report", "order"]
+	return ["defense_minute", "mainline_claimed", "appearance", "temple_journal", "factions", "island_journal", "opened_chests", "quests", "tracked_quest", "visited_landmarks", "weapon_slots", "active_slot", "skill_ranks", "skill_charges", "skill_timers", "villagers", "letters", "raid_day", "raid_status", "village_integrity", "equipment", "gear_drops", "equipped_gear", "equipped_armor", "next_gear_id", "smart_farming", "day", "money", "energy", "health", "minutes", "weather", "selected_crop", "inventory", "supplies", "storage", "bag_slots", "chest_slots", "terrain", "drops", "placements", "plots", "oil", "talismans", "bones", "ash", "reputation", "cultivation", "pollution", "ward", "hall_level", "spirits", "remains", "cargo", "enemies", "enemy_day", "next_id", "total_harvest", "called_day", "ritual_count", "ritual_path", "boss_spawned", "boss_defeated", "ending", "intro_seen", "zone", "journal", "last_report", "order"]
 
 static func valid_int(value: Variant, minimum: int, maximum: int = 100000000) -> bool:
 	return (value is int or value is float) and is_finite(float(value)) and float(value) == floor(float(value)) and value >= minimum and value <= maximum
@@ -525,7 +529,7 @@ static func valid_point(value: Variant) -> bool:
 	return value is Array and value.size() == 2 and (value[0] is float or value[0] is int) and (value[1] is float or value[1] is int) and is_finite(float(value[0])) and is_finite(float(value[1])) and value[0] >= 0 and value[0] <= 2880 and value[1] >= 0 and value[1] <= 1920
 
 func restore(data: Dictionary) -> bool:
-	if not valid_int(data.get("version"), 3, 12): return false
+	if not valid_int(data.get("version"), 3, 13): return false
 	var defaults := FarmState.new()
 	if int(data.version) == 3:
 		data = data.duplicate(true)
@@ -606,6 +610,21 @@ func restore(data: Dictionary) -> bool:
 	for stage in data.mainline_claimed:
 		if stage not in ["gear","journey","balance"] or data.mainline_claimed.count(stage)!=1: return false
 
+	if int(data.version)<13:
+		data=data.duplicate(true)
+		data.version=13
+		data.defense_minute=0.0
+		if not data.get("spirits") is Array:return false
+		for spirit in data.spirits:
+			if not spirit is Dictionary or spirit.get("source_kind") not in YinAbilities.MONSTERS or not valid_int(spirit.get("level"),1,10) or not valid_int(spirit.get("max_hp"),1,300) or not valid_int(spirit.get("hp"),0,spirit.max_hp):return false
+			var old_max: int=(90+(int(spirit.level)-1)*10) if spirit.source_kind in YinAbilities.BOSSES else (42+(int(spirit.level)-1)*7)
+			if int(spirit.max_hp) not in [old_max,YinAbilities.spirit_hp(spirit.source_kind,int(spirit.level))]:return false
+			var new_max: int=YinAbilities.spirit_hp(spirit.source_kind,int(spirit.level))
+			spirit.hp=roundi(float(spirit.hp)/float(spirit.max_hp)*new_max)
+			spirit.max_hp=new_max
+			if not spirit.has("assignment"):spirit.assignment="follow" if spirit.get("active",false) else "rest"
+			if not spirit.has("guard_villager"):spirit.guard_villager=0
+	if not (data.get("defense_minute") is float or data.get("defense_minute") is int) or not is_finite(float(data.defense_minute)) or data.defense_minute<0 or data.defense_minute>100000000:return false
 	for key in save_keys():
 		if not data.has(key): return false
 		var expected: Variant = defaults.get(key)
@@ -719,15 +738,14 @@ func restore(data: Dictionary) -> bool:
 		if not valid_int(data.skill_charges.get(key), 0, 2): return false
 		var timer: Variant = data.skill_timers.get(key)
 		if (not timer is float and not timer is int) or not is_finite(float(timer)) or timer < 0 or timer > 18: return false
-	var deployment: int = 0
 	for spirit in data.spirits:
 		if spirit.get("source_kind") not in YinAbilities.MONSTERS or not valid_int(spirit.get("level"), 1, 10): return false
 		if not valid_int(spirit.get("max_hp"), 1, 300) or not valid_int(spirit.get("hp"), 0, spirit.max_hp) or not valid_int(spirit.get("xp"), 0, 400) or not spirit.get("active") is bool: return false
 		if spirit.max_hp != YinAbilities.spirit_hp(spirit.source_kind, int(spirit.level)) or spirit.xp >= spirit.level * 40 or (spirit.level == 10 and spirit.xp != 0): return false
 		if spirit.active:
 			if spirit.hp == 0: return false
-			deployment += YinAbilities.deployment_cost(spirit.source_kind)
-	if deployment > 3: return false
+		if spirit.get("assignment") not in ["follow","village","rest"] or not valid_int(spirit.get("guard_villager"),0,6):return false
+		if spirit.active and spirit.assignment=="rest":return false
 	if data.villagers.size() != 6 or data.letters.size() > 12: return false
 	var villager_ids: Array = []
 	for villager in data.villagers:
@@ -759,7 +777,7 @@ func restore(data: Dictionary) -> bool:
 	for p in normalized.plots:
 		for key in ["growth", "yin"]: p[key] = int(p[key])
 	for item in normalized.spirits:
-		for key in ["id", "risk", "affinity", "level", "hp", "max_hp", "xp"]: item[key] = int(item[key])
+		for key in ["id", "risk", "affinity", "level", "hp", "max_hp", "xp", "guard_villager"]: item[key] = int(item[key])
 	for item in normalized.remains:
 		for key in ["id", "integrity", "fierceness"]: item[key] = int(item[key])
 		item.at = [float(item.at[0]), float(item.at[1])]
@@ -954,14 +972,14 @@ func spend_skill(id: String) -> bool:
 func deployment_used() -> int:
 	var result: int = 0
 	for spirit in spirits:
-		if spirit.get("active", false) and spirit.get("hp", 1) > 0: result += YinAbilities.deployment_cost(spirit.get("source_kind", spirit.kind))
+		if spirit.get("active", false) and spirit.get("hp", 1) > 0: result += 1
 	return result
 func deploy_spirit(id: int, active: bool) -> String:
 	for spirit in spirits:
 		if spirit.id != id: continue
 		if active and spirit.hp <= 0: return "役灵已倒下，先疗养。"
-		if active and not spirit.active and deployment_used() + YinAbilities.deployment_cost(spirit.source_kind) > 3: return "出战上限 3 点，首领占 2 点。先召回其他随从。"
 		spirit.active = active
+		spirit.assignment="follow" if active else "rest"
 		return "已出战。" if active else "已召回义庄。"
 	return "没有这位役灵。"
 func dismiss_spirit(id: int) -> String:
@@ -1000,6 +1018,7 @@ func heal_spirit(id: int) -> String:
 func update_raid() -> bool:
 	if raid_status == "warned" and day == raid_day and minutes >= 1080:
 		raid_status = "active"
+		defense_minute=day*1440+minutes
 		for letter in letters:
 			if letter.day == raid_day: letter.status = "active"
 		for i in range(4 + mini(2, int(day / 6))):
@@ -1007,6 +1026,7 @@ func update_raid() -> bool:
 			enemy.raid = raid_day
 		add_log("青槐村夜袭开始，村民正受到威胁。")
 		return true
+	if raid_status=="active" and zone!="village":resolve_village_guard()
 	if raid_status == "active" and not enemies.any(func(e): return e.zone == "village" and int(e.get("raid", 0)) == raid_day and not e.dead):
 		raid_status = "success"
 		money += 30
@@ -1057,3 +1077,38 @@ func claim_mainline() -> String:
 			cultivation+=25
 			return "%s完成：%d文、25修为。"%[stage.name,stage.reward]
 	return "暂没有可领取的奖励。探索、装备提升与势力调停都无需种田。"
+
+func spirit_present(spirit: Dictionary,zone_name: String) -> bool:
+	return spirit.active and spirit.hp>0 and (spirit.get("assignment","follow")=="follow" or zone_name=="village" and spirit.get("assignment")=="village")
+func village_guards() -> Array:
+	return spirits.filter(func(s):return s.active and s.hp>0 and s.get("assignment","")=="village")
+func assign_spirit(id: int,duty: String,villager_id: int=0) -> String:
+	if duty not in ["follow","village","rest"] or villager_id<0 or villager_id>6:return "无效指令。"
+	for spirit in spirits:
+		if spirit.id!=id:continue
+		if duty!="rest" and spirit.hp<=0:return "役灵已倒下，先疗养。"
+		spirit.assignment=duty
+		spirit.guard_villager=villager_id
+		spirit.active=duty!="rest"
+		return spirit.name+{"follow":"已归队随行。","village":"已前往青槐村驻守；离开村庄后仍参与守卫。","rest":"已回义庄休整。"}[duty]
+	return "没有这位役灵。"
+func resolve_village_guard() -> void:
+	var now: float=day*1440+minutes
+	if defense_minute==0:defense_minute=now
+	var turns: int=mini(24,int((now-defense_minute)/10))
+	if turns<=0:return
+	defense_minute=now
+	for turn in range(turns):
+		var defenders: Array=village_guards()
+		var attackers: Array=enemies.filter(func(e):return e.zone=="village" and int(e.get("raid",0))==raid_day and not e.dead)
+		if attackers.is_empty() or defenders.is_empty():break
+		var damage: int=0
+		for guard in defenders:damage+=YinAbilities.spirit_damage(guard)*2
+		var target: Dictionary=attackers[0]
+		target.hp=maxi(0,int(target.hp)-damage)
+		var defender: Dictionary=defenders[turn%defenders.size()]
+		defender.hp=maxi(0,int(defender.hp)-maxi(1,int(target.get("damage",9))/3))
+		if defender.hp==0:defender.active=false;defender.assignment="rest"
+		if target.hp==0:
+			target.dead=true
+			for guard in defenders:gain_spirit_xp(guard,10)

@@ -3,15 +3,15 @@
 		"atlas": "roster",
 		"frame": {
 			"anchor": [
-				92.0,
-				254.0
+				81.0,
+				252.0
 			],
 			"mirror": false,
 			"rect": [
-				1042.0,
-				561.0,
-				227.0,
-				254.0
+				1039.0,
+				503.0,
+				236.0,
+				252.0
 			]
 		},
 		"parts": [
@@ -19,38 +19,38 @@
 				"crop": [
 					0,
 					0,
-					227,
-					254
+					235,
+					252
 				],
 				"joint": "body",
 				"part": "body",
 				"path": "res://assets/jrpg/parts/archer_body.png",
 				"pivot": [
-					0.405286341905594,
+					0.343220353126526,
 					0.519999980926514
 				]
 			},
 			{
 				"crop": [
-					45,
+					47,
 					0,
-					137,
-					84
+					142,
+					83
 				],
 				"joint": "head",
 				"part": "head",
 				"path": "res://assets/jrpg/parts/archer_head.png",
 				"pivot": [
-					0.405286341905594,
+					0.343220353126526,
 					0.330000013113022
 				]
 			},
 			{
 				"crop": [
-					149,
+					154,
 					71,
-					78,
-					117
+					82,
+					115
 				],
 				"joint": "arm",
 				"part": "arm",
@@ -64,8 +64,8 @@
 				"crop": [
 					0,
 					71,
-					77,
-					117
+					80,
+					115
 				],
 				"joint": "arm_left",
 				"part": "body",
@@ -77,31 +77,31 @@
 			},
 			{
 				"crop": [
-					92,
-					185,
-					66,
-					69
+					81,
+					184,
+					68,
+					68
 				],
 				"joint": "leg",
 				"part": "leg",
 				"path": "res://assets/jrpg/parts/archer_leg.png",
 				"pivot": [
-					0.475286334753036,
+					0.413220345973969,
 					0.75
 				]
 			},
 			{
 				"crop": [
-					26,
-					185,
-					66,
-					69
+					13,
+					184,
+					68,
+					68
 				],
 				"joint": "leg_left",
 				"part": "body",
 				"path": "res://assets/jrpg/parts/archer_leg_left.png",
 				"pivot": [
-					0.335286349058151,
+					0.273220330476761,
 					0.75
 				]
 			}
@@ -111,54 +111,54 @@
 		"atlas": "roster",
 		"frame": {
 			"anchor": [
-				143.0,
-				292.0
+				116.0,
+				255.0
 			],
 			"mirror": false,
 			"rect": [
-				1012.0,
-				11.0,
-				284.0,
-				292.0
+				1035.0,
+				9.0,
+				252.0,
+				255.0
 			]
 		},
 		"parts": [
 			{
 				"crop": [
-					0,
-					0,
-					284,
-					292
+					2,
+					9,
+					228,
+					246
 				],
 				"joint": "body",
 				"part": "body",
 				"path": "res://assets/jrpg/parts/asura_body.png",
 				"pivot": [
-					0.503521144390106,
+					0.460317462682724,
 					0.519999980926514
 				]
 			},
 			{
 				"crop": [
-					62,
+					55,
 					0,
-					160,
-					105
+					142,
+					92
 				],
 				"joint": "head",
 				"part": "head",
 				"path": "res://assets/jrpg/parts/asura_head.png",
 				"pivot": [
-					0.503521144390106,
+					0.460317462682724,
 					0.360000014305115
 				]
 			},
 			{
 				"crop": [
-					187,
-					82,
-					97,
-					134
+					165,
+					71,
+					87,
+					118
 				],
 				"joint": "arm",
 				"part": "arm",
@@ -171,9 +171,9 @@
 			{
 				"crop": [
 					0,
-					82,
-					97,
-					134
+					71,
+					85,
+					118
 				],
 				"joint": "arm_left",
 				"part": "body",
@@ -185,31 +185,31 @@
 			},
 			{
 				"crop": [
-					143,
-					213,
-					82,
-					79
+					116,
+					186,
+					73,
+					69
 				],
 				"joint": "leg",
 				"part": "leg",
 				"path": "res://assets/jrpg/parts/asura_leg.png",
 				"pivot": [
-					0.573521137237549,
+					0.530317485332489,
 					0.75
 				]
 			},
 			{
 				"crop": [
-					61,
-					213,
-					82,
-					79
+					43,
+					186,
+					73,
+					69
 				],
 				"joint": "leg_left",
 				"part": "body",
 				"path": "res://assets/jrpg/parts/asura_leg_left.png",
 				"pivot": [
-					0.433521121740341,
+					0.390317469835281,
 					0.75
 				]
 			}
@@ -219,15 +219,15 @@
 		"atlas": "roster",
 		"frame": {
 			"anchor": [
-				90.0,
-				254.0
+				137.5,
+				252.0
 			],
 			"mirror": false,
 			"rect": [
-				785.0,
-				561.0,
-				215.0,
-				254.0
+				768.0,
+				503.0,
+				231.0,
+				252.0
 			]
 		},
 		"parts": [
@@ -235,38 +235,38 @@
 				"crop": [
 					0,
 					0,
-					215,
-					254
+					231,
+					252
 				],
 				"joint": "body",
 				"part": "body",
 				"path": "res://assets/jrpg/parts/bone_body.png",
 				"pivot": [
-					0.418604642152786,
+					0.595238089561462,
 					0.519999980926514
 				]
 			},
 			{
 				"crop": [
-					43,
+					46,
 					0,
-					129,
-					84
+					139,
+					83
 				],
 				"joint": "head",
 				"part": "head",
 				"path": "res://assets/jrpg/parts/bone_head.png",
 				"pivot": [
-					0.418604642152786,
+					0.595238089561462,
 					0.330000013113022
 				]
 			},
 			{
 				"crop": [
-					140,
+					153,
 					71,
-					75,
-					117
+					78,
+					115
 				],
 				"joint": "arm",
 				"part": "arm",
@@ -278,10 +278,10 @@
 			},
 			{
 				"crop": [
-					12,
+					0,
 					71,
-					61,
-					117
+					81,
+					115
 				],
 				"joint": "arm_left",
 				"part": "body",
@@ -293,31 +293,31 @@
 			},
 			{
 				"crop": [
-					90,
-					185,
-					62,
-					69
+					138,
+					184,
+					66,
+					68
 				],
 				"joint": "leg",
 				"part": "leg",
 				"path": "res://assets/jrpg/parts/bone_leg.png",
 				"pivot": [
-					0.488604664802551,
+					0.665238082408905,
 					0.75
 				]
 			},
 			{
 				"crop": [
-					28,
-					185,
-					62,
-					69
+					71,
+					184,
+					67,
+					68
 				],
 				"joint": "leg_left",
 				"part": "body",
 				"path": "res://assets/jrpg/parts/bone_leg_left.png",
 				"pivot": [
-					0.348604649305344,
+					0.52523809671402,
 					0.75
 				]
 			}
@@ -327,15 +327,15 @@
 		"atlas": "roster",
 		"frame": {
 			"anchor": [
-				97.0,
-				207.0
+				89.0,
+				255.0
 			],
 			"mirror": false,
 			"rect": [
-				1039.0,
-				815.0,
-				194.0,
-				207.0
+				1046.0,
+				755.0,
+				189.0,
+				255.0
 			]
 		},
 		"parts": [
@@ -343,38 +343,38 @@
 				"crop": [
 					0,
 					0,
-					194,
-					207
+					189,
+					253
 				],
 				"joint": "body",
 				"part": "body",
 				"path": "res://assets/jrpg/parts/boss_body.png",
 				"pivot": [
-					0.5,
+					0.47089946269989,
 					0.519999980926514
 				]
 			},
 			{
 				"crop": [
-					39,
+					38,
 					0,
-					116,
-					68
+					113,
+					84
 				],
 				"joint": "head",
 				"part": "head",
 				"path": "res://assets/jrpg/parts/boss_head.png",
 				"pivot": [
-					0.5,
+					0.47089946269989,
 					0.330000013113022
 				]
 			},
 			{
 				"crop": [
-					127,
-					58,
-					67,
-					95
+					123,
+					71,
+					66,
+					118
 				],
 				"joint": "arm",
 				"part": "arm",
@@ -387,9 +387,9 @@
 			{
 				"crop": [
 					0,
-					58,
-					67,
-					95
+					71,
+					65,
+					118
 				],
 				"joint": "arm_left",
 				"part": "body",
@@ -401,31 +401,31 @@
 			},
 			{
 				"crop": [
-					97,
-					151,
-					56,
-					56
+					89,
+					186,
+					51,
+					69
 				],
 				"joint": "leg",
 				"part": "leg",
 				"path": "res://assets/jrpg/parts/boss_leg.png",
 				"pivot": [
-					0.569999992847443,
+					0.540899455547333,
 					0.75
 				]
 			},
 			{
 				"crop": [
-					41,
-					151,
-					56,
-					56
+					35,
+					186,
+					54,
+					69
 				],
 				"joint": "leg_left",
 				"part": "body",
 				"path": "res://assets/jrpg/parts/boss_leg_left.png",
 				"pivot": [
-					0.430000007152557,
+					0.400899469852448,
 					0.75
 				]
 			}
@@ -435,15 +435,15 @@
 		"atlas": "roster",
 		"frame": {
 			"anchor": [
-				122.5,
-				209.0
+				97.5,
+				253.0
 			],
 			"mirror": false,
 			"rect": [
-				257.0,
-				815.0,
-				245.0,
-				209.0
+				272.0,
+				755.0,
+				255.0,
+				253.0
 			]
 		},
 		"parts": [
@@ -451,38 +451,38 @@
 				"crop": [
 					0,
 					0,
-					245,
-					209
+					255,
+					253
 				],
 				"joint": "body",
 				"part": "body",
 				"path": "res://assets/jrpg/parts/brute_body.png",
 				"pivot": [
-					0.5,
+					0.382352948188782,
 					0.519999980926514
 				]
 			},
 			{
 				"crop": [
-					44,
+					46,
 					0,
-					172,
-					82
+					178,
+					99
 				],
 				"joint": "head",
 				"part": "head",
 				"path": "res://assets/jrpg/parts/brute_head.png",
 				"pivot": [
-					0.5,
+					0.382352948188782,
 					0.389999985694885
 				]
 			},
 			{
 				"crop": [
-					163,
-					59,
-					82,
-					96
+					169,
+					71,
+					86,
+					116
 				],
 				"joint": "arm",
 				"part": "arm",
@@ -495,9 +495,9 @@
 			{
 				"crop": [
 					0,
-					59,
+					71,
 					82,
-					96
+					116
 				],
 				"joint": "arm_left",
 				"part": "body",
@@ -509,31 +509,31 @@
 			},
 			{
 				"crop": [
-					122,
-					153,
-					71,
-					56
+					97,
+					185,
+					68,
+					68
 				],
 				"joint": "leg",
 				"part": "leg",
 				"path": "res://assets/jrpg/parts/brute_leg.png",
 				"pivot": [
-					0.569999992847443,
+					0.452352941036224,
 					0.75
 				]
 			},
 			{
 				"crop": [
-					52,
-					153,
-					70,
-					56
+					24,
+					185,
+					73,
+					68
 				],
 				"joint": "leg_left",
 				"part": "body",
 				"path": "res://assets/jrpg/parts/brute_leg_left.png",
 				"pivot": [
-					0.430000007152557,
+					0.312352955341339,
 					0.75
 				]
 			}
@@ -543,15 +543,15 @@
 		"atlas": "roster",
 		"frame": {
 			"anchor": [
-				113.5,
-				250.0
+				149.0,
+				239.0
 			],
 			"mirror": false,
 			"rect": [
-				270.0,
-				311.0,
-				218.0,
-				250.0
+				274.0,
+				264.0,
+				204.0,
+				239.0
 			]
 		},
 		"parts": [
@@ -559,14 +559,14 @@
 				"crop": [
 					0,
 					0,
-					218,
-					250
+					204,
+					239
 				],
 				"joint": "head",
 				"part": "head",
 				"path": "res://assets/jrpg/parts/chochin_head.png",
 				"pivot": [
-					0.520642220973969,
+					0.730392158031464,
 					0.330000013113022
 				]
 			}
@@ -576,54 +576,54 @@
 		"atlas": "roster",
 		"frame": {
 			"anchor": [
-				124.0,
-				254.0
+				111.5,
+				252.0
 			],
 			"mirror": false,
 			"rect": [
-				19.0,
-				561.0,
-				241.0,
-				254.0
+				13.0,
+				503.0,
+				235.0,
+				252.0
 			]
 		},
 		"parts": [
 			{
 				"crop": [
+					2,
 					0,
-					32,
-					241,
-					222
+					233,
+					252
 				],
 				"joint": "body",
 				"part": "body",
 				"path": "res://assets/jrpg/parts/daitengu_body.png",
 				"pivot": [
-					0.514522850513458,
+					0.47446808218956,
 					0.519999980926514
 				]
 			},
 			{
 				"crop": [
-					48,
+					47,
 					0,
-					131,
-					84
+					141,
+					83
 				],
 				"joint": "head",
 				"part": "head",
 				"path": "res://assets/jrpg/parts/daitengu_head.png",
 				"pivot": [
-					0.514522850513458,
+					0.47446808218956,
 					0.330000013113022
 				]
 			},
 			{
 				"crop": [
-					158,
+					153,
 					71,
-					83,
-					117
+					82,
+					115
 				],
 				"joint": "arm",
 				"part": "arm",
@@ -637,8 +637,8 @@
 				"crop": [
 					0,
 					71,
-					84,
-					117
+					81,
+					115
 				],
 				"joint": "arm_left",
 				"part": "body",
@@ -650,31 +650,31 @@
 			},
 			{
 				"crop": [
-					124,
-					185,
-					63,
-					69
+					112,
+					184,
+					66,
+					67
 				],
 				"joint": "leg",
 				"part": "leg",
 				"path": "res://assets/jrpg/parts/daitengu_leg.png",
 				"pivot": [
-					0.584522843360901,
+					0.544468104839325,
 					0.75
 				]
 			},
 			{
 				"crop": [
-					54,
-					185,
-					70,
-					69
+					44,
+					184,
+					68,
+					68
 				],
 				"joint": "leg_left",
 				"part": "body",
 				"path": "res://assets/jrpg/parts/daitengu_leg_left.png",
 				"pivot": [
-					0.444522827863693,
+					0.404468089342117,
 					0.75
 				]
 			}
@@ -2412,54 +2412,54 @@
 		"atlas": "roster",
 		"frame": {
 			"anchor": [
-				109.0,
-				207.0
+				119.5,
+				253.0
 			],
 			"mirror": false,
 			"rect": [
-				14.0,
-				815.0,
-				226.0,
-				207.0
+				12.0,
+				755.0,
+				260.0,
+				253.0
 			]
 		},
 		"parts": [
 			{
 				"crop": [
-					3,
 					0,
-					223,
-					207
+					0,
+					260,
+					253
 				],
 				"joint": "body",
 				"part": "body",
 				"path": "res://assets/jrpg/parts/gunner_body.png",
 				"pivot": [
-					0.482300877571106,
+					0.459615379571915,
 					0.519999980926514
 				]
 			},
 			{
 				"crop": [
-					45,
+					52,
 					0,
-					136,
-					68
+					156,
+					83
 				],
 				"joint": "head",
 				"part": "head",
 				"path": "res://assets/jrpg/parts/gunner_head.png",
 				"pivot": [
-					0.482300877571106,
+					0.459615379571915,
 					0.330000013113022
 				]
 			},
 			{
 				"crop": [
-					147,
-					58,
-					53,
-					95
+					169,
+					71,
+					91,
+					116
 				],
 				"joint": "arm",
 				"part": "arm",
@@ -2472,9 +2472,9 @@
 			{
 				"crop": [
 					0,
-					58,
-					78,
-					95
+					71,
+					89,
+					116
 				],
 				"joint": "arm_left",
 				"part": "body",
@@ -2486,31 +2486,31 @@
 			},
 			{
 				"crop": [
-					109,
-					151,
-					52,
-					56
+					120,
+					185,
+					75,
+					68
 				],
 				"joint": "leg",
 				"part": "leg",
 				"path": "res://assets/jrpg/parts/gunner_leg.png",
 				"pivot": [
-					0.552300870418549,
+					0.52961540222168,
 					0.75
 				]
 			},
 			{
 				"crop": [
 					44,
-					151,
-					65,
-					56
+					185,
+					76,
+					68
 				],
 				"joint": "leg_left",
 				"part": "body",
 				"path": "res://assets/jrpg/parts/gunner_leg_left.png",
 				"pivot": [
-					0.412300884723663,
+					0.389615386724472,
 					0.75
 				]
 			}
@@ -2520,54 +2520,54 @@
 		"atlas": "roster",
 		"frame": {
 			"anchor": [
-				93.0,
-				281.0
+				106.5,
+				240.0
 			],
 			"mirror": false,
 			"rect": [
-				44.0,
+				32.0,
 				22.0,
-				182.0,
-				281.0
+				199.0,
+				240.0
 			]
 		},
 		"parts": [
 			{
 				"crop": [
-					0,
-					14,
-					182,
-					267
+					1,
+					25,
+					198,
+					215
 				],
 				"joint": "body",
 				"part": "body",
 				"path": "res://assets/jrpg/parts/hungry_ghost_body.png",
 				"pivot": [
-					0.510989010334015,
+					0.535175859928131,
 					0.519999980926514
 				]
 			},
 			{
 				"crop": [
-					36,
+					40,
 					0,
-					98,
-					93
+					119,
+					79
 				],
 				"joint": "head",
 				"part": "head",
 				"path": "res://assets/jrpg/parts/hungry_ghost_head.png",
 				"pivot": [
-					0.510989010334015,
+					0.535175859928131,
 					0.330000013113022
 				]
 			},
 			{
 				"crop": [
-					119,
-					79,
-					63,
-					129
+					131,
+					67,
+					68,
+					111
 				],
 				"joint": "arm",
 				"part": "arm",
@@ -2580,9 +2580,9 @@
 			{
 				"crop": [
 					0,
-					79,
-					63,
-					129
+					67,
+					69,
+					111
 				],
 				"joint": "arm_left",
 				"part": "body",
@@ -2594,31 +2594,31 @@
 			},
 			{
 				"crop": [
-					93,
-					205,
-					53,
-					76
+					107,
+					175,
+					57,
+					65
 				],
 				"joint": "leg",
 				"part": "leg",
 				"path": "res://assets/jrpg/parts/hungry_ghost_leg.png",
 				"pivot": [
-					0.580989003181458,
+					0.605175852775574,
 					0.75
 				]
 			},
 			{
 				"crop": [
-					40,
-					205,
 					53,
-					76
+					175,
+					54,
+					63
 				],
 				"joint": "leg_left",
 				"part": "body",
 				"path": "res://assets/jrpg/parts/hungry_ghost_leg_left.png",
 				"pivot": [
-					0.440989017486572,
+					0.465175867080688,
 					0.75
 				]
 			}
@@ -2628,54 +2628,54 @@
 		"atlas": "roster",
 		"frame": {
 			"anchor": [
-				136.0,
-				250.0
+				119.0,
+				239.0
 			],
 			"mirror": false,
 			"rect": [
-				494.0,
-				311.0,
-				237.0,
-				250.0
+				506.0,
+				264.0,
+				218.0,
+				239.0
 			]
 		},
 		"parts": [
 			{
 				"crop": [
 					0,
-					26,
-					237,
-					224
+					0,
+					216,
+					239
 				],
 				"joint": "body",
 				"part": "body",
 				"path": "res://assets/jrpg/parts/ippon_datara_body.png",
 				"pivot": [
-					0.573839664459229,
+					0.545871555805206,
 					0.519999980926514
 				]
 			},
 			{
 				"crop": [
-					47,
+					44,
 					0,
-					143,
-					82
+					130,
+					79
 				],
 				"joint": "head",
 				"part": "head",
 				"path": "res://assets/jrpg/parts/ippon_datara_head.png",
 				"pivot": [
-					0.573839664459229,
+					0.545871555805206,
 					0.330000013113022
 				]
 			},
 			{
 				"crop": [
-					157,
-					70,
-					80,
-					115
+					143,
+					67,
+					75,
+					110
 				],
 				"joint": "arm",
 				"part": "arm",
@@ -2688,9 +2688,9 @@
 			{
 				"crop": [
 					0,
-					70,
-					83,
-					115
+					67,
+					76,
+					109
 				],
 				"joint": "arm_left",
 				"part": "body",
@@ -2702,16 +2702,16 @@
 			},
 			{
 				"crop": [
-					65,
-					182,
-					142,
-					68
+					54,
+					174,
+					130,
+					65
 				],
 				"joint": "leg",
 				"part": "leg",
 				"path": "res://assets/jrpg/parts/ippon_datara_leg.png",
 				"pivot": [
-					0.643839657306671,
+					0.615871548652649,
 					0.75
 				]
 			}
@@ -2721,54 +2721,54 @@
 		"atlas": "roster",
 		"frame": {
 			"anchor": [
-				105.5,
-				250.0
+				127.0,
+				239.0
 			],
 			"mirror": false,
 			"rect": [
 				1264.0,
-				311.0,
-				263.0,
-				250.0
+				264.0,
+				268.0,
+				239.0
 			]
 		},
 		"parts": [
 			{
 				"crop": [
 					1,
-					8,
-					258,
-					232
+					0,
+					267,
+					237
 				],
 				"joint": "body",
 				"part": "body",
 				"path": "res://assets/jrpg/parts/itsumade_body.png",
 				"pivot": [
-					0.401140689849854,
+					0.473880589008331,
 					0.519999980926514
 				]
 			},
 			{
 				"crop": [
-					53,
+					54,
 					0,
-					157,
-					82
+					160,
+					79
 				],
 				"joint": "head",
 				"part": "head",
 				"path": "res://assets/jrpg/parts/itsumade_head.png",
 				"pivot": [
-					0.401140689849854,
+					0.473880589008331,
 					0.330000013113022
 				]
 			},
 			{
 				"crop": [
-					171,
-					70,
-					92,
-					115
+					175,
+					67,
+					93,
+					110
 				],
 				"joint": "arm",
 				"part": "arm",
@@ -2781,9 +2781,9 @@
 			{
 				"crop": [
 					0,
-					70,
-					89,
-					115
+					67,
+					92,
+					110
 				],
 				"joint": "arm_left",
 				"part": "body",
@@ -2795,31 +2795,31 @@
 			},
 			{
 				"crop": [
-					105,
-					182,
-					71,
-					68
+					127,
+					174,
+					76,
+					65
 				],
 				"joint": "leg",
 				"part": "leg",
 				"path": "res://assets/jrpg/parts/itsumade_leg.png",
 				"pivot": [
-					0.471140682697296,
+					0.543880581855774,
 					0.75
 				]
 			},
 			{
 				"crop": [
-					39,
-					182,
-					66,
-					68
+					53,
+					174,
+					74,
+					65
 				],
 				"joint": "leg_left",
 				"part": "body",
 				"path": "res://assets/jrpg/parts/itsumade_leg_left.png",
 				"pivot": [
-					0.331140697002411,
+					0.403880596160889,
 					0.75
 				]
 			}
@@ -2829,30 +2829,30 @@
 		"atlas": "roster",
 		"frame": {
 			"anchor": [
-				158.5,
-				243.0
+				152.0,
+				237.0
 			],
 			"mirror": false,
 			"rect": [
-				755.0,
-				311.0,
+				745.0,
+				266.0,
 				294.0,
-				243.0
+				237.0
 			]
 		},
 		"parts": [
 			{
 				"crop": [
-					8,
-					39,
-					286,
-					204
+					0,
+					0,
+					294,
+					237
 				],
 				"joint": "body",
 				"part": "body",
 				"path": "res://assets/jrpg/parts/jorogumo_body.png",
 				"pivot": [
-					0.53911566734314,
+					0.517006814479828,
 					0.519999980926514
 				]
 			},
@@ -2860,23 +2860,23 @@
 				"crop": [
 					59,
 					0,
-					170,
-					80
+					174,
+					78
 				],
 				"joint": "head",
 				"part": "head",
 				"path": "res://assets/jrpg/parts/jorogumo_head.png",
 				"pivot": [
-					0.53911566734314,
+					0.517006814479828,
 					0.330000013113022
 				]
 			},
 			{
 				"crop": [
-					193,
-					68,
-					101,
-					112
+					192,
+					66,
+					102,
+					109
 				],
 				"joint": "arm",
 				"part": "arm",
@@ -2889,9 +2889,9 @@
 			{
 				"crop": [
 					0,
-					68,
-					103,
-					112
+					66,
+					102,
+					109
 				],
 				"joint": "arm_left",
 				"part": "body",
@@ -2903,31 +2903,31 @@
 			},
 			{
 				"crop": [
-					158,
-					177,
+					152,
+					173,
 					85,
-					66
+					64
 				],
 				"joint": "leg",
 				"part": "leg",
 				"path": "res://assets/jrpg/parts/jorogumo_leg.png",
 				"pivot": [
-					0.609115660190582,
+					0.587006807327271,
 					0.75
 				]
 			},
 			{
 				"crop": [
-					74,
-					177,
-					84,
-					66
+					67,
+					173,
+					85,
+					64
 				],
 				"joint": "leg_left",
 				"part": "body",
 				"path": "res://assets/jrpg/parts/jorogumo_leg_left.png",
 				"pivot": [
-					0.469115644693375,
+					0.447006791830063,
 					0.75
 				]
 			}
@@ -2937,54 +2937,54 @@
 		"atlas": "roster",
 		"frame": {
 			"anchor": [
-				100.5,
-				244.0
+				64.0,
+				224.0
 			],
 			"mirror": false,
 			"rect": [
-				43.0,
-				317.0,
-				183.0,
-				244.0
+				28.0,
+				279.0,
+				197.0,
+				224.0
 			]
 		},
 		"parts": [
 			{
 				"crop": [
-					15,
-					37,
-					168,
-					207
+					0,
+					0,
+					197,
+					224
 				],
 				"joint": "body",
 				"part": "body",
 				"path": "res://assets/jrpg/parts/kappa_body.png",
 				"pivot": [
-					0.549180328845978,
+					0.324873089790344,
 					0.519999980926514
 				]
 			},
 			{
 				"crop": [
-					18,
+					6,
 					0,
-					116,
-					83
+					138,
+					76
 				],
 				"joint": "head",
 				"part": "head",
 				"path": "res://assets/jrpg/parts/kappa_head.png",
 				"pivot": [
-					0.549180328845978,
+					0.324873089790344,
 					0.340000003576279
 				]
 			},
 			{
 				"crop": [
-					120,
-					68,
+					128,
 					63,
-					113
+					69,
+					103
 				],
 				"joint": "arm",
 				"part": "arm",
@@ -2997,9 +2997,9 @@
 			{
 				"crop": [
 					0,
-					68,
 					63,
-					113
+					66,
+					103
 				],
 				"joint": "arm_left",
 				"part": "body",
@@ -3011,31 +3011,31 @@
 			},
 			{
 				"crop": [
-					100,
-					178,
-					53,
-					66
+					64,
+					164,
+					57,
+					60
 				],
 				"joint": "leg",
 				"part": "leg",
 				"path": "res://assets/jrpg/parts/kappa_leg.png",
 				"pivot": [
-					0.61918032169342,
+					0.394873082637787,
 					0.75
 				]
 			},
 			{
 				"crop": [
-					48,
-					178,
-					52,
-					66
+					18,
+					164,
+					46,
+					60
 				],
 				"joint": "leg_left",
 				"part": "body",
 				"path": "res://assets/jrpg/parts/kappa_leg_left.png",
 				"pivot": [
-					0.479180335998535,
+					0.254873096942902,
 					0.75
 				]
 			}
@@ -3045,54 +3045,54 @@
 		"atlas": "roster",
 		"frame": {
 			"anchor": [
-				125.0,
-				276.0
+				128.0,
+				246.0
 			],
 			"mirror": false,
 			"rect": [
-				756.0,
-				35.0,
-				250.0,
-				276.0
+				765.0,
+				13.0,
+				252.0,
+				246.0
 			]
 		},
 		"parts": [
 			{
 				"crop": [
-					13,
-					43,
-					237,
-					230
+					0,
+					21,
+					252,
+					225
 				],
 				"joint": "body",
 				"part": "body",
 				"path": "res://assets/jrpg/parts/kumbhanda_body.png",
 				"pivot": [
-					0.5,
+					0.507936537265778,
 					0.519999980926514
 				]
 			},
 			{
 				"crop": [
-					54,
+					50,
 					0,
 					146,
-					91
+					81
 				],
 				"joint": "head",
 				"part": "head",
 				"path": "res://assets/jrpg/parts/kumbhanda_head.png",
 				"pivot": [
-					0.5,
+					0.507936537265778,
 					0.330000013113022
 				]
 			},
 			{
 				"crop": [
-					163,
-					77,
+					165,
+					69,
 					87,
-					127
+					113
 				],
 				"joint": "arm",
 				"part": "arm",
@@ -3105,9 +3105,9 @@
 			{
 				"crop": [
 					0,
-					77,
-					87,
-					127
+					69,
+					88,
+					113
 				],
 				"joint": "arm_left",
 				"part": "body",
@@ -3119,31 +3119,31 @@
 			},
 			{
 				"crop": [
-					125,
-					201,
-					69,
-					75
+					128,
+					180,
+					72,
+					66
 				],
 				"joint": "leg",
 				"part": "leg",
 				"path": "res://assets/jrpg/parts/kumbhanda_leg.png",
 				"pivot": [
-					0.569999992847443,
+					0.57793653011322,
 					0.75
 				]
 			},
 			{
 				"crop": [
-					54,
-					201,
-					71,
-					75
+					55,
+					180,
+					73,
+					66
 				],
 				"joint": "leg_left",
 				"part": "body",
 				"path": "res://assets/jrpg/parts/kumbhanda_leg_left.png",
 				"pivot": [
-					0.430000007152557,
+					0.437936514616013,
 					0.75
 				]
 			}
@@ -3153,54 +3153,54 @@
 		"atlas": "roster",
 		"frame": {
 			"anchor": [
-				86.0,
-				254.0
+				89.0,
+				247.0
 			],
 			"mirror": false,
 			"rect": [
-				1269.0,
-				561.0,
-				221.0,
-				254.0
+				1292.0,
+				503.0,
+				225.0,
+				247.0
 			]
 		},
 		"parts": [
 			{
 				"crop": [
 					0,
-					32,
-					219,
-					222
+					2,
+					225,
+					245
 				],
 				"joint": "body",
 				"part": "body",
 				"path": "res://assets/jrpg/parts/lantern_body.png",
 				"pivot": [
-					0.389140278100967,
+					0.395555555820465,
 					0.519999980926514
 				]
 			},
 			{
 				"crop": [
-					48,
+					45,
 					0,
-					129,
-					84
+					132,
+					82
 				],
 				"joint": "head",
 				"part": "head",
 				"path": "res://assets/jrpg/parts/lantern_head.png",
 				"pivot": [
-					0.389140278100967,
+					0.395555555820465,
 					0.330000013113022
 				]
 			},
 			{
 				"crop": [
-					144,
-					71,
-					77,
-					117
+					146,
+					69,
+					79,
+					114
 				],
 				"joint": "arm",
 				"part": "arm",
@@ -3213,9 +3213,9 @@
 			{
 				"crop": [
 					0,
-					71,
-					75,
-					117
+					69,
+					76,
+					114
 				],
 				"joint": "arm_left",
 				"part": "body",
@@ -3227,31 +3227,31 @@
 			},
 			{
 				"crop": [
-					86,
-					185,
-					64,
-					69
+					89,
+					180,
+					65,
+					67
 				],
 				"joint": "leg",
 				"part": "leg",
 				"path": "res://assets/jrpg/parts/lantern_leg.png",
 				"pivot": [
-					0.45914027094841,
+					0.465555548667908,
 					0.75
 				]
 			},
 			{
 				"crop": [
-					25,
-					185,
-					61,
-					69
+					24,
+					180,
+					65,
+					67
 				],
 				"joint": "leg_left",
 				"part": "body",
 				"path": "res://assets/jrpg/parts/lantern_leg_left.png",
 				"pivot": [
-					0.319140285253525,
+					0.325555562973022,
 					0.75
 				]
 			}
@@ -3261,54 +3261,54 @@
 		"atlas": "roster",
 		"frame": {
 			"anchor": [
-				116.5,
-				209.0
+				120.0,
+				255.0
 			],
 			"mirror": false,
 			"rect": [
 				770.0,
-				815.0,
-				236.0,
-				209.0
+				755.0,
+				245.0,
+				255.0
 			]
 		},
 		"parts": [
 			{
 				"crop": [
-					1,
 					0,
-					235,
-					209
+					0,
+					242,
+					255
 				],
 				"joint": "body",
 				"part": "body",
 				"path": "res://assets/jrpg/parts/opera_boss_body.png",
 				"pivot": [
-					0.493644058704376,
+					0.489795923233032,
 					0.519999980926514
 				]
 			},
 			{
 				"crop": [
-					47,
+					51,
 					0,
-					142,
-					69
+					145,
+					84
 				],
 				"joint": "head",
 				"part": "head",
 				"path": "res://assets/jrpg/parts/opera_boss_head.png",
 				"pivot": [
-					0.493644058704376,
+					0.489795923233032,
 					0.330000013113022
 				]
 			},
 			{
 				"crop": [
-					154,
-					59,
-					82,
-					96
+					160,
+					71,
+					85,
+					118
 				],
 				"joint": "arm",
 				"part": "arm",
@@ -3321,9 +3321,9 @@
 			{
 				"crop": [
 					0,
-					59,
-					82,
-					96
+					71,
+					85,
+					118
 				],
 				"joint": "arm_left",
 				"part": "body",
@@ -3335,31 +3335,31 @@
 			},
 			{
 				"crop": [
-					117,
-					153,
-					68,
-					56
+					120,
+					186,
+					71,
+					69
 				],
 				"joint": "leg",
 				"part": "leg",
 				"path": "res://assets/jrpg/parts/opera_boss_leg.png",
 				"pivot": [
-					0.563644051551819,
+					0.559795916080475,
 					0.75
 				]
 			},
 			{
 				"crop": [
-					48,
-					153,
-					69,
-					56
+					50,
+					186,
+					70,
+					69
 				],
 				"joint": "leg_left",
 				"part": "body",
 				"path": "res://assets/jrpg/parts/opera_boss_leg_left.png",
 				"pivot": [
-					0.423644065856934,
+					0.41979593038559,
 					0.75
 				]
 			}
@@ -3369,54 +3369,54 @@
 		"atlas": "roster",
 		"frame": {
 			"anchor": [
-				119.0,
-				301.0
+				98.5,
+				255.0
 			],
 			"mirror": false,
 			"rect": [
-				498.0,
-				10.0,
-				249.0,
-				301.0
+				514.0,
+				9.0,
+				230.0,
+				255.0
 			]
 		},
 		"parts": [
 			{
 				"crop": [
 					0,
-					14,
-					236,
-					284
+					0,
+					223,
+					255
 				],
 				"joint": "body",
 				"part": "body",
 				"path": "res://assets/jrpg/parts/rakshasa_body.png",
 				"pivot": [
-					0.477911651134491,
+					0.428260862827301,
 					0.519999980926514
 				]
 			},
 			{
 				"crop": [
-					55,
+					51,
 					0,
-					139,
-					108
+					128,
+					92
 				],
 				"joint": "head",
 				"part": "head",
 				"path": "res://assets/jrpg/parts/rakshasa_head.png",
 				"pivot": [
-					0.477911651134491,
+					0.428260862827301,
 					0.360000014305115
 				]
 			},
 			{
 				"crop": [
-					163,
-					84,
-					86,
-					139
+					150,
+					71,
+					80,
+					118
 				],
 				"joint": "arm",
 				"part": "arm",
@@ -3429,9 +3429,9 @@
 			{
 				"crop": [
 					0,
-					84,
-					85,
-					139
+					71,
+					77,
+					118
 				],
 				"joint": "arm_left",
 				"part": "body",
@@ -3443,31 +3443,31 @@
 			},
 			{
 				"crop": [
-					119,
-					220,
-					70,
-					81
+					99,
+					186,
+					63,
+					69
 				],
 				"joint": "leg",
 				"part": "leg",
 				"path": "res://assets/jrpg/parts/rakshasa_leg.png",
 				"pivot": [
-					0.547911643981934,
+					0.498260855674744,
 					0.75
 				]
 			},
 			{
 				"crop": [
-					49,
-					220,
-					70,
-					81
+					32,
+					186,
+					67,
+					69
 				],
 				"joint": "leg_left",
 				"part": "body",
 				"path": "res://assets/jrpg/parts/rakshasa_leg_left.png",
 				"pivot": [
-					0.407911658287048,
+					0.358260869979858,
 					0.75
 				]
 			}
@@ -3477,15 +3477,15 @@
 		"atlas": "roster",
 		"frame": {
 			"anchor": [
-				122.5,
-				254.0
+				121.0,
+				252.0
 			],
 			"mirror": false,
 			"rect": [
-				265.0,
-				561.0,
-				267.0,
-				254.0
+				259.0,
+				503.0,
+				253.0,
+				252.0
 			]
 		},
 		"parts": [
@@ -3493,38 +3493,38 @@
 				"crop": [
 					0,
 					0,
-					267,
-					254
+					253,
+					252
 				],
 				"joint": "body",
 				"part": "body",
 				"path": "res://assets/jrpg/parts/ryomen_sukuna_body.png",
 				"pivot": [
-					0.458801507949829,
+					0.47826087474823,
 					0.519999980926514
 				]
 			},
 			{
 				"crop": [
-					63,
+					51,
 					0,
 					151,
-					84
+					83
 				],
 				"joint": "head",
 				"part": "head",
 				"path": "res://assets/jrpg/parts/ryomen_sukuna_head.png",
 				"pivot": [
-					0.458801507949829,
+					0.47826087474823,
 					0.330000013113022
 				]
 			},
 			{
 				"crop": [
-					174,
+					165,
 					71,
-					93,
-					117
+					88,
+					115
 				],
 				"joint": "arm",
 				"part": "arm",
@@ -3538,8 +3538,8 @@
 				"crop": [
 					0,
 					71,
-					92,
-					117
+					87,
+					115
 				],
 				"joint": "arm_left",
 				"part": "body",
@@ -3551,31 +3551,31 @@
 			},
 			{
 				"crop": [
-					122,
-					185,
-					78,
-					69
+					121,
+					184,
+					73,
+					68
 				],
 				"joint": "leg",
 				"part": "leg",
 				"path": "res://assets/jrpg/parts/ryomen_sukuna_leg.png",
 				"pivot": [
-					0.528801500797272,
+					0.548260867595673,
 					0.75
 				]
 			},
 			{
 				"crop": [
-					45,
-					185,
-					77,
-					69
+					48,
+					184,
+					73,
+					68
 				],
 				"joint": "leg_left",
 				"part": "body",
 				"path": "res://assets/jrpg/parts/ryomen_sukuna_leg_left.png",
 				"pivot": [
-					0.388801485300064,
+					0.408260881900787,
 					0.75
 				]
 			}
@@ -3585,15 +3585,15 @@
 		"atlas": "roster",
 		"frame": {
 			"anchor": [
-				113.5,
-				249.0
+				72.0,
+				215.0
 			],
 			"mirror": false,
 			"rect": [
-				1069.0,
-				312.0,
-				163.0,
-				249.0
+				1075.0,
+				264.0,
+				153.0,
+				215.0
 			]
 		},
 		"parts": [
@@ -3601,14 +3601,14 @@
 				"crop": [
 					0,
 					0,
-					163,
-					249
+					153,
+					215
 				],
 				"joint": "body",
 				"part": "body",
 				"path": "res://assets/jrpg/parts/sogenbi_body.png",
 				"pivot": [
-					0.696319043636322,
+					0.470588237047195,
 					0.519999980926514
 				]
 			}
@@ -3618,54 +3618,54 @@
 		"atlas": "roster",
 		"frame": {
 			"anchor": [
-				98.5,
-				254.0
+				153.5,
+				252.0
 			],
 			"mirror": false,
 			"rect": [
-				532.0,
-				561.0,
-				201.0,
-				254.0
+				512.0,
+				503.0,
+				256.0,
+				252.0
 			]
 		},
 		"parts": [
 			{
 				"crop": [
 					0,
-					6,
-					201,
-					248
+					0,
+					256,
+					252
 				],
 				"joint": "body",
 				"part": "body",
 				"path": "res://assets/jrpg/parts/water_body.png",
 				"pivot": [
-					0.490049749612808,
+					0.599609375,
 					0.519999980926514
 				]
 			},
 			{
 				"crop": [
-					40,
+					51,
 					0,
-					121,
-					84
+					154,
+					83
 				],
 				"joint": "head",
 				"part": "head",
 				"path": "res://assets/jrpg/parts/water_head.png",
 				"pivot": [
-					0.490049749612808,
+					0.599609375,
 					0.330000013113022
 				]
 			},
 			{
 				"crop": [
-					131,
+					170,
 					71,
-					70,
-					117
+					86,
+					115
 				],
 				"joint": "arm",
 				"part": "arm",
@@ -3679,8 +3679,8 @@
 				"crop": [
 					0,
 					71,
-					70,
-					117
+					89,
+					115
 				],
 				"joint": "arm_left",
 				"part": "body",
@@ -3692,31 +3692,31 @@
 			},
 			{
 				"crop": [
-					99,
-					185,
-					58,
-					69
+					153,
+					184,
+					74,
+					68
 				],
 				"joint": "leg",
 				"part": "leg",
 				"path": "res://assets/jrpg/parts/water_leg.png",
 				"pivot": [
-					0.560049772262573,
+					0.669609367847443,
 					0.75
 				]
 			},
 			{
 				"crop": [
-					40,
-					185,
-					59,
-					69
+					80,
+					184,
+					73,
+					68
 				],
 				"joint": "leg_left",
 				"part": "body",
 				"path": "res://assets/jrpg/parts/water_leg_left.png",
 				"pivot": [
-					0.420049756765366,
+					0.529609382152557,
 					0.75
 				]
 			}
@@ -3726,15 +3726,15 @@
 		"atlas": "roster",
 		"frame": {
 			"anchor": [
-				122.5,
-				208.0
+				99.0,
+				255.0
 			],
 			"mirror": false,
 			"rect": [
-				519.0,
-				815.0,
-				236.0,
-				208.0
+				527.0,
+				755.0,
+				223.0,
+				255.0
 			]
 		},
 		"parts": [
@@ -3742,38 +3742,38 @@
 				"crop": [
 					0,
 					0,
-					236,
-					208
+					223,
+					255
 				],
 				"joint": "body",
 				"part": "body",
 				"path": "res://assets/jrpg/parts/well_boss_body.png",
 				"pivot": [
-					0.519067823886871,
+					0.443946182727814,
 					0.519999980926514
 				]
 			},
 			{
 				"crop": [
-					47,
+					45,
 					0,
-					142,
-					69
+					133,
+					84
 				],
 				"joint": "head",
 				"part": "head",
 				"path": "res://assets/jrpg/parts/well_boss_head.png",
 				"pivot": [
-					0.519067823886871,
+					0.443946182727814,
 					0.330000013113022
 				]
 			},
 			{
 				"crop": [
-					155,
-					58,
-					81,
-					96
+					145,
+					71,
+					78,
+					118
 				],
 				"joint": "arm",
 				"part": "arm",
@@ -3786,9 +3786,9 @@
 			{
 				"crop": [
 					0,
-					58,
-					82,
-					96
+					71,
+					76,
+					118
 				],
 				"joint": "arm_left",
 				"part": "body",
@@ -3800,31 +3800,31 @@
 			},
 			{
 				"crop": [
-					122,
-					152,
-					69,
-					56
+					99,
+					186,
+					63,
+					69
 				],
 				"joint": "leg",
 				"part": "leg",
 				"path": "res://assets/jrpg/parts/well_boss_leg.png",
 				"pivot": [
-					0.589067816734314,
+					0.513946175575256,
 					0.75
 				]
 			},
 			{
 				"crop": [
-					54,
-					152,
-					68,
-					56
+					35,
+					186,
+					64,
+					69
 				],
 				"joint": "leg_left",
 				"part": "body",
 				"path": "res://assets/jrpg/parts/well_boss_leg_left.png",
 				"pivot": [
-					0.449067801237106,
+					0.373946189880371,
 					0.75
 				]
 			}
@@ -3834,15 +3834,15 @@
 		"atlas": "roster",
 		"frame": {
 			"anchor": [
-				116.5,
-				295.0
+				111.0,
+				244.0
 			],
 			"mirror": false,
 			"rect": [
 				260.0,
-				16.0,
-				227.0,
-				295.0
+				20.0,
+				221.0,
+				244.0
 			]
 		},
 		"parts": [
@@ -3850,14 +3850,14 @@
 				"crop": [
 					0,
 					0,
-					227,
-					295
+					221,
+					244
 				],
 				"joint": "body",
 				"part": "body",
 				"path": "res://assets/jrpg/parts/wraith_body.png",
 				"pivot": [
-					0.513215839862823,
+					0.502262473106384,
 					0.519999980926514
 				]
 			}
@@ -3867,15 +3867,15 @@
 		"atlas": "roster",
 		"frame": {
 			"anchor": [
-				115.0,
-				309.0
+				78.5,
+				255.0
 			],
 			"mirror": false,
 			"rect": [
-				1303.0,
-				2.0,
-				219.0,
-				309.0
+				1312.0,
+				9.0,
+				195.0,
+				255.0
 			]
 		},
 		"parts": [
@@ -3883,38 +3883,38 @@
 				"crop": [
 					0,
 					0,
-					219,
-					309
+					195,
+					255
 				],
 				"joint": "body",
 				"part": "body",
 				"path": "res://assets/jrpg/parts/yaksha_body.png",
 				"pivot": [
-					0.525114178657532,
+					0.402564108371735,
 					0.519999980926514
 				]
 			},
 			{
 				"crop": [
-					62,
+					46,
 					0,
-					109,
-					111
+					106,
+					92
 				],
 				"joint": "head",
 				"part": "head",
 				"path": "res://assets/jrpg/parts/yaksha_head.png",
 				"pivot": [
-					0.525114178657532,
+					0.402564108371735,
 					0.360000014305115
 				]
 			},
 			{
 				"crop": [
-					145,
-					87,
-					74,
-					142
+					127,
+					71,
+					68,
+					118
 				],
 				"joint": "arm",
 				"part": "arm",
@@ -3927,9 +3927,9 @@
 			{
 				"crop": [
 					0,
-					87,
-					75,
-					142
+					71,
+					64,
+					118
 				],
 				"joint": "arm_left",
 				"part": "body",
@@ -3941,31 +3941,31 @@
 			},
 			{
 				"crop": [
-					115,
-					226,
-					61,
-					83
+					78,
+					186,
+					57,
+					69
 				],
 				"joint": "leg",
 				"part": "leg",
 				"path": "res://assets/jrpg/parts/yaksha_leg.png",
 				"pivot": [
-					0.595114171504974,
+					0.472564101219177,
 					0.75
 				]
 			},
 			{
 				"crop": [
-					52,
-					226,
-					63,
-					83
+					22,
+					186,
+					56,
+					69
 				],
 				"joint": "leg_left",
 				"part": "body",
 				"path": "res://assets/jrpg/parts/yaksha_leg_left.png",
 				"pivot": [
-					0.455114156007767,
+					0.332564115524292,
 					0.75
 				]
 			}

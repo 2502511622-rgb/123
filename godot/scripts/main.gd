@@ -167,25 +167,28 @@ func spawn_enemies() -> void:
 						break
 				if located: break
 			e.at = [enemy.position.x, enemy.position.y]
-		enemy.add_to_group("faction_guards" if e.get("faction", "") == "village" else "enemies")
+		enemy.add_to_group("faction_guards" if YinFactions.friendly(state,e) else "enemies")
 		world.actors.add_child(enemy)
 
 func spawn_spirits() -> void:
 	var existing: Dictionary = {}
 	for actor in get_tree().get_nodes_in_group("companions"):
 		var found: Array = state.spirits.filter(func(s): return s.id == actor.record.id)
-		if actor.get_parent() == world.actors and not actor.is_queued_for_deletion() and not found.is_empty() and found[0].active and found[0].hp > 0:
+		if actor.get_parent() == world.actors and not actor.is_queued_for_deletion() and not found.is_empty() and state.spirit_present(found[0],state.zone):
 			actor.record = found[0]
 			existing[actor.record.id] = actor
 		else: actor.queue_free()
 	for s in state.spirits:
-		if not s.active or s.hp <= 0: continue
+		if not state.spirit_present(s,state.zone): continue
 		if existing.has(s.id): continue
 		var actor := CharacterBody2D.new()
 		actor.set_script(preload("res://scripts/spirit_actor.gd"))
 		actor.set("game", self)
 		actor.set("record", s)
-		actor.position = player.position + Vector2(-30, 20)
+		actor.position = player.position + Vector2(-30-int(s.id)%4*12, 20)
+		if s.get("assignment")=="village":
+			var citizens: Array=state.villagers.filter(func(v):return int(v.id)==int(s.get("guard_villager",0)))
+			actor.position=Vector2(citizens[0].at[0],citizens[0].at[1])+Vector2(-24,16) if not citizens.is_empty() else Vector2(560,400)
 		actor.add_to_group("companions")
 		world.actors.add_child(actor)
 
@@ -533,7 +536,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		player.aim_direction = player.position.direction_to(world.get_global_mouse_position())
 	if event is InputEventMouseButton and not event.pressed and event.button_index == MOUSE_BUTTON_LEFT: shooting_mouse = false
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT:
-		if state.current_gear().weapon not in YinBalance.MELEE: combat.reload()
+		if player.held_item in YinBalance.MELEE:
+			var aim: Vector2=player.position.direction_to(world.get_global_transform_with_canvas().affine_inverse()*event.position)
+			if aim!=Vector2.ZERO and player.attack_time<=0:player.facing=aim
+			if not combat.heavy() and state.energy<14:refresh("重击需要14气力。")
+		elif player.held_item in YinBalance.GUNS:combat.reload()
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		if placement.selected != "":
 			if placement.place(world.get_global_mouse_position()): notify_action("放置完成。")
@@ -849,6 +856,19 @@ func show_journal() -> void:
 
 func show_factions() -> void:
 	var box := open_modal("四方势力 · P", YinFactions.report(state))
+	for war in state.factions.wars:
+		for side in ["defender","attacker"]:
+			var choice:=button("支援%s · %s"%["守方" if side=="defender" else "攻方",YinFactions.NAMES[war[side]]],func():
+				var message: String=YinFactions.choose_side(state,int(war.id),side)
+				for actor in get_tree().get_nodes_in_group("enemies")+get_tree().get_nodes_in_group("faction_guards"):
+					if actor.record.has("war_id"):
+						actor.remove_from_group("enemies");actor.remove_from_group("faction_guards")
+						actor.add_to_group("faction_guards" if YinFactions.friendly(state,actor.record) else "enemies")
+				persist();show_factions();refresh(message)
+			)
+			choice.disabled=war.get("player_side","")!="" and war.player_side!=side
+			box.add_child(choice)
+
 	box.add_child(button("援助当前最弱势力 · 30 文",func():
 		var result: String=YinFactions.aid_weakest(state)
 		persist()
@@ -864,7 +884,7 @@ func show_factions() -> void:
 
 func show_pause() -> void:
 	var box := open_modal("暂停", "进度自动保存 · 世界已暂停")
-	box.add_child(button("操作帮助", func(): open_modal("操作", "WASD 移动 · E 互动 · 空格劳作\nJ / 左键攻击 · 滚轮换武器 · U 装填\nShift 闪避 · F 镇符 · G 符火 · V 免费炼化\nI 行囊 · B 装备 · H 随从 · Tab 地图\nR 点名 · C 指令 · K 书信 · L 手札\nQ 阴种 · Z 智能劳作 · T 黄昏 · M 环境音")))
+	box.add_child(button("操作帮助", func(): open_modal("操作", "WASD 移动 · E 互动 · 空格劳作\nJ / 左键轻击 · 右键近战重击 · 滚轮换武器 · U 装填\nShift 闪避 · F 镇符 · G 符火 · V 免费炼化\nI 行囊 · B 装备 · H 随从 · Tab 地图\nR 点名 · C 指令 · K 书信 · L 手札\nQ 阴种 · Z 智能劳作 · T 黄昏 · M 环境音")))
 	box.add_child(button("四方势力 · P", show_factions))
 	box.add_child(button("委托 · O", show_quests))
 	box.add_child(button("地图 · Tab", func(): show_character("地图")))
@@ -995,6 +1015,8 @@ func equipment_content(box: VBoxContainer) -> void:
 		equip_button.add_theme_stylebox_override("normal", style("223a33", YinBalance.COLORS[int(gear.quality)].darkened(0.35).to_html(false)))
 		equip_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		equip_button.icon = YinBalance.icon(gear.weapon)
+		equip_button.expand_icon=true
+		equip_button.add_theme_constant_override("icon_max_width",26)
 		equip_button.tooltip_text = YinWeaponLore.describe(gear.weapon) + "\n获取时自带词条，无需加工\n" + YinAbilities.affix_text(gear, YinBalance.level(state.cultivation))
 		equip_button.text += "\n"+YinWeaponLore.describe(gear.weapon)
 		row.add_child(equip_button)
@@ -1172,14 +1194,43 @@ func skill_tree_content(box: VBoxContainer) -> void:
 		learn.tooltip_text = spec.description + "\n" + details
 		card.add_child(learn)
 func companion_content(box: VBoxContainer) -> void:
-	paragraph(box, "安置 %d/%d · 出战 %d/3 点" % [state.spirits.size(), state.capacity(), state.deployment_used()])
+	paragraph(box, "随从 %d · 随行 %d · 驻村 %d · 出战数量不限" % [state.spirits.size(),state.spirits.filter(func(s):return s.active and s.get("assignment")=="follow").size(),state.village_guards().size()])
+	var actions:=HBoxContainer.new()
+	box.add_child(actions)
+	for command in [["全员随行","follow"],["智能驻村","village"],["全部休整","rest"]]:
+		actions.add_child(button(command[0],func():
+			for follower in state.spirits:
+				var citizen_id: int=0
+				if command[1]=="village":
+					var citizens: Array=state.villagers.duplicate()
+					citizens.sort_custom(func(a,b):
+						var load_a: int=state.village_guards().filter(func(g):return int(g.get("guard_villager",0))==int(a.id)).size()
+						var load_b: int=state.village_guards().filter(func(g):return int(g.get("guard_villager",0))==int(b.id)).size()
+						return int(a.hp)+load_a*28<int(b.hp)+load_b*28
+					)
+					citizen_id=int(citizens[0].id)
+				state.assign_spirit(follower.id,command[1],citizen_id)
+			spawn_spirits();persist();show_character("随从")
+		,Vector2(126,26)))
 	if state.spirits.is_empty(): paragraph(box, "站到遗骸上 V 炼化，无需耗材。")
 	for spirit in state.spirits:
-		box.add_child(button("管理 · %s  Lv%d  %d/%d  %s" % [spirit.name, spirit.level, spirit.hp, spirit.max_hp, "倒下" if spirit.hp == 0 else ("出战中" if spirit.active else "待命")], func(): show_companion(spirit)))
+		box.add_child(button("管理 · %s  Lv%d  %d/%d  %s" % [spirit.name, spirit.level, spirit.hp, spirit.max_hp, "倒下" if spirit.hp == 0 else (("驻村守卫" if spirit.get("assignment")=="village" else "随行出战") if spirit.active else "休整")], func(): show_companion(spirit)))
 
 func show_companion(spirit: Dictionary) -> void:
 	var meta: Dictionary = YinAbilities.meta(spirit.source_kind)
 	var box := open_modal(spirit.name + " · Lv%d" % spirit.level, "生命 %d/%d · 经验 %d/%d\n%s / %s" % [spirit.hp, spirit.max_hp, spirit.xp, spirit.level * 40, meta.active, meta.passive])
+	var duty_label: Label=paragraph(box,"当前指令："+{"follow":"随行战斗","village":"驻守青槐村","rest":"义庄休整"}.get(spirit.get("assignment","rest"),"休整"),10)
+	duty_label.custom_minimum_size.x=418
+	box.add_child(button("派往青槐村 · 优先保护受伤村民",func():
+		var citizens: Array=state.villagers.duplicate()
+		citizens.sort_custom(func(a,b):return a.hp<b.hp)
+		var message: String=state.assign_spirit(spirit.id,"village",int(citizens[0].id))
+		spawn_spirits();persist();show_companion(spirit);refresh(message)
+	))
+	box.add_child(button("归队随行",func():
+		var message: String=state.assign_spirit(spirit.id,"follow")
+		spawn_spirits();persist();show_companion(spirit);refresh(message)
+	))
 	var row := HBoxContainer.new()
 	box.add_child(row)
 	row.add_child(button("召回" if spirit.active else "出战", func():
@@ -1211,6 +1262,12 @@ func show_companion(spirit: Dictionary) -> void:
 			refresh(message)
 		))
 	, Vector2(96, 27)))
+	(row.get_child(0) as Button).disabled=not spirit.active and spirit.hp<=0
+	(row.get_child(0) as Button).tooltip_text="倒下的随从需要先疗养。" if spirit.hp<=0 else "随行数量不限，召回后留在义庄。"
+	(row.get_child(1) as Button).disabled=state.bones<2 or spirit.level>=10
+	(row.get_child(1) as Button).tooltip_text="训练消耗2骨料，十级封顶。"
+	(row.get_child(2) as Button).disabled=spirit.hp>=spirit.max_hp or state.oil<3
+	(row.get_child(2) as Button).tooltip_text="疗养消耗3灯油，恢复全部生命。"
 	box.add_child(button("安排工作", func(): show_job(spirit)))
 	box.add_child(button("返回随从", func(): show_character("随从")))
 func mail_content(box: VBoxContainer) -> void:
@@ -1225,6 +1282,7 @@ func show_villager() -> void:
 		var record: Dictionary = actor.record
 		var box := open_modal(record.name, "生命 %d/100 · 村庄完好度 %d\n%s" % [record.hp, state.village_integrity, "今晚求道长护村。" if state.raid_status in ["warned", "active"] else "村口邪祟每隔几日便来叩门。"])
 		box.add_child(button("四方局势与援村", show_factions))
+		box.add_child(button("派随从保护这位村民",func():show_villager_guard(record)))
 		box.add_child(button("聊一聊", func(): show_chat(record)))
 		box.add_child(button("委托", func(): show_npc_quests(record)))
 		box.add_child(button("阅读村庄来信", func(): show_character("书信")))
@@ -1399,3 +1457,14 @@ func show_weapon_popup() -> void:
 	weapon_popup_time=2.4
 	weapon_popup.visible=true
 	weapon_popup_label.text="%s · %s\n%s"%[YinBalance.gear_name(gear),("三元素" if gear.get("enchantment","")=="all" else YinBalance.ELEMENT_NAMES.get(gear.get("enchantment",""),"无附魔")),"弹药 %d/%d · U 装填"%[gear.magazine,spec.magazine] if spec.ammo!="" else ("气力 %d · 远程施术"%state.energy if gear.weapon in YinBalance.MAGIC else "近战 · J / 左键挥击")]
+
+func show_villager_guard(citizen: Dictionary) -> void:
+	var box:=open_modal("守卫安排 · "+citizen.name,"选择随从前往守卫。驻村角色留在青槐村，离开地图后仍参与抵御入侵。")
+	for spirit in state.spirits:
+		var choice:=button("%s · Lv%d · %d/%d"%[spirit.name,spirit.level,spirit.hp,spirit.max_hp],func():
+			var message: String=state.assign_spirit(spirit.id,"village",int(citizen.id))
+			spawn_spirits();persist();show_villager_guard(citizen);refresh(message)
+		)
+		choice.disabled=spirit.hp<=0 or (spirit.get("assignment")=="village" and int(spirit.get("guard_villager",0))==int(citizen.id))
+		box.add_child(choice)
+	if state.spirits.is_empty():box.get_child(0).text="暂无随从。遗骸旁按V可免费炼化，随后在这里安排守卫。"

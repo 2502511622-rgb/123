@@ -20,6 +20,13 @@ var visual_clock: float = 0
 var hit_pause: float = 0
 var swing_direction := Vector2.DOWN
 var swing_sign: float = 1
+var heavy_attack: bool = false
+var attack_lunge := Vector2.ZERO
+var impact_shake: float = 0
+var gait_blend: float = 0
+var body_offset := Vector2.ZERO
+var weapon_angle: float = 0
+var body_lean: float = 0
 var attack_duration: float = 0.22
 var last_attack_time: float = 0
 var frozen: bool = false
@@ -32,6 +39,7 @@ var attack_time: float = 0
 var hit_feedback: float = 0
 var ghosts: Array = []
 
+var weapon_layer: YinHeldWeapon
 var state_machine: YinPlayerStateMachine
 var hitbox: YinHitbox
 var health_receiver: YinHealthReceiver
@@ -51,6 +59,10 @@ func _ready() -> void:
 	health_receiver = YinHealthReceiver.new()
 	health_receiver.name = "HealthReceiver"
 	add_child(health_receiver)
+	weapon_layer=YinHeldWeapon.new()
+	weapon_layer.name="HeldWeapon"
+	weapon_layer.actor=self
+	add_child(weapon_layer)
 
 func _physics_process(delta: float) -> void:
 	if frozen:
@@ -63,6 +75,7 @@ func _physics_process(delta: float) -> void:
 		queue_redraw()
 		return
 	visual_clock += delta
+	impact_shake = maxf(0,impact_shake-delta)
 	if attack_time > last_attack_time + 0.005: attack_duration = maxf(0.16, attack_time)
 	var input_direction := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	var direction: Vector2 = state_machine.update(delta, input_direction, false)
@@ -92,22 +105,37 @@ func _physics_process(delta: float) -> void:
 	wind_impulse = wind_impulse.move_toward(Vector2.ZERO, delta * 180)
 	if dodge_time > 0 and not frozen:
 		velocity = dodge_direction * 250
+	if attack_time>0:
+		var progress: float=YinActionMotion.phase(attack_time,attack_duration)
+		if progress>0.36 and progress<0.61:velocity+=swing_direction*(36.0 if heavy_attack else 14.0)
 	if direction != Vector2.ZERO and attack_time <= 0:
 		facing = Vector2(signf(direction.x), 0) if absf(direction.x) > absf(direction.y) else Vector2(0, signf(direction.y))
 	collision_mask = 1 if dodge_time > 0 else 5
 	collision_layer = 0 if dodge_time > 0 else 2
 	get_node("Camera2D").offset = Vector2(2 if int(hit_feedback * 40) % 2 == 0 else -2, 0) if hit_feedback > 0 else Vector2.ZERO
+	if impact_shake>0:get_node("Camera2D").offset+=Vector2(sin(visual_clock*115),cos(visual_clock*91))*minf(3,impact_shake*24)
 	material.set_shader_parameter("motion_clock", visual_clock)
 	material.set_shader_parameter("motion_amount", 0.9 if direction.length() > 0 else 0.15)
 	var previous_position: Vector2 = position
 	move_and_slide()
 	# Gait advances with distance travelled: walls and slow spells cannot skate.
-	animation_time += position.distance_to(previous_position) / SPEED
+	var travelled: float=position.distance_to(previous_position)
+	animation_time += travelled / SPEED
+	gait_blend=move_toward(gait_blend,minf(1,travelled/maxf(delta*SPEED,0.01)),delta*12)
 	if velocity.length() < 2: animation_time = 0
 	queue_redraw()
+	weapon_layer.show_behind_parent=facing.y< -0.5
+	weapon_layer.material.set_shader_parameter("wetness",material.get_shader_parameter("wetness"))
+	weapon_layer.queue_redraw()
 
 func _draw() -> void:
 	var pose: Dictionary = YinActorArt.hero_motion_pose(facing, animation_time, velocity.length() > 2, attack_time, hit_feedback, attack_duration,int(appearance.body))
+	var gait: float=animation_time*16.0*TAU/8.0
+	body_offset=Vector2(sin(gait)*0.5,-absf(sin(gait))*1.1)*gait_blend
+	if attack_time>0:body_offset=YinActionMotion.body_offset(swing_direction,YinActionMotion.phase(attack_time,attack_duration),heavy_attack)
+	if attack_time<=0:
+		pose.gait_phase=gait
+		pose.gait_strength=gait_blend
 	YinAppearance.pose_uniforms(material,pose)
 	var direction_row: int=YinActorArt.direction_row(facing)
 	art_hand=[Vector2(8,-24),Vector2(9,-23),Vector2(-11,-23),Vector2(11,-23)][direction_row]
@@ -117,15 +145,19 @@ func _draw() -> void:
 		var hand_y: Array=[-24,-27,-26,-25,-24,-23]
 		art_hand=Vector2(hand_x[column],hand_y[column])
 	if int(appearance.body)==1:art_hand.y+=1.5
+	if pose.has("hand"):art_hand=pose.hand
+	art_hand+=body_offset
+	if attack_time<=0:art_hand+=Vector2(sin(gait)*0.8,sin(gait)*0.6)*gait_blend
 	for ghost in ghosts:
 		YinActorArt.draw_pose(self, YinActorArt.hero_motion_pose(facing, animation_time, true, 0, 0,0.22,int(appearance.body)), Color(0.55, 0.85, 0.79, (1 - ghost.age / 0.18) * 0.3), ghost.at - position)
 	YinActorArt.contact_shadow(self,10,animation_time*16.0*TAU/8.0,velocity.length()/SPEED)
 	var tint := Color("ef9a82") if hit_feedback > 0 else (Color(1, 1, 1, 0.55 if int(invincible * 20) % 2 == 0 else 1.0) if invincible > 0 else Color.WHITE)
-	var lean: float = dodge_direction.x * 0.12 if dodge_time > 0 else 0.0
+	var lean: float = dodge_direction.x * 0.12 if dodge_time > 0 else velocity.x/SPEED*0.025
+	if attack_time>0:lean=swing_direction.x*YinActionMotion.force(YinActionMotion.phase(attack_time,attack_duration))*(0.13 if heavy_attack else 0.07)
+	body_lean=lean
 	draw_set_transform(Vector2.ZERO, lean)
-	YinActorArt.draw_pose(self, pose, tint)
+	YinActorArt.draw_pose(self, pose, tint,body_offset)
 	draw_set_transform(Vector2.ZERO)
-	draw_held_item()
 
 func dodge() -> void:
 	if dodge_cooldown > 0 or frozen: return
@@ -138,51 +170,54 @@ func dodge() -> void:
 	invincible = 0.35
 	dodge_cooldown = 0.65
 
-func draw_held_item() -> void:
+func draw_held_item(canvas: CanvasItem = null) -> void:
+	if canvas==null:canvas=self
 	var direction: Vector2 = aim_direction if held_item in YinBalance.GUNS or held_item in YinBalance.MAGIC else facing
 	var hand: Vector2 = direction*8+Vector2(0,-23) if held_item in YinBalance.GUNS or held_item in YinBalance.MAGIC else art_hand
+	if held_item in YinBalance.GUNS or held_item in YinBalance.MAGIC:hand+=body_offset
+	hand=hand.rotated(body_lean)
 	if held_item.begins_with("tool"):
 		var index: int = int(held_item.substr(4))
 		var swing: float = sin((0.2 - attack_time) * 18) * 0.4 if attack_time > 0 else 0.0
-		draw_set_transform(hand, direction.angle() + swing, Vector2.ONE)
-		draw_texture_rect_region(preload("res://assets/tools.png"), Rect2(-6, -6, 16, 16), Rect2(index * 16, 0, 16, 16))
+		canvas.draw_set_transform(hand, direction.angle() + swing, Vector2.ONE)
+		canvas.draw_texture_rect_region(preload("res://assets/tools.png"), Rect2(-6, -6, 16, 16), Rect2(index * 16, 0, 16, 16))
 	elif held_item in YinBalance.MELEE:
 		var progress: float = clampf(1.0-attack_time/maxf(attack_duration,0.01),0,1)
-		var active: float = smoothstep(0.18,0.68,progress)
-		var angle_value: float = swing_direction.angle() + swing_sign*lerpf(-1.7,1.5,active) if attack_time>0 else direction.angle()+0.8
+		var active: float = smoothstep(0.36,0.61,progress)
+		var angle_value: float = swing_direction.angle() + swing_sign*YinActionMotion.swing(progress) if attack_time>0 else direction.angle()+0.8
 		var reach: float = maxf(31.0,hitbox.radius-8.0)
 		var glow: Color = Color("ead9ad") if held_item!="ipetam" else Color("c98078")
 		if held_item=="prajna": glow=Color("a5d8db")
-		if attack_time>0 and progress>0.18 and progress<0.8:
+		if attack_time>0 and progress>0.36 and progress<0.76:
 			for trail in range(5):
 				var lag: float=float(trail)*0.1*swing_sign
-				draw_arc(hand,reach,angle_value-lag-swing_sign*0.28,angle_value-lag+0.01,12,Color(glow,0.23-float(trail)*0.035),2.0)
-		draw_set_transform(hand,angle_value)
-		draw_line(Vector2(-5,0),Vector2(5,0),Color("665548"),3)
+				canvas.draw_arc(hand,reach,angle_value-lag-swing_sign*0.28,angle_value-lag+0.01,12,Color(glow,0.23-float(trail)*0.035),2.0)
+		weapon_angle=angle_value
+		canvas.draw_set_transform(hand,angle_value)
 		if held_item=="whip":
-			var points:=PackedVector2Array()
-			for i in range(13):
-				var distance_value: float=float(i)/12.0
-				points.append(Vector2(distance_value*reach,sin(distance_value*7.0-progress*9.0)*5.0*distance_value))
-			draw_polyline(points,Color("b3a080"),2)
-		else:
-			draw_line(Vector2(5,-5),Vector2(5,5),Color("ad9768"),2)
-			draw_colored_polygon(PackedVector2Array([Vector2(6,-2),Vector2(reach-4,-2),Vector2(reach+2,0),Vector2(6,2)]),glow)
-			draw_line(Vector2(8,-1),Vector2(reach-2,-1),Color("f3eee0"),1)
+			# Grip stays attached; articulated lash follows the same swing clock.
+			YinWeaponArt.draw(canvas,held_item,25)
+			if attack_time>0:
+				var points:=PackedVector2Array()
+				for i in range(18):
+					var fraction: float=float(i)/17.0
+					points.append(Vector2(fraction*reach,sin(fraction*5.0-progress*7.0)*5.0*fraction*(1-active)))
+				canvas.draw_polyline(points,Color("b69a72"),1.5)
+		else:YinWeaponArt.draw(canvas,held_item,reach+8)
+		# The painted sleeve and exposed hand follow the grip and the torso drive.
+		canvas.draw_set_transform(Vector2.ZERO)
+		canvas.draw_circle(hand,1.4,YinAppearance.COLORS.skin[int(appearance.skin)])
+
 	else:
 		var recoil: float = recoil_time / 0.09 * 3
-		draw_set_transform(hand - direction * recoil, direction.angle())
+		canvas.draw_set_transform(hand - direction * recoil, direction.angle())
 		if held_item in YinBalance.GUNS:
-			var barrel: float=27.0 if held_item in ["rifle","gatling"] else 16.0
-			draw_rect(Rect2(-2,-4,12,7),Color("676e68"))
-			draw_rect(Rect2(2,1,4,7),Color("776048"))
-			draw_line(Vector2(8,-2),Vector2(barrel,-2),Color("b0b8b0"),3)
-			if held_item=="revolver":draw_circle(Vector2(6,0),4,Color("9b9b86"))
-			if held_item=="gatling":
-				for y in [-4,0,4]:draw_line(Vector2(9,y),Vector2(barrel,y),Color("8b9992"),2)
+			var barrel: float=40.0 if held_item in ["rifle","gatling"] else 27.0
+			YinWeaponArt.draw(canvas,held_item,barrel+9)
 			if recoil_time>0:
-				draw_colored_polygon(PackedVector2Array([Vector2(barrel,-6),Vector2(barrel+10,-2),Vector2(barrel,4)]),Color("f6d49a"))
+				canvas.draw_colored_polygon(PackedVector2Array([Vector2(barrel,-5),Vector2(barrel+9,0),Vector2(barrel,5)]),Color("f6d49a"))
 		else:
-			draw_texture_rect(YinBalance.icon(held_item), Rect2(-5,-8,19,18),false)
-			if attack_time>0:draw_arc(Vector2(7,0),14,visual_clock*5,visual_clock*5+4.0,20,Color("a8d5da"),2)
-	draw_set_transform(Vector2.ZERO)
+			YinWeaponArt.draw(canvas,held_item,22)
+			if attack_time>0:canvas.draw_arc(Vector2(7,0),14,visual_clock*5,visual_clock*5+4.0,20,Color("a8d5da"),2)
+
+	canvas.draw_set_transform(Vector2.ZERO)

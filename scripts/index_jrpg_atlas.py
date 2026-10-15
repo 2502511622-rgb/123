@@ -40,14 +40,43 @@ def seams(name,rows):
   def cost(y):return sum(v>100 for v in a.crop((0,y,w,y+1)).get_flattened_data())*100+abs(y-n)
   ys.append(min(range(n-span,n+span+1),key=cost))
  return ys+[h]
-walk=index('hero_walk',8,[0,201,391,570,751,905,1058,1254])
+def hand_anchors(sheet,rows,directions):
+ im=Image.open(ROOT/(sheet+'.png')).convert('RGBA')
+ for row,direction in zip(rows,directions):
+  for frame in row:
+   l,t,w,h=frame['rect']; candidates=[]
+   for y in range(round(h*(.24 if sheet=="hero_attack" else .38)),round(h*.73)):
+    for x in range(w):
+     red,g,b,alpha=im.getpixel((l+x,t+y))
+     if alpha>190 and g>38 and red>g*1.17 and red<g*2.1 and g>b*1.17 and red>85:
+      candidates.append((x,y))
+   if candidates:
+    left=direction=='left' and not frame.get('mirror',False)
+    extreme=min(x for x,y in candidates) if left else max(x for x,y in candidates)
+    points=[(x,y) for x,y in candidates if abs(x-extreme)<max(3,w*.035)]
+    frame['hand']=[sum(x for x,y in points)/len(points),sum(y for x,y in points)/len(points)]
+   else:frame['hand']=[w*(.25 if direction=='left' else .75),h*.55]
+
+walk=index('hero_walk',8,seams('hero_walk',4))
+walk_alt=index('hero_walk_alt',8,seams('hero_walk_alt',4))
 attack=index('hero_attack',6,[0,247,459,687,910,1131,1448])
 for row in [attack[2],attack[5]]:
  for column in [4,5]:row[column]['mirror']=True
+hand_anchors('hero_walk',walk,['down','up','left','right'])
+hand_anchors('hero_walk_alt',walk_alt,['down','up','left','right'])
+hand_anchors('hero_attack',attack,['down','up','left','down','up','left'])
+# Neutral grip positions are calibrated to the two authored standing poses.
+for row_index,row in enumerate(attack):
+ direction=row_index%3
+ dx,dy=[(8,-24),(9,-23),(-11,-23)][direction]
+ scale=50/row[5]['rect'][3]
+ for column in [0,5]:
+  frame=row[column];sx=-dx if frame.get('mirror',False) else dx
+  frame['hand']=[frame['anchor'][0]+sx/scale,frame['anchor'][1]+dy/scale]
 legacy=json.loads((ROOT.parent/'actors16/atlas.json').read_text())
-out={'hero':legacy['hero'],'hero_walk':walk[:4],'hero_walk_alt':walk[4:7]+[mirror(walk[6])],
+out={'hero':legacy['hero'],'hero_walk':walk,'hero_walk_alt':walk_alt,
      'hero_attack':attack[:3]+[mirror(attack[2])], 'hero_attack_alt':attack[3:6]+[mirror(attack[5])],
-     'roster':dict(zip(KINDS,[f for row in index('roster',6,[0,311,561,815,1024]) for f in row])),
+     'roster':dict(zip(KINDS,[f for row in index('roster',6,seams('roster',4)) for f in row])),
      'npc':index('npc',6,seams('npc',4)), 'tengu':index('tengu',4,seams('tengu',4))}
 (ROOT/'atlas.json').write_text(json.dumps(out,ensure_ascii=False,indent=2)+'\n')
 print('Indexed JRPG: 2 body presets, four directions x 8 walk / 6 combat poses; 23 enemies; 6 NPCs')

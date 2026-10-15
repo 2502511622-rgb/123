@@ -47,7 +47,7 @@ func visible(enemy: Node2D) -> bool:
 	return get_world_2d().direct_space_state.intersect_ray(ray).is_empty()
 func _physics_process(delta: float) -> void:
 	if game.modal != null or is_queued_for_deletion(): return
-	if record.hp <= 0 or not record.active:
+	if not game.state.spirit_present(record,game.state.zone):
 		queue_free()
 		return
 	if burst_remaining > 0:
@@ -69,10 +69,14 @@ func _physics_process(delta: float) -> void:
 		if YinAbilities.meta(record.source_kind).get("trait") == "regen": record.hp = mini(record.max_hp, record.hp + 1)
 	time += delta
 	cooldown = maxf(0, cooldown - delta)
-	if last_order != game.state.order:
-		last_order = game.state.order
+	var desired_order: String="guard" if record.get("assignment")=="village" else game.state.order
+	if last_order != desired_order:
+		last_order = desired_order
 		guard_anchor = position
 		repath = 0
+	if record.get("assignment")=="village":
+		var citizens: Array=game.state.villagers.filter(func(v):return int(v.id)==int(record.get("guard_villager",0)))
+		guard_anchor=Vector2(citizens[0].at[0],citizens[0].at[1]) if not citizens.is_empty() else Vector2(560,400)
 	var target: Vector2 = game.player.position + Vector2(-24 - int(record.id) % 3 * 18, 22)
 	if not game.world.is_safe_position(target): target = game.player.position
 	if last_order == "guard": target = guard_anchor + Vector2.from_angle(int(time / 3) * PI / 2 + int(record.id)) * 36
@@ -83,8 +87,8 @@ func _physics_process(delta: float) -> void:
 			use_inherited_skill(enemy)
 		if position.distance_to(enemy.position) < 44 and visible(enemy) and cooldown <= 0:
 			enemy.receive_hit(attack_damage(), "spirit")
-			game.world.effect(enemy.position, Color("91aaa8"))
-			cooldown = 1.6
+			game.world.impact(enemy.position+Vector2(0,-20),position.direction_to(enemy.position),"spirit")
+			cooldown = 1.4
 			target = position
 	repath -= delta
 	if repath <= 0:
@@ -103,7 +107,7 @@ func _physics_process(delta: float) -> void:
 	queue_redraw()
 func _draw() -> void:
 	var row: int = {"water": 0, "bone": 1, "child": 2}.get(record.kind, 1)
-	draw_rect(Rect2(-9, -2, 18, 4), Color(0.1, 0.15, 0.2, 0.25))
+	YinActorArt.contact_shadow(self,10,time*11.0,clampf(velocity.length()/105.0,0,1))
 	if record.kind == "child":
 		draw_texture_rect_region(TEXTURE, Rect2(-16, -40 + roundf(sin(time * 2)), 32, 40), Rect2(0, row * 20, 16, 20), Color(1, 1, 1, 0.9))
 	else:
@@ -129,6 +133,7 @@ func receive_hit(damage: int) -> void:
 	game.world.damage_number(position, damage, Color("da968a"))
 	if record.hp == 0:
 		record.active = false
+		record.assignment="rest"
 		game.notify_action(record.name + "倒下，已召回。角色 → 随从中疗养。")
 		queue_free()
 func use_inherited_skill(enemy: YinEnemy) -> void:
@@ -159,8 +164,8 @@ func use_inherited_skill(enemy: YinEnemy) -> void:
 		"slam":
 			if position.distance_to(enemy.position) > 60: return
 			enemy.receive_hit(damage + 2, "spirit")
-	game.world.effect(position, Color("83bca4"))
-	skill_cooldown = 6.4 if meta.get("trait") == "reload" else 8.0
+	game.world.spell_trace(position+Vector2(0,-20),enemy.position+Vector2(0,-20),"spirit")
+	skill_cooldown = 6.4 if meta.get("trait") == "reload" else 7.0
 
 func attack_damage() -> int:
 	var result: int = YinAbilities.spirit_damage(record)
