@@ -68,7 +68,7 @@ func reset_world(at: Vector2) -> void:
  game.action_cooldown = 0
 func run() -> void:
  Engine.time_scale = 3
- check(YinBalance.MONSTERS.size() == 17, "seventeen independent monster archetypes")
+ check(YinBalance.MONSTERS.size() == 23, "twenty-three independent monster archetypes")
  check(YinBalance.damage(15, 1) == 15 and YinBalance.damage(0, 1) == 0, "baseline and zero damage")
  check(YinBalance.damage(20, 1, {}, 100) == 10, "armor uses diminishing returns")
  check(YinBalance.damage(20, 3, YinBalance.make_gear(1, "rifle", 4, 2)) > 20, "level tier and quality increase damage")

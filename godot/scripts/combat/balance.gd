@@ -1,6 +1,7 @@
 class_name YinBalance
 extends RefCounted
 const WEAPONS = {
+ "prajna": {"name": "文殊般若剑", "damage": 25, "interval": 0.48, "magazine": 0, "reload": 0.0, "ammo": "", "speed": 0, "spread": 0.0, "range": 88},
  "sword": {"name": "桃木剑", "damage": 15, "interval": 0.32, "magazine": 0, "reload": 0.0, "ammo": "", "speed": 0, "spread": 0.0, "range": 49},
  "pistol": {"name": "手枪", "damage": 19, "interval": 0.28, "magazine": 8, "reload": 1.0, "ammo": "light_ammo", "speed": 700, "spread": 0.018, "range": 650},
  "smg": {"name": "冲锋枪", "damage": 9, "interval": 0.09, "magazine": 24, "reload": 1.4, "ammo": "light_ammo", "speed": 750, "spread": 0.09, "range": 560},
@@ -14,16 +15,22 @@ const WEAPONS = {
  "ipetam": {"name": "伊佩塔姆", "damage": 28, "interval": 0.38, "magazine": 0, "reload": 0.0, "ammo": "", "speed": 0, "spread": 0.0, "range": 76},
  "armor": {"name": "镇煞护甲", "damage": 0, "interval": 0.0, "magazine": 0, "reload": 0.0, "ammo": "", "speed": 0, "spread": 0.0, "range": 0}
 }
-const MELEE = ["ipetam", "sword", "whip", "silver_sword"]
+const MELEE = ["prajna", "ipetam", "sword", "whip", "silver_sword"]
 const GUNS = ["pistol", "smg", "rifle", "revolver", "gatling"]
 const MAGIC = ["spellbook", "curse_doll"]
-const ICON_ORDER = ["sword", "pistol", "smg", "rifle", "armor", "whip", "silver_sword", "revolver", "gatling", "spellbook", "curse_doll", "ipetam"]
+const ICON_ORDER = ["sword", "pistol", "smg", "rifle", "armor", "whip", "silver_sword", "revolver", "gatling", "spellbook", "curse_doll", "ipetam", "prajna"]
 const ELEMENTS = ["burn", "freeze", "lightning"]
 const ELEMENT_NAMES = {"burn": "燃烧", "freeze": "冰冻", "lightning": "闪电"}
 const ELEMENT_COLORS = {"burn": Color("f4a261"), "freeze": Color("91d8ee"), "lightning": Color("c4a7ef")}
 const QUALITY = ["凡品", "灵纹", "珍品", "异宝"]
 const COLORS = [Color("c5c8b5"), Color("84bdda"), Color("e5c477"), Color("e7a46e")]
 const MONSTERS = {
+ "hungry_ghost": {"name": "饿鬼", "hp": 100, "damage": 13, "speed": 39, "pattern": "hunger", "armor": 2},
+ "wraith": {"name": "幽魂", "hp": 75, "damage": 12, "speed": 36, "pattern": "ethereal", "armor": 0},
+ "rakshasa": {"name": "罗刹", "hp": 140, "damage": 19, "speed": 48, "pattern": "mirage", "armor": 8},
+ "kumbhanda": {"name": "鸠槃茶", "hp": 155, "damage": 14, "speed": 29, "pattern": "nightmare", "armor": 6},
+ "asura": {"name": "阿修罗", "hp": 880, "damage": 26, "speed": 43, "pattern": "six_arms", "armor": 18},
+ "yaksha": {"name": "夜叉", "hp": 1040, "damage": 28, "speed": 54, "pattern": "guardian", "armor": 20},
  "kappa": {"name": "河童", "hp": 90, "damage": 12, "speed": 37, "pattern": "river", "armor": 6},
  "chochin": {"name": "提灯妖怪", "hp": 65, "damage": 10, "speed": 40, "pattern": "tongue", "armor": 0},
  "ippon_datara": {"name": "一本踏鞴", "hp": 145, "damage": 22, "speed": 42, "pattern": "hammer", "armor": 12},
@@ -48,18 +55,22 @@ static func damage(base: int, actor_level: int, gear: Dictionary = {}, armor: in
  if base <= 0: return 0
  var tier: int = int(gear.get("tier", 1))
  var bonus: int = int(gear.get("bonus", 0))
- var raw: float = (base + (2 * (artifact_level(gear) - 1) if gear.get("weapon") == "ipetam" else 0)) * (1 + 0.07 * (tier - 1) + 0.02 * (actor_level - 1)) * (1 + bonus / 100.0)
+ var growth: int = 2 * (clampi(actor_level, 1, 20) - 1) if gear.get("weapon") == "prajna" else (2 * (artifact_level(gear) - 1) if gear.get("weapon") == "ipetam" else 0)
+ var raw: float = (base + growth) * (1 + 0.07 * (tier - 1) + 0.02 * (actor_level - 1)) * (1 + bonus / 100.0)
  return maxi(1, roundi(raw * 100.0 / (100 + maxi(0, armor))))
 static func make_gear(id: int, weapon: String, tier: int = 1, quality: int = 0) -> Dictionary:
- if weapon == "ipetam": quality = 3
+ if weapon in ["ipetam", "prajna"]: quality = 3
  var affixes: Array = []
  # Stable innate rolls: purchased, granted and dropped gear use one generation path.
- if weapon not in ["armor", "ipetam"]:
+ if weapon not in ["armor", "ipetam", "prajna"]:
   var first: String = "crit" if (id + tier) % 2 == 0 else "bleed"
   affixes.append({"id": first, "value": 8 + quality * 4 if first == "crit" else 3 + mini(quality, 3)})
   if quality >= 2:
    affixes.append({"id": "bleed" if first == "crit" else "crit", "value": 4 if first == "crit" else 16})
- var result := {"id": id, "weapon": weapon, "tier": tier, "quality": quality, "bonus": quality * 8, "magazine": 0, "affixes": affixes, "enchantment": ELEMENTS[randi_range(0, 2)] if weapon not in ["armor", "ipetam"] else ""}
+ var result := {"id": id, "weapon": weapon, "tier": tier, "quality": quality, "bonus": quality * 8, "magazine": 0, "affixes": affixes, "enchantment": ELEMENTS[randi_range(0, 2)] if weapon not in ["armor", "ipetam", "prajna"] else ""}
+ if weapon == "prajna":
+  result.enchantment = "all"
+  result.affixes = [{"id": "crit", "value": 20}, {"id": "bleed", "value": 4}]
  if weapon == "ipetam": result.artifact_kills = 0
  return result
 static func gear_name(gear: Dictionary) -> String:
@@ -76,8 +87,8 @@ static func icon(weapon: String) -> AtlasTexture:
  if icon_cache.has(weapon): return icon_cache[weapon]
  var index: int = ICON_ORDER.find(weapon)
  var texture := AtlasTexture.new()
- texture.atlas = preload("res://assets/weapons.png") if index < 5 else preload("res://assets/arsenal.svg")
- texture.region = Rect2((index if index < 5 else index - 5) * 24, 0, 24, 16)
+ texture.atlas = preload("res://assets/prajna.svg") if weapon == "prajna" else (preload("res://assets/weapons.png") if index < 5 else preload("res://assets/arsenal.svg"))
+ texture.region = Rect2((0 if weapon == "prajna" else index if index < 5 else index - 5) * 24, 0, 24, 16)
  icon_cache[weapon] = texture
  return texture
 

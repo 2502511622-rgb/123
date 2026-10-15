@@ -55,7 +55,7 @@ func _ready() -> void:
 	health_trail = float(record.hp)
 	shield = 20 if record.kind == "opera_boss" else 0
 	collision_layer = 4
-	collision_mask = 7
+	collision_mask = 1 if record.kind == "wraith" else 7
 	var shape := CollisionShape2D.new()
 	var box := RectangleShape2D.new()
 	box.size = Vector2(14, 10)
@@ -127,6 +127,7 @@ func _physics_process(delta: float) -> void:
 	if record.has("war_id"):
 		faction_tick(delta, spec)
 		return
+	if YinTempleCombat.tick(self, delta, spec): return
 	if YinIslandCombat.tick(self, delta, spec): return
 	var boss: bool = record.kind in YinAbilities.BOSSES
 	var ranged: bool = spec.pattern in ["fan", "ring", "burst", "tide", "opera", "cold"]
@@ -221,6 +222,10 @@ func receive_hit(damage: int, method: String = "sword", source_gear_id: int = 0)
 	if record.dead: return
 	var armor: int = int(record.get("armor", 0)) if method not in ["seal", "fire", "bleed", "burn", "lightning", "curse"] else 0
 	var adjusted: int = YinBalance.damage(damage, 1, {}, armor)
+	if method in ["sword", "bullet", "tool"] and not record.suppressed:
+		if record.kind == "wraith": adjusted = maxi(1, roundi(adjusted * 0.3))
+		elif YinTempleCombat.phantom(self): adjusted = maxi(1, roundi(adjusted * 0.5))
+	if method == "seal" and record.kind == "yaksha": shield = 0
 	if record.kind == "boss" and method not in ["seal", "fire", "bleed", "burn", "lightning", "curse"]: adjusted = maxi(1, roundi(adjusted * 0.75))
 	if record.kind == "chochin" and method in ["fire", "burn"]: adjusted = roundi(adjusted * 1.6)
 	if record.kind == "sogenbi" and method in ["fire", "burn"]: adjusted = maxi(1, roundi(adjusted * 0.25))
@@ -264,6 +269,9 @@ func receive_hit(damage: int, method: String = "sword", source_gear_id: int = 0)
 		game.spawn_remains_visuals()
 		game.spawn_pickups()
 		game.spawn_gear_pickups()
+		if record.kind in YinTemple.BOSSES:
+			game.spawn_enemies()
+			game.refresh("佛寺战意已平息，返回村庄复命，或循山路进入护法殿。")
 		if record.kind in YinIsland.BOSSES:
 			game.spawn_enemies()
 			game.refresh("岛国封印已松动，前往下一处祭场，或回村复命。")
@@ -277,10 +285,12 @@ func _draw() -> void:
 		draw_string(ThemeDB.fallback_font, Vector2(-18, -72), YinFactions.NAMES[record.faction], HORIZONTAL_ALIGNMENT_LEFT, -1, 10, YinFactions.COLORS[record.faction])
 	draw_rect(Rect2(-12, -3, 24, 5), Color("253b3a66"))
 	var row: int = {"water": 0, "bone": 1, "boss": 2, "archer": 3, "lantern": 4, "gunner": 5, "brute": 6, "well_boss": 0, "opera_boss": 5}.get(record.kind, 0)
-	row = YinIsland.ROWS.get(record.kind, row)
+	row = YinTemple.ROWS.get(record.kind, YinIsland.ROWS.get(record.kind, row))
 	var body_texture: Texture2D = YinIsland.texture(record.kind)
 	var scale_value: float = 3 if record.kind in YinAbilities.BOSSES else 2
 	var tint := Color.WHITE if hit_flash > 0.065 else (Color("d79279") if hit_flash > 0 else (Color("8eafd0") if stun > 0.3 or chill_time > 0 else Color.WHITE))
+	if record.kind == "wraith": tint.a = 0.55 if not record.suppressed else 1.0
+	if YinTempleCombat.phantom(self): tint = Color("c8a3e0aa")
 	var missing: Array = record.get("severed", [])
 	# Draw the original sprite in non-overlapping pieces so missing limbs stay absent.
 	for part in [Rect2(0, 0, 16, 8), Rect2(4, 8, 8, 10), Rect2(0, 8, 4, 10), Rect2(12, 8, 4, 10), Rect2(0, 18, 8, 6), Rect2(8, 18, 8, 6)]:
@@ -307,7 +317,9 @@ func _draw() -> void:
 	var caption: String = YinBalance.MONSTERS[record.kind].name + " Lv%d" % int(record.get("level", 1)) + (" · 精英" if record.get("elite", false) else "")
 	if record.get("faction", "") == "village": caption = "护村役卫 Lv%d" % int(record.get("level", 1))
 	draw_string(ThemeDB.fallback_font, Vector2(-24, -56 * (1.4 if record.kind in YinAbilities.BOSSES else 1)), caption, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color("e6c485") if record.get("elite", false) else Color("c8c9ae"))
-	if YinIsland.ROWS.has(record.kind):
+	if YinTemple.ROWS.has(record.kind):
+		YinTempleCombat.draw_warning(self)
+	elif YinIsland.ROWS.has(record.kind):
 		YinIslandCombat.draw_warning(self)
 	elif windup > 0 and YinAbilities.meta(record.kind).pattern in ["fan", "ring", "burst", "tide", "opera", "cold"]:
 		var direction: Vector2 = position.direction_to(attack_center)
@@ -342,7 +354,7 @@ func update_dismemberment() -> void:
 		var fragment := YinSeveredLimb.new()
 		fragment.part = part
 		fragment.row = {"water": 0, "bone": 1, "boss": 2, "archer": 3, "lantern": 4, "gunner": 5, "brute": 6, "well_boss": 0, "opera_boss": 5}.get(record.kind, 0)
-		fragment.row = YinIsland.ROWS.get(record.kind, fragment.row)
+		fragment.row = YinTemple.ROWS.get(record.kind, YinIsland.ROWS.get(record.kind, fragment.row))
 		fragment.source_texture = YinIsland.texture(record.kind)
 		fragment.sprite_scale = 3.0 if record.kind in YinAbilities.BOSSES else 2.0
 		fragment.position = position + Vector2(10, -20 if part == "arm" else -2)
@@ -350,16 +362,17 @@ func update_dismemberment() -> void:
 		game.world.feedback.add_child(fragment)
 		game.world.effect(fragment.position, Color("a57465"))
 
-func apply_element(element: String, power: int = 3) -> void:
+func apply_element(element: String, power: int = 3, harmonious: bool = false) -> void:
 	if record.dead: return
 	match element:
 		"burn":
-			chill_time = 0
-			freeze_lock = 0
+			if not harmonious:
+				chill_time = 0
+				freeze_lock = 0
 			burn_time = 4
 			burn_power = maxi(burn_power, power)
 		"freeze":
-			if burn_time > 0:
+			if burn_time > 0 and not harmonious:
 				burn_time = 0
 				game.world.effect(position + Vector2(0, -20), Color("dce5e7"))
 			chill_time = 3

@@ -6,7 +6,16 @@ func reply(state, npc: Dictionary, message: String) -> String:
 	message = message.strip_edges().substr(0, 500)
 	if message == "": return "想问什么？可以聊委托、宝箱、武器或村里的近况。"
 	if "势力" in message or "进攻" in message or "战况" in message: return YinFactions.report(state)
-	if "伊佩塔姆" in message or "神器" in message: return "那是裂海带来的阿伊努嗜血之刃。平息三处祭场后，经砚青、秋婶、柳伯的委托，找阿祁缔约。装备后亲手击杀使它成长，剑伤能回补命息。"
+	if "文殊" in message or "般若" in message: return "般若剑随你的修为成长。每次命中都让燃烧、冰冻、闪电共存，无需刻录。完成砚青、秋婶、柳伯的佛寺调查，再请阿祁开锋。"
+	if "饿鬼" in message: return "饿鬼细喉大腹，饥渴难填；会吞附近遗骸疗伤，咬中还会夺气。先超度遗骸，燃烧和镇符也能阻止吞食。"
+	if "幽魂" in message: return "幽魂没有可斩落的肢体，魂躯能削弱刀枪；镇符让它显形，符火和附魔也能穿透虚化。"
+	if "罗刹" in message: return "罗刹善幻化、持毒刃。紫色幻身会绕侧并削弱刀枪伤害，镇符可破幻，别追着影子打。"
+	if "鸠槃茶" in message or "鸠槃荼" in message: return "大腹梦鬼也称鸠槃荼，会以梦压飞珠拖慢身形、夺取气力。飞珠慢，留好闪避，镇符可打断蓄势。"
+	if "阿修罗" in message: return "阿修罗好争斗，三面六臂起剑阵，六道剑锋之间留有空隙；也会放射战火。半血后攻势更急，平息它才能问夜叉。"
+	if "夜叉" in message: return "佛寺夜叉是守藏护法，疾刺前会标明路线，随后三叉投锋；护障会恢复，镇符能破障并打断蓄势。"
+	if "佛寺" in message: return "青槐村北侧山道通往大佛寺。施食庭、塔林、梦障院连着修罗道场和护法殿。先找砚青接北山梵影；大佛寺也参与四方势力争斗。"
+	if "神器" in message and "伊佩塔姆" not in message: return "岛国的伊佩塔姆靠亲手击杀成长并吸血；大佛寺的文殊般若剑随角色修为成长，每次命中三相附魔共存。两条调查委托都从砚青处接续，最后找阿祁。"
+	if "伊佩塔姆" in message: return "那是裂海带来的阿伊努嗜血之刃。平息三处祭场后，经砚青、秋婶、柳伯的委托，找阿祁缔约。装备后亲手击杀使它成长，剑伤能回补命息。"
 	if "河童" in message: return "河童依赖头皿中的水，靠近水岸会恢复。镇符可令水皿失效，离水作战也能压住它。"
 	if "以津真天" in message: return "荒冢金鸟在问亡者何时安葬。附近未处理遗骸越多，毒鸣越强；先超度，再战。"
 	if "天狗" in message: return "风山修验者以羽扇起山岚。风障蓄势时子弹难进，镇符能打断它。"
@@ -33,7 +42,7 @@ func reply(state, npc: Dictionary, message: String) -> String:
 					continue
 				if YinAdventure.progress(state, id) >= spec.target: return "事情办妥了。打开委托菜单复命，我把报酬交给你。"
 				return "还差一点。%s 目前 %d/%d。" % [spec.description, YinAdventure.progress(state, id), spec.target]
-			return "上次的事多亏你了，报酬已经交给你。" if completed else "暂时没有新委托，找砚青了解裂海异闻。"
+			return "上次的事多亏你了，报酬已经交给你。" if completed else "暂时没有新委托，找砚青了解裂海与佛寺异闻。"
 		"explore": return "主路连接出入口，东侧支路通向断碑营地、枯井、山门。箱子附近有守卫，腾出行囊再去。"
 		"weapon": return "鞭子够远，银剑稳，左轮每发都得算着打。魔法书与娃娃耗气力。燃烧持续灼伤，冰冻减速，闪电跳跃；火冰会消解。"
 		"enemy": return "鬼物断腿会跛行，断头后会乱窜，无法再攻击；不过已经射出的弹丸仍有危险。"

@@ -85,6 +85,7 @@ func trigger(method: String) -> bool:
 		game.player.hitbox.radius = spec.reach
 		var rolled: Dictionary = roll_hit(spec.damage, {} if using_tool else game.state.current_gear())
 		pending = {"gear_id": 0 if using_tool else game.state.equipped_gear, "payload": rolled, "actor": game.player, "facing": game.player.facing, "damage": rolled.damage, "delay": 0.06, "method": "tool" if using_tool else "sword"}
+		if game.player.held_item == "prajna": game.world.prajna_sweep(game.player.position, game.player.facing, spec.reach, YinBalance.level(game.state.cultivation))
 		if game.player.held_item == "ipetam": game.world.artifact_sweep(game.player.position, game.player.facing, spec.reach, YinBalance.artifact_level(game.state.current_gear()))
 	else:
 		var target: YinEnemy = spell_target(spec.reach)
@@ -169,11 +170,14 @@ func roll_hit(base: int, gear: Dictionary) -> Dictionary:
 			damage = roundi(damage * 1.65)
 			critical = true
 		if affix.id == "bleed" and random.randf() < 0.25: bleed = int(affix.value)
+	if gear.get("weapon") == "prajna": return {"damage": damage, "bleed": bleed, "critical": critical, "elements": YinBalance.ELEMENTS.duplicate(), "element": "", "power": 3 + YinBalance.level(game.state.cultivation) / 3}
 	return {"damage": damage, "bleed": bleed, "critical": critical, "element": gear.get("enchantment", "") if random.randf() < 0.3 else "", "power": 3 + int(gear.get("quality", 0))}
 
 func apply_payload(target: YinEnemy, payload: Dictionary) -> void:
 	if not is_instance_valid(target) or target.record.dead or target.is_queued_for_deletion(): return
 	if payload.get("bleed", 0) > 0: target.apply_bleed(payload.bleed, 2)
+	for element_id in payload.get("elements", []):
+		if element_id in YinBalance.ELEMENTS: target.apply_element(element_id, int(payload.get("power", 3)), true)
 	var element: String = payload.get("element", "")
 	if element != "": target.apply_element(element, int(payload.get("power", 3)))
 

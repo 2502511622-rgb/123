@@ -1,7 +1,13 @@
 class_name YinAbilities
 extends RefCounted
-const BOSSES = ["itsumade", "daitengu", "ryomen_sukuna", "boss", "well_boss", "opera_boss"]
+const BOSSES = ["asura", "yaksha", "itsumade", "daitengu", "ryomen_sukuna", "boss", "well_boss", "opera_boss"]
 const MONSTERS = {
+ "hungry_ghost": {"active": "饥噬夺气", "passive": "吞骸充腹", "pattern": "hunger", "trait": "hunger"},
+ "wraith": {"active": "幽怨追魂", "passive": "无形魂躯", "pattern": "ethereal", "trait": "ethereal"},
+ "rakshasa": {"active": "幻身毒刃", "passive": "幻化欺敌", "pattern": "mirage", "trait": "mirage"},
+ "kumbhanda": {"active": "梦压夺气", "passive": "大腹梦障", "pattern": "nightmare", "trait": "nightmare"},
+ "asura": {"active": "六臂战阵", "passive": "争斗嗔怒", "pattern": "six_arms", "trait": "wrath"},
+ "yaksha": {"active": "巡殿疾刺", "passive": "守藏护障", "pattern": "guardian", "trait": "guardian"},
  "kappa": {"active": "引水扑击", "passive": "头皿蓄水", "pattern": "river", "trait": "river"},
  "chochin": {"active": "长舌惊吓", "passive": "纸灯易燃", "pattern": "tongue", "trait": "paper"},
  "ippon_datara": {"active": "独足锻击", "passive": "山中独足", "pattern": "hammer", "trait": "hammer"},
@@ -35,7 +41,8 @@ static func spirit_damage(spirit: Dictionary) -> int:
  return (7 if spirit.source_kind in BOSSES else 4) + int((spirit.level - 1) * 0.8) + int(spirit.affinity / 50)
 static func deployment_cost(kind: String) -> int:
  return 2 if kind in BOSSES else 1
-static func affix_text(gear: Dictionary) -> String:
+static func affix_text(gear: Dictionary, actor_level: int = 1) -> String:
+ if gear.get("weapon") == "prajna": return "神器 Lv%d · 随修为成长 · 燃烧 / 冰冻 / 闪电共存 · 暴击 20%% / 重伤 4秒" % actor_level
  if gear.get("weapon") == "ipetam": return "神器 Lv%d · 击杀 %d · 吸血 %.1f%%" % [YinBalance.artifact_level(gear), gear.artifact_kills, YinBalance.lifesteal(gear) * 100]
  var result: Array[String] = []
  for affix in gear.get("affixes", []):

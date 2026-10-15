@@ -40,7 +40,7 @@ func _ready() -> void:
 	feedback.z_index = 20
 	add_child(feedback)
 	add_child(actors)
-	level_size = Vector2(2240, 1600) if state.zone == "island" else Vector2(2880, 1920) if state.zone == "forest" else (Vector2(1280, 960) if state.zone in ["sunken", "theatre", "village"] else SIZE)
+	level_size = Vector2(1600, 1280) if state.zone == "temple" else Vector2(2240, 1600) if state.zone == "island" else Vector2(2880, 1920) if state.zone == "forest" else (Vector2(1280, 960) if state.zone in ["sunken", "theatre", "village"] else SIZE)
 	projectiles = YinProjectiles.new()
 	projectiles.name = "Projectiles"
 	projectiles.game = get_tree().get_first_node_in_group("yintian_game")
@@ -51,6 +51,9 @@ func _ready() -> void:
 	boundary(Rect2(-32, level_size.y, level_size.x + 64, 32))
 	boundary(Rect2(-32, 0, 32, level_size.y))
 	boundary(Rect2(level_size.x, 0, 32, level_size.y))
+	if state.zone == "temple":
+		build_temple()
+		return
 	if state.zone == "island":
 		build_island()
 		return
@@ -202,8 +205,10 @@ func front_plot() -> int:
 
 func nearest_interaction() -> String:
 	if nearest_chest() != "": return "treasure"
+	if state.zone == "temple": return "temple_return" if player.position.distance_to(YinTemple.EXIT) < 47 else ""
 	if state.zone == "island": return "island_return" if player.position.distance_to(Vector2(180, 1440)) < 47 else ""
 	if state.zone == "village":
+		if player.position.distance_to(YinTemple.VILLAGE_GATE) < 47: return "temple_gate"
 		if player.position.distance_to(Vector2(1180, 820)) < 47: return "island_ferry"
 		if player.position.distance_to(Vector2(155, 820)) < 47: return "village_return"
 		for villager in get_tree().get_nodes_in_group("villagers"):
@@ -254,6 +259,9 @@ func tile(id: int, at: Vector2) -> void:
 
 func _draw() -> void:
 	if state == null:
+		return
+	if state.zone == "temple":
+		draw_temple()
 		return
 	if state.zone == "island":
 		draw_island()
@@ -435,6 +443,8 @@ func build_branch() -> void:
 			prop("grave", at, Vector2(-16, -48), Rect2(-12, -16, 24, 16))
 
 func build_village() -> void:
+	add_sign(Vector2(1000, 135), "山道 · 大佛寺 ↑ E")
+	prop("lantern", Vector2(1152, 160), Vector2(-16, -48), Rect2(-4, -6, 8, 6))
 	add_sign(Vector2(1080, 790), "东码头 · 岛国 → E")
 	prop("lantern", Vector2(1200, 820), Vector2(-16, -48), Rect2(-4, -6, 8, 6))
 	prop("lantern", Vector2(155, 820), Vector2(-16, -48), Rect2(-4, -6, 8, 6))
@@ -558,3 +568,60 @@ func artifact_sweep(at: Vector2, facing: Vector2, reach: float, level_value: int
 		var tween := slash.create_tween()
 		tween.tween_property(slash, "modulate:a", 0.0, 0.24 + level_value * 0.005)
 		tween.tween_callback(slash.queue_free)
+
+func build_temple() -> void:
+	# Open courtyards linked by gates, with optional side loops around the pagodas.
+	for rect in [Rect2(64, 64, 1472, 32), Rect2(64, 64, 32, 1024), Rect2(64, 1216, 1472, 32), Rect2(1504, 64, 32, 1152), Rect2(96, 736, 480, 32), Rect2(736, 736, 304, 32), Rect2(1216, 736, 288, 32), Rect2(992, 96, 32, 224), Rect2(992, 448, 32, 288)]: boundary(rect)
+	prop("lantern", YinTemple.EXIT + Vector2(32, 0), Vector2(-16, -48), Rect2(-4, -6, 8, 6))
+	add_sign(Vector2(112, 1184), "青槐村山道 ↓ E")
+	add_sign(Vector2(288, 1088), "大佛寺 · 施食庭 ↑ 塔林 / 修罗道场")
+	add_sign(Vector2(1024, 1120), "梦障院 ↑ 护法殿 · 镇符可破梦障")
+	add_sign(Vector2(512, 800), "修罗道场 ↑ 六臂战阵，看清预兆再进退")
+	add_sign(Vector2(1056, 496), "护法殿 ↑ 先息修罗，再问守藏夜叉")
+	for at in [Vector2(288, 608), Vector2(480, 448), Vector2(1184, 640), Vector2(1408, 736)]:
+		prop("rock", at, Vector2(-20, -28), Rect2(-14, -15, 28, 15))
+	for at in [Vector2(352, 992), Vector2(832, 1056), Vector2(1376, 1120)]: prop("tree", at, Vector2(-32, -88), Rect2(-8, -16, 16, 16))
+	# Actual statue and stupa footprints match the drawing below.
+	boundary(Rect2(1144, 128, 208, 72))
+	for at in [Vector2(256, 352), Vector2(448, 352), Vector2(256, 544), Vector2(512, 672)]: boundary(Rect2(at - Vector2(20, 12), Vector2(40, 24)))
+
+func draw_temple() -> void:
+	for at in [Vector2(704, 512), Vector2(1248, 288)]:
+		draw_circle(at, 108, Color("706d59"))
+		draw_arc(at, 104, 0, TAU, 48, Color("b8a774"), 3)
+		for i in range(8): draw_line(at + Vector2.from_angle(i * TAU / 8) * 35, at + Vector2.from_angle(i * TAU / 8) * 100, Color("9a8e66"), 2)
+	for at in [Vector2(256, 352), Vector2(448, 352), Vector2(256, 544), Vector2(512, 672)]:
+		draw_rect(Rect2(at - Vector2(24, 10), Vector2(48, 20)), Color("757d70"))
+		for floor_index in range(3):
+			var offset := Vector2(0, -18 - floor_index * 18)
+			draw_rect(Rect2(at + offset - Vector2(14, 14), Vector2(28, 18)), Color("a4a48b"))
+			draw_colored_polygon(PackedVector2Array([at + offset + Vector2(-24, -12), at + offset + Vector2(0, -24), at + offset + Vector2(24, -12)]), Color("4a6260"))
+	# Seated stone Buddha, lotus seat and weathered aureole.
+	var statue := Vector2(1248, 156)
+	draw_arc(statue + Vector2(0, -64), 65, 0, TAU, 48, Color("a6996c"), 5)
+	draw_circle(statue + Vector2(0, -100), 19, Color("a9aa8b"))
+	draw_rect(Rect2(statue + Vector2(-14, -121), Vector2(28, 8)), Color("62736d"))
+	draw_colored_polygon(PackedVector2Array([statue + Vector2(-17, -83), statue + Vector2(17, -83), statue + Vector2(42, -12), statue + Vector2(-42, -12)]), Color("969e82"))
+	draw_line(statue + Vector2(-12, -72), statue + Vector2(26, -18), Color("707e6e"), 5)
+	for side in [-1, 1]: draw_line(statue + Vector2(side * 21, -64), statue + Vector2(side * 38, -26), Color("b4b596"), 9)
+	draw_rect(Rect2(statue + Vector2(-88, -12), Vector2(176, 28)), Color("aaa482"))
+	draw_rect(Rect2(statue + Vector2(-104, 16), Vector2(208, 20)), Color("778374"))
+	for i in range(9): draw_circle(statue + Vector2(-72 + i * 18, 0), 9, Color("c2af7b"))
+	if not YinTemple.available(state, "yaksha"):
+		draw_arc(YinTemple.ARENAS.yaksha, 90, 0, TAU, 40, Color("dabf73"), 3)
+		draw_string(ThemeDB.fallback_font, YinTemple.ARENAS.yaksha + Vector2(-64, 0), "先平息阿修罗战意", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color("ead4a1"))
+
+func prajna_sweep(at: Vector2, facing: Vector2, reach: float, actor_level: int) -> void:
+	for layer in range(4):
+		var slash := Line2D.new()
+		slash.add_to_group("prajna_slashes")
+		slash.width = 3 if layer == 0 else 2
+		slash.default_color = [Color("f0dc92"), Color("e7a26e"), Color("9bd9e6"), Color("cbb2ef")][layer]
+		for i in range(25):
+			var angle: float = facing.angle() - 1.0 + float(i) / 24 * 2.0
+			slash.add_point(at + Vector2.from_angle(angle) * (reach - layer * 6))
+		feedback.add_child(slash)
+		var tween := slash.create_tween()
+		tween.tween_property(slash, "modulate:a", 0.0, 0.28 + actor_level * 0.003)
+		tween.tween_callback(slash.queue_free)
+	shock_ring(at, 16 + actor_level, Color("e9cf83"))

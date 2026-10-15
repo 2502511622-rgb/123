@@ -6,9 +6,10 @@ const ROWS = {"kappa": 0, "chochin": 1, "ippon_datara": 2, "jorogumo": 3, "sogen
 const ARENAS = {"itsumade": Vector2(700, 352), "daitengu": Vector2(1568, 320), "ryomen_sukuna": Vector2(1824, 1184)}
 const REGIONS = {"苇岸": Vector2(448, 960), "荒冢": Vector2(704, 352), "风山": Vector2(1568, 320), "双面社": Vector2(1824, 1184)}
 static func texture(kind: String) -> Texture2D:
+	if YinTemple.ROWS.has(kind): return preload("res://assets/temple_spirits.svg")
 	return preload("res://assets/island_yokai.svg") if ROWS.has(kind) else preload("res://assets/enemies.png")
 static func anatomy(kind: String) -> Array:
-	if kind == "sogenbi": return []
+	if kind in ["sogenbi", "wraith"]: return []
 	if kind == "chochin": return ["head"]
 	return ["arm", "leg", "head"]
 static func near_water(at: Vector2) -> bool:

@@ -1,6 +1,8 @@
 class_name YinAdventure
 extends RefCounted
 const CHESTS = {
+	"temple_alms": {"name": "施食旧匣", "zone": "temple", "at": Vector2(576, 1056), "weapon": "silver_sword", "tier": 3},
+	"temple_sutra": {"name": "梦障经匣", "zone": "temple", "at": Vector2(1376, 928), "weapon": "spellbook", "tier": 4},
 	"grave_cache": {"name": "守墓人的箱子", "zone": "graveyard", "at": Vector2(448, 500), "weapon": "whip", "tier": 1},
 	"forest_west": {"name": "猎人的旧箱", "zone": "forest", "at": Vector2(640, 768), "weapon": "revolver", "tier": 2},
 	"camp_cache": {"name": "断碑军械箱", "zone": "forest", "at": Vector2(2304, 448), "weapon": "gatling", "tier": 3},
@@ -15,6 +17,11 @@ const LANDMARKS = {
 	"temple": {"name": "山门遗址", "at": Vector2(2304, 1632)}
 }
 const QUESTS = {
+	"temple_arrival": {"npc": 6, "name": "北山梵影", "kind": "temple_visit", "target": 1, "money": 40, "weapon": "", "description": "砚青请你沿青槐村北侧山道进入大佛寺，记录缝合而来的护法异境。"},
+	"temple_catalog": {"npc": 2, "name": "四障异闻", "kind": "temple_hunt", "target": 4, "money": 90, "weapon": "", "parent": "temple_arrival", "description": "秋婶请你分别调查饿鬼、幽魂、罗刹、鸠槃茶。镇符可破虚化幻身，先处理遗骸可阻饿鬼吞食。"},
+	"temple_wrath": {"npc": 1, "name": "止息修罗", "kind": "temple_boss", "boss": "asura", "target": 1, "money": 130, "weapon": "", "parent": "temple_catalog", "description": "柳伯请你平息阿修罗的争斗嗔怒。六臂战阵留有空隙，半血后的战意更盛。"},
+	"temple_guardian": {"npc": 6, "name": "守藏之问", "kind": "temple_boss", "boss": "yaksha", "target": 1, "money": 160, "weapon": "", "parent": "temple_wrath", "description": "砚青请你前往大佛下的护法殿，挑战守藏夜叉。镇符可破护障，避开疾刺路线。"},
+	"temple_wisdom": {"npc": 3, "name": "般若开锋", "kind": "temple_relic", "target": 1, "money": 60, "weapon": "prajna", "parent": "temple_guardian", "description": "向阿祁讲述佛寺四障与两位护法的见闻，领取文殊般若剑。剑随修为成长，每次命中三相附魔共存。"},
 	"island_arrival": {"npc": 6, "name": "裂海异乡", "kind": "island_visit", "target": 1, "money": 35, "weapon": "", "description": "从青槐村东码头乘船抵达岛国，再向砚青讲述缝合海岸。"},
 	"island_catalog": {"npc": 6, "name": "五妖异闻", "kind": "island_hunt", "target": 5, "money": 80, "weapon": "", "parent": "island_arrival", "description": "分别击败河童、提灯妖怪、一本踏鞴、络新妇、丛原火，记录它们的特点。"},
 	"island_lament": {"npc": 2, "name": "何时安葬", "kind": "island_boss", "boss": "itsumade", "target": 1, "money": 100, "weapon": "", "parent": "island_catalog", "description": "找秋婶接续异闻；超度荒冢附近遗骸可削弱以津真天，平息金羽毒鸣后复命。"},
@@ -36,6 +43,10 @@ static func accept(state, id: String) -> String:
 static func progress(state, id: String) -> int:
 	if not state.quests.has(id) or not QUESTS.has(id): return 0
 	var spec: Dictionary = QUESTS[id]
+	if spec.kind == "temple_visit": return 1 if state.temple_journal.visited else 0
+	if spec.kind == "temple_hunt": return state.temple_journal.hunted.size()
+	if spec.kind == "temple_boss": return 1 if spec.boss in state.temple_journal.defeated else 0
+	if spec.kind == "temple_relic": return 1 if "yaksha" in state.temple_journal.defeated else 0
 	if spec.kind == "island_visit": return 1 if state.island_journal.visited else 0
 	if spec.kind == "island_hunt": return state.island_journal.hunted.size()
 	if spec.kind == "island_boss": return 1 if spec.boss in state.island_journal.defeated else 0
@@ -56,7 +67,7 @@ static func claim(state, id: String, npc_id: int) -> String:
 	if spec.weapon != "" and state.equipment.size() >= 20: return "装备位已满，请先整理，再来领取。"
 	if spec.kind == "delivery": state.set_container_count("bag", spec.item, state.container_count("bag", spec.item) - spec.target)
 	if spec.weapon != "":
-		if spec.weapon != "ipetam" or not state.equipment.any(func(g): return g.weapon == "ipetam"): state.grant_gear(spec.weapon, 2, 1)
+		if spec.weapon not in ["ipetam", "prajna"] or not state.equipment.any(func(g): return g.weapon == spec.weapon): state.grant_gear(spec.weapon, 2, 1)
 	state.money += spec.money
 	state.quests[id].claimed = true
 	if state.tracked_quest == id: state.tracked_quest = ""

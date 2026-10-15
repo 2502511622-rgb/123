@@ -1,11 +1,11 @@
 class_name YinFactions
 extends RefCounted
-const IDS = ["island", "graveyard", "village"]
-const NAMES = {"island": "岛国", "graveyard": "乱葬岗", "village": "青槐村"}
-const COLORS = {"island": Color("c46e61"), "graveyard": Color("a48bc3"), "village": Color("8fbd81")}
+const IDS = ["temple", "island", "graveyard", "village"]
+const NAMES = {"temple": "大佛寺", "island": "岛国", "graveyard": "乱葬岗", "village": "青槐村"}
+const COLORS = {"temple": Color("d6ba6d"), "island": Color("c46e61"), "graveyard": Color("a48bc3"), "village": Color("8fbd81")}
 
 static func initial() -> Dictionary:
-	return {"last_day": 0, "next_war": 1, "sponsored_day": 0, "powers": {"island": {"troops": 120, "supply": 100}, "graveyard": {"troops": 85, "supply": 75}, "village": {"troops": 60, "supply": 65}}, "wars": [], "history": []}
+	return {"last_day": 0, "next_war": 1, "sponsored_day": 0, "powers": {"temple": {"troops": 105, "supply": 90}, "island": {"troops": 120, "supply": 100}, "graveyard": {"troops": 85, "supply": 75}, "village": {"troops": 60, "supply": 65}}, "wars": [], "history": []}
 
 static func strength(data: Dictionary, id: String) -> int:
 	return int(data.powers[id].troops) + int(data.powers[id].supply) / 2
@@ -54,7 +54,7 @@ static func deploy(s, war: Dictionary) -> void:
 		var id: String = war[side]
 		var count: int = int(war.attackers if side == "attacker" else war.defenders)
 		for i in range(count):
-			var kind: String = {"island": ["kappa", "chochin", "ippon_datara"], "graveyard": ["bone", "water", "brute"], "village": ["gunner", "archer", "bone"]}[id][i % 3]
+			var kind: String = {"temple": ["hungry_ghost", "rakshasa", "kumbhanda"], "island": ["kappa", "chochin", "ippon_datara"], "graveyard": ["bone", "water", "brute"], "village": ["gunner", "archer", "bone"]}[id][i % 3]
 			var at := Vector2((760 if side == "attacker" else 520) + (i % 2) * 34, 280 + int(i / 2) * 52)
 			var e: Dictionary = s.spawn_record(kind, war.defender, at, 1 + strength(s.factions, id) / 100)
 			e.faction = id
@@ -130,7 +130,7 @@ static func report(s) -> String:
 		lines.append("%s   实力 %d   兵力 %d / 物资 %d" % [NAMES[id], strength(s.factions, id), p.troops, p.supply])
 	for war in s.factions.wars:
 		lines.append("%s → %s · %s · %d 对 %d\n正午开战，入夜结算；前往守方地图可参战。" % [NAMES[war.attacker], NAMES[war.defender], "行军中" if war.status == "warned" else "交战中", war.attackers, war.defenders])
-	if s.factions.wars.is_empty(): lines.append("当前休整。每天恢复兵力与物资，三方都有机会向其他两方出兵。")
+	if s.factions.wars.is_empty(): lines.append("当前休整。每天恢复兵力与物资，各方都有机会向其他势力出兵。")
 	lines.append("最近战报\n" + ("\n".join(s.factions.history) if not s.factions.history.is_empty() else "尚无战报。"))
 	return "\n\n".join(lines)
 
@@ -138,7 +138,7 @@ static func validate(data: Dictionary) -> bool:
 	if data.size() != 6: return false
 	for key in ["last_day", "next_war", "sponsored_day"]:
 		if not FarmState.valid_int(data.get(key), 0): return false
-	if not data.get("powers") is Dictionary or data.powers.size() != 3: return false
+	if not data.get("powers") is Dictionary or data.powers.size() != IDS.size(): return false
 	for id in IDS:
 		if not data.powers.get(id) is Dictionary: return false
 		for key in ["troops", "supply"]:
