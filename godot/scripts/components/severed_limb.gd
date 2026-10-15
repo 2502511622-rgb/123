@@ -1,14 +1,14 @@
 class_name YinSeveredLimb
 extends Node2D
+var source_region := Rect2()
+var draw_size := Vector2.ZERO
+var flip_h: bool = false
 var part: String = "arm"
-var row: int = 0
-var sprite_scale: float = 2.0
-var source_density: int = 1
 var velocity := Vector2.ZERO
 var height: float = 12
 var lift: float = 95
 var age: float = 0
-var source_texture: Texture2D = preload("res://assets/enemies.png")
+var source_texture: Texture2D = YinActorArt.ROSTER
 func _process(delta: float) -> void:
 	var game := get_tree().get_first_node_in_group("yintian_game")
 	if game != null and game.modal != null: return
@@ -27,5 +27,9 @@ func _process(delta: float) -> void:
 	modulate.a = minf(1, 9 - age)
 	queue_redraw()
 func _draw() -> void:
-	var region: Rect2 = {"arm": Rect2(12, row * 24 + 8, 4, 10), "leg": Rect2(8, row * 24 + 18, 8, 6), "head": Rect2(0, row * 24, 16, 8)}[part]
-	draw_texture_rect_region(source_texture, Rect2(-region.size * sprite_scale / 2 - Vector2(0, height), region.size * sprite_scale), Rect2(region.position * source_density, region.size * source_density))
+	if not source_region.has_area(): return
+	var destination := Rect2(-draw_size / 2 - Vector2(0, height), draw_size)
+	if flip_h:
+		destination.position.x = destination.end.x
+		destination.size.x = -destination.size.x
+	draw_texture_rect_region(source_texture, destination, source_region)

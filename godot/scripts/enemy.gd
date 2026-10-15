@@ -1,5 +1,8 @@
 class_name YinEnemy
 extends CharacterBody2D
+var art_clock: float = 0
+var art_facing := Vector2.DOWN
+var art_strike: float = 0
 var game: Node2D
 var record: Dictionary
 var stun: float = 0
@@ -37,7 +40,6 @@ var charge_direction: Vector2
 var charge_hit: bool = false
 var health_receiver: YinHealthReceiver
 var hurtbox: YinHurtbox
-const TEXTURE = preload("res://assets/enemies.png")
 
 func _ready() -> void:
 	var flash_material := ShaderMaterial.new()
@@ -68,6 +70,9 @@ func _physics_process(delta: float) -> void:
 		queue_free()
 		return
 	if game.modal != null or is_queued_for_deletion(): return
+	if freeze_lock <= 0 and hit_stop <= 0: art_clock += delta
+	if velocity.length() > 2: art_facing = velocity.normalized()
+	art_strike = 0.18 if windup > 0 else maxf(0, art_strike - delta)
 	hit_flash = maxf(0, hit_flash - delta)
 	material.set_shader_parameter("flash", 1.0 if hit_flash > 0.065 else 0.0)
 	trail_delay = maxf(0, trail_delay - delta)
@@ -284,34 +289,22 @@ func _draw() -> void:
 		draw_circle(Vector2(0, 1), 13, YinFactions.COLORS[record.faction])
 		draw_string(ThemeDB.fallback_font, Vector2(-18, -72), YinFactions.NAMES[record.faction], HORIZONTAL_ALIGNMENT_LEFT, -1, 10, YinFactions.COLORS[record.faction])
 	draw_rect(Rect2(-12, -3, 24, 5), Color("253b3a66"))
-	var row: int = {"water": 0, "bone": 1, "boss": 2, "archer": 3, "lantern": 4, "gunner": 5, "brute": 6, "well_boss": 0, "opera_boss": 5}.get(record.kind, 0)
-	row = YinArt.enemy_row(record.kind)
-	var body_texture: Texture2D = YinIsland.texture(record.kind)
-	var scale_value: float = 3 if record.kind in YinAbilities.BOSSES else 2
+	var boss: bool = record.kind in YinAbilities.BOSSES
 	var tint := Color.WHITE if hit_flash > 0.065 else (Color("d79279") if hit_flash > 0 else (Color("8eafd0") if stun > 0.3 or chill_time > 0 else Color.WHITE))
 	if record.kind == "wraith": tint.a = 0.55 if not record.suppressed else 1.0
 	if YinTempleCombat.phantom(self): tint = Color("c8a3e0aa")
 	var missing: Array = record.get("severed", [])
-	# Draw the original sprite in non-overlapping pieces so missing limbs stay absent.
-	for part in [Rect2(0, 0, 16, 8), Rect2(4, 8, 8, 10), Rect2(0, 8, 4, 10), Rect2(12, 8, 4, 10), Rect2(0, 18, 8, 6), Rect2(8, 18, 8, 6)]:
-		if part.position == Vector2(0, 0) and "head" in missing: continue
-		if part.position == Vector2(12, 8) and "arm" in missing: continue
-		if part.position == Vector2(8, 18) and "leg" in missing: continue
-		if record.kind == "ippon_datara" and part.position == Vector2(0, 18) and "leg" in missing: continue
-		var destination := Rect2(Vector2(-8, -22) * scale_value + part.position * scale_value, part.size * scale_value)
-		draw_texture_rect_region(body_texture, destination, Rect2((part.position + Vector2(0, row * 24)) * 2, part.size * 2), tint)
-	if record.kind == "well_boss":
-		draw_arc(Vector2(0, -18), 24, 0, TAU, 16, Color("85c9ce"), 3)
-		draw_rect(Rect2(-20, -70, 40, 8), Color("366777"))
-	if record.kind == "opera_boss" and "head" not in missing:
-		draw_rect(Rect2(-12, -62, 24, 16), Color("e7d6b9"))
-		draw_rect(Rect2(-9, -56, 18, 4), Color("9d495c"))
-		for side in [-1, 1]: draw_line(Vector2(side * 15, -38), Vector2(side * 31, -7), Color("c26f85"), 4)
+	var pose: Dictionary = art_pose()
+	var stagger := Vector2(sin(hit_flash * 80) * 1.5, 0) if hit_flash > 0 else Vector2.ZERO
+	draw_set_transform(stagger, -0.035 if hit_flash > 0 else 0.0)
+	YinActorArt.draw_enemy(self, record.kind, pose, missing, art_clock, velocity.length() > 2 and freeze_lock <= 0, art_strike > 0, tint)
+	draw_set_transform(Vector2.ZERO)
+	var art_height: float = -pose.destination.position.y + 7
 	var reveal: bool = record.hp < record.max_hp or record.kind in YinAbilities.BOSSES or record.get("elite", false) or position.distance_to(game.player.position) < 160
 	if reveal:
-		draw_rect(Rect2(-16, -50 * (1.4 if record.kind in YinAbilities.BOSSES else 1), 32, 3), Color("413e3e"))
-		draw_rect(Rect2(-16, -50 * (1.4 if record.kind in YinAbilities.BOSSES else 1), 32 * health_trail / record.max_hp, 3), Color("e6bb83"))
-		draw_rect(Rect2(-16, -50 * (1.4 if record.kind in YinAbilities.BOSSES else 1), 32 * float(record.hp) / record.max_hp, 3), Color("aa7164"))
+		draw_rect(Rect2(-16, -art_height, 32, 3), Color("413e3e"))
+		draw_rect(Rect2(-16, -art_height, 32 * health_trail / record.max_hp, 3), Color("e6bb83"))
+		draw_rect(Rect2(-16, -art_height, 32 * float(record.hp) / record.max_hp, 3), Color("aa7164"))
 	if shield > 0: draw_arc(Vector2(0, -25), 25, 0, TAU, 20, Color("96c0db"), 2)
 	if burn_time > 0: draw_circle(Vector2(8, -24), 3, Color("f4a261"))
 	if chill_time > 0: draw_arc(Vector2(0, -20), 18, 0, TAU, 12, Color("91d8ee"), 1)
@@ -319,7 +312,7 @@ func _draw() -> void:
 	var caption: String = YinBalance.MONSTERS[record.kind].name + " Lv%d" % int(record.get("level", 1)) + (" · 精英" if record.get("elite", false) else "")
 	if record.get("faction", "") == "village": caption = "护村役卫 Lv%d" % int(record.get("level", 1))
 	if reveal:
-		draw_string(ThemeDB.fallback_font, Vector2(-24, -56 * (1.4 if record.kind in YinAbilities.BOSSES else 1)), caption, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color("e6c485") if record.get("elite", false) else Color("c8c9ae"))
+		draw_string(ThemeDB.fallback_font, Vector2(-24, -art_height - 5), caption, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color("e6c485") if record.get("elite", false) else Color("c8c9ae"))
 	if YinTemple.ROWS.has(record.kind):
 		YinTempleCombat.draw_warning(self)
 	elif YinIsland.ROWS.has(record.kind):
@@ -330,8 +323,8 @@ func _draw() -> void:
 		draw_arc(Vector2(0, -14), 26, 0, TAU * (1 - windup / 0.85), 24, Color("e6b17c"), 2)
 	elif windup > 0:
 		var local_center: Vector2 = attack_center - position
-		draw_circle(local_center, 57 if row == 2 else (42 if record.kind == "brute" else 29), Color(0.7, 0.27, 0.20, 0.2))
-		draw_arc(local_center, 57 if row == 2 else (42 if record.kind == "brute" else 29), -PI / 2, -PI / 2 + TAU * (1 - windup / (0.8 if row == 2 else 0.5)), 32, Color("f0bc7d"), 3)
+		draw_circle(local_center, 57 if boss else (42 if record.kind == "brute" else 29), Color(0.7, 0.27, 0.20, 0.2))
+		draw_arc(local_center, 57 if boss else (42 if record.kind == "brute" else 29), -PI / 2, -PI / 2 + TAU * (1 - windup / (0.8 if boss else 0.5)), 32, Color("f0bc7d"), 3)
 		draw_rect(Rect2(local_center - Vector2(2, 2), Vector2(4, 4)), Color("f0bc7d"))
 
 func hurt_victim(damage: int) -> void:
@@ -354,17 +347,28 @@ func update_dismemberment() -> void:
 			windup = 0
 			burst_remaining = 0
 			charge_time = 0
-		var fragment := YinSeveredLimb.new()
-		fragment.part = part
-		fragment.row = {"water": 0, "bone": 1, "boss": 2, "archer": 3, "lantern": 4, "gunner": 5, "brute": 6, "well_boss": 0, "opera_boss": 5}.get(record.kind, 0)
-		fragment.row = YinArt.enemy_row(record.kind)
-		fragment.source_texture = YinIsland.texture(record.kind)
-		fragment.source_density = 2
-		fragment.sprite_scale = 3.0 if record.kind in YinAbilities.BOSSES else 2.0
-		fragment.position = position + Vector2(10, -20 if part == "arm" else -2)
-		fragment.velocity = game.player.position.direction_to(position).rotated(-0.6 if part == "arm" else 0.6) * 85
-		game.world.feedback.add_child(fragment)
-		game.world.effect(fragment.position, Color("a57465"))
+		var pose: Dictionary = art_pose()
+		for piece in YinActorArt.pieces(record.kind, pose):
+			if piece.part != part: continue
+			var cut: Dictionary = YinActorArt.sub_pose(pose, piece.rect)
+			var fragment := YinSeveredLimb.new()
+			fragment.part = part
+			fragment.source_texture = cut.texture
+			fragment.source_region = cut.source
+			fragment.draw_size = cut.destination.size
+			fragment.flip_h = cut.flip
+			var center: Vector2 = cut.destination.get_center()
+			if cut.flip: center.x = -center.x
+			fragment.position = position + center
+			fragment.height = 0
+			fragment.velocity = game.player.position.direction_to(position).rotated(-0.6 if part == "arm" else 0.6) * 85
+			game.world.feedback.add_child(fragment)
+			game.world.effect(fragment.position, Color("a57465"))
+
+	queue_redraw()
+
+func art_pose() -> Dictionary:
+	return YinActorArt.enemy_pose(record.kind, art_facing, art_clock, velocity.length() > 2, art_strike > 0, record.kind in YinAbilities.BOSSES)
 
 func apply_element(element: String, power: int = 3, harmonious: bool = false) -> void:
 	if record.dead: return

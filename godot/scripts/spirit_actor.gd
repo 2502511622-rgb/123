@@ -104,12 +104,12 @@ func _physics_process(delta: float) -> void:
 func _draw() -> void:
 	var row: int = {"water": 0, "bone": 1, "child": 2}.get(record.kind, 1)
 	draw_rect(Rect2(-9, -2, 18, 4), Color(0.1, 0.15, 0.2, 0.25))
-	if record.kind in ["water", "bone", "child"]:
+	if record.kind == "child":
 		draw_texture_rect_region(TEXTURE, Rect2(-16, -40 + roundf(sin(time * 2)), 32, 40), Rect2(0, row * 20, 16, 20), Color(1, 1, 1, 0.9))
 	else:
-		var source_row: int = {"archer": 3, "lantern": 4, "gunner": 5, "brute": 6, "boss": 2, "well_boss": 0, "opera_boss": 5}.get(record.source_kind, 1)
-		source_row = YinArt.enemy_row(record.source_kind)
-		draw_texture_rect_region(YinIsland.texture(record.source_kind), Rect2(-16, -44, 32, 48), Rect2(0, source_row * 48, 32, 48), Color("9ecdc7"))
+		var direction: Vector2 = velocity.normalized() if velocity.length() > 2 else Vector2.DOWN
+		var pose: Dictionary = YinActorArt.enemy_pose(record.source_kind, direction, time, velocity.length() > 2, charge_duration > 0, false)
+		YinActorArt.draw_enemy(self, record.source_kind, pose, [], time, velocity.length() > 2, charge_duration > 0, Color("9ecdc7"))
 
 	var fraction: float = float(record.hp) / record.max_hp
 	draw_rect(Rect2(-16, -46, 32, 4), Color("263938"))

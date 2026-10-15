@@ -23,7 +23,6 @@ var dodge_direction := Vector2.DOWN
 var attack_time: float = 0
 var hit_feedback: float = 0
 var ghosts: Array = []
-var texture: Texture2D = YinArt.HERO
 
 var state_machine: YinPlayerStateMachine
 var hitbox: YinHitbox
@@ -89,18 +88,16 @@ func _physics_process(delta: float) -> void:
 	queue_redraw()
 
 func _draw() -> void:
+	var column: int = YinActorArt.hero_column(animation_time, velocity.length() > 2, attack_time, hit_feedback)
+	var pose: Dictionary = YinActorArt.hero_pose(facing, column)
 	for ghost in ghosts:
-		draw_texture_rect_region(texture, Rect2(ghost.at - position + Vector2(-16, -48), Vector2(32, 48)), Rect2(0, 0, 32, 48), Color(0.55, 0.85, 0.79, (1 - ghost.age / 0.18) * 0.3))
+		YinActorArt.draw_pose(self, YinActorArt.hero_pose(facing, 1), Color(0.55, 0.85, 0.79, (1 - ghost.age / 0.18) * 0.3), ghost.at - position)
 	draw_rect(Rect2(-10, -3, 20, 5), Color(0.18, 0.25, 0.20, 0.22))
-	var row: int = 0
-	if facing == Vector2.UP:
-		row = 1
-	elif facing == Vector2.LEFT:
-		row = 2
-	elif facing == Vector2.RIGHT:
-		row = 3
-	var frame: int = int(animation_time * 9) % 4
-	draw_texture_rect_region(texture, Rect2(-16, -48, 32, 48), Rect2(frame * 32, row * 48, 32, 48), Color("ef9a82") if hit_feedback > 0 else (Color(1, 1, 1, 0.55 if int(invincible * 20) % 2 == 0 else 1.0) if invincible > 0 else Color.WHITE))
+	var tint := Color("ef9a82") if hit_feedback > 0 else (Color(1, 1, 1, 0.55 if int(invincible * 20) % 2 == 0 else 1.0) if invincible > 0 else Color.WHITE)
+	var lean: float = dodge_direction.x * 0.12 if dodge_time > 0 else 0.0
+	draw_set_transform(Vector2.ZERO, lean)
+	YinActorArt.draw_pose(self, pose, tint)
+	draw_set_transform(Vector2.ZERO)
 	draw_held_item()
 	if attack_time > 0 and held_item in YinBalance.MELEE:
 		var sweep: float = 1 - attack_time / 0.22
@@ -123,7 +120,8 @@ func dodge() -> void:
 
 func draw_held_item() -> void:
 	var direction: Vector2 = aim_direction if held_item in YinBalance.GUNS or held_item in YinBalance.MAGIC else facing
-	var hand := direction * 6 + Vector2(0, -17)
+	var hand := direction * 8 + Vector2(0, -22)
+	if attack_time > 0: hand += direction * (4 if attack_time < 0.11 else -3)
 	if held_item.begins_with("tool"):
 		var index: int = int(held_item.substr(4))
 		var swing: float = sin((0.2 - attack_time) * 18) * 0.4 if attack_time > 0 else 0.0
