@@ -5,6 +5,8 @@ var record: Dictionary
 var time: float = 0
 var invincible: float = 0
 var home: Vector2
+var walking: bool = false
+var walk_clock: float = 0
 var brain_state: String = "work"
 func _ready() -> void:
 	material = ShaderMaterial.new()
@@ -23,7 +25,12 @@ func _physics_process(delta: float) -> void:
 	brain_state = "wounded" if record.hp <= 0 else ("shelter" if game.state.raid_status == "active" or record.hp < 30 else ("rest" if game.state.minutes >= 1200 else "work"))
 	var drift: float = 4 if brain_state in ["shelter", "rest"] else 12
 	var target: Vector2 = home + Vector2(roundf(sin(time / 3 + int(record.id))) * drift, roundf(cos(time / 4)) * drift)
+	var previous: Vector2 = position
 	position = position.move_toward(target, delta * 12) if record.hp > 0 else position
+	walking = position.distance_to(previous) > 0.01
+	if walking: walk_clock += delta
+	material.set_shader_parameter("motion_clock", time)
+	material.set_shader_parameter("motion_amount", 0.6 if walking else 0.12)
 	queue_redraw()
 func receive_hit(damage: int) -> void:
 	if record.hp <= 0 or invincible > 0: return
@@ -35,12 +42,14 @@ func _draw() -> void:
 	for id in YinAdventure.QUESTS:
 		if YinAdventure.QUESTS[id].npc != int(record.id) or not YinAdventure.available(game.state, id): continue
 		var mark: String = "!" if not game.state.quests.has(id) else ("?" if not game.state.quests[id].claimed and YinAdventure.progress(game.state, id) >= YinAdventure.QUESTS[id].target else "")
-		if mark != "" and record.hp > 0: draw_string(ThemeDB.fallback_font, Vector2(-3, -65), mark, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("f1cf83"))
-	draw_texture_rect_region(YinArt.VILLAGERS, Rect2(-16, -44, 32, 44), Rect2((int(record.id) - 1) * 32, 0, 32, 44), Color("98aaa0") if record.hp == 0 else Color.WHITE)
+		if mark != "" and record.hp > 0: draw_string(ThemeDB.fallback_font, Vector2(-3, -75), mark, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("f1cf83"))
+	YinActorArt.contact_shadow(self,9)
+	var pose: Dictionary = YinActorArt.npc_pose(int(record.id), walk_clock, walking, game.player.position.distance_to(position) < 50 and not walking)
+	YinActorArt.draw_pose(self, pose, Color("98aaa0") if record.hp == 0 else Color.WHITE)
 	if record.hp < 100:
-		draw_rect(Rect2(-18, -46, 36, 3), Color("162d2c"))
-		draw_rect(Rect2(-18, -46, 36 * float(record.hp) / 100, 3), Color("a5b780"))
+		draw_rect(Rect2(-18, -60, 36, 3), Color("162d2c"))
+		draw_rect(Rect2(-18, -60, 36 * float(record.hp) / 100, 3), Color("a5b780"))
 	if position.distance_to(game.player.position) < 125 or record.hp < 100:
 		var caption: String = record.name + (" · 养伤" if record.hp == 0 else "")
-		draw_string_outline(ThemeDB.fallback_font, Vector2(-25, -50), caption, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, 2, Color("102725"))
-		draw_string(ThemeDB.fallback_font, Vector2(-25, -50), caption, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color("e5d4ab"))
+		draw_string_outline(ThemeDB.fallback_font, Vector2(-25, -64), caption, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, 2, Color("102725"))
+		draw_string(ThemeDB.fallback_font, Vector2(-25, -64), caption, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color("e5d4ab"))

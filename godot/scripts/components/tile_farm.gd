@@ -67,6 +67,9 @@ func build(zone_name: String) -> void:
 	if zone == "island":
 		for route in [[Vector2i(6, 44), Vector2i(24, 44), Vector2i(24, 24), Vector2i(24, 11), Vector2i(22, 11)], [Vector2i(24, 24), Vector2i(49, 24), Vector2i(49, 10)], [Vector2i(24, 39), Vector2i(57, 39), Vector2i(57, 37)]]:
 			for i in range(route.size() - 1): paint_road(route[i], route[i + 1])
+	if zone == "graveyard":
+		paint_road(Vector2i(4,5),Vector2i(4,17))
+		paint_road(Vector2i(4,16),Vector2i(26,16))
 	finish_edges()
 
 func finish_edges() -> void:

@@ -4,7 +4,7 @@ uniform float wind=0.5;
 uniform float phase=0.0;
 uniform float wetness=0.0;
 void vertex(){
-	float canopy=clamp((88.0-VERTEX.y)/70.0,0.0,1.0);
+	float canopy=clamp((124.0-VERTEX.y)/100.0,0.0,1.0);
 	VERTEX.x+=(sin(clock_time*1.1+phase)*1.8+sin(clock_time*2.5+phase+VERTEX.y*0.08)*0.65)*canopy*canopy*wind;
 	VERTEX.y+=sin(clock_time*1.5+phase)*canopy*0.5*wind;
 }

@@ -7,7 +7,7 @@ func _ready() -> void:
 func _process(_delta: float) -> void: queue_redraw()
 func _draw() -> void:
 	var opened: bool = chest_id in game.state.opened_chests
-	draw_texture_rect(preload("res://assets/chest.png"), Rect2(-20, -30, 40, 32), false, Color("8a9383") if opened else Color.WHITE)
+	draw_texture_rect(YinArt.texture("chest"), Rect2(-20, -30, 40, 32), false, Color("8a9383") if opened else Color.WHITE)
 	if opened:
 		draw_rect(Rect2(-14, -22, 28, 8), Color("283b37"))
 	else:

@@ -72,6 +72,7 @@ func _ready() -> void:
 	refresh("存档损坏，新建义庄；原文件在首次保存前保留。" if not loaded else "槐阴村的风，带着纸灰的味道。")
 	if not state.intro_seen:
 		var box := open_modal("阴田录 · 师父遗书", "裂海将异乡传说缝进此世。你刚刚出师，来到槐阴村接管破败义庄与荒田。\n\n田里长出人声，不要答应。\n驱使的东西，每夜都要点名。\n祠堂里的神，不是祖宗。\n\nWASD 移动，空格劳作，E 互动。\n7 剑 / 8 手枪 / J 手持攻击 / U 装填。\nShift 闪避 / F 镇符 / G 符火。")
+		box.add_child(button("先定制旅人外观",func(): state.intro_seen=true; show_character("外观")))
 		box.add_child(button("收起遗书，走进义庄", func():
 			state.intro_seen = true
 			close_modal()
@@ -93,6 +94,7 @@ func build_zone(zone_name: String, at: Vector2) -> void:
 	world = router.install(zone_name, state)
 	player = preload("res://scenes/actors/player.tscn").instantiate()
 	player.position = at if world.is_safe_position(at) else Vector2(300, 350)
+	player.appearance = state.appearance
 	player.facing = state.saved_facing
 	world.actors.add_child(player)
 	player.health_receiver.bind_source(state, "health")
@@ -798,7 +800,7 @@ func show_npc() -> void:
 	var box := open_modal("桥边阿婆", "")
 	var data := YinDialogueData.new()
 	data.speaker = "桥边阿婆"
-	data.portrait = preload("res://assets/npc.png")
+	data.portrait = YinActorArt.npc_texture(2)
 	data.lines.assign([state.story_line(), "这片田里的东西，镇住它，也在养着它。" if state.day >= 8 else "你师父每夜都要点名，有一夜，门外多答了一声。", state.talk()])
 	var dialogue := YinDialoguePanel.new()
 	dialogue.data = data
@@ -1052,7 +1054,8 @@ func show_character(tab: String = "背包") -> void:
 		tab_button.set_pressed_no_signal(tab == name_value)
 		tabs.add_child(tab_button)
 	scroll.custom_minimum_size.y = 214
-	box.get_child(0).text = "%d 文 · Lv%d · 随从 %d/%d" % [state.money, level_value, state.spirits.size(), state.capacity()]
+	box.get_child(0).add_theme_font_override("font",YinAppearance.name_font())
+	box.get_child(0).text = "%s · %d 文 · Lv%d · 随从 %d/%d" % [state.appearance.name,state.money,level_value,state.spirits.size(),state.capacity()]
 	box.get_child(0).add_theme_font_size_override("font_size", 10)
 	match tab:
 		"背包":
@@ -1085,7 +1088,17 @@ func show_character(tab: String = "背包") -> void:
 			worn.add_theme_font_size_override("font_size", 11)
 			worn.add_theme_color_override("font_color", Color("ded9bf"))
 			box.add_child(worn)
+			box.add_child(button("外观定制",func(): show_character("外观"),Vector2(120,24)))
 			equipment_content(box)
+		"外观":
+			var panel := YinAppearancePanel.new()
+			panel.name = "AppearancePanel"
+			panel.game = self
+			panel.applied.connect(func():
+				box.get_child(0).text="%s · %d 文 · Lv%d · 随从 %d/%d"%[state.appearance.name,state.money,YinBalance.level(state.cultivation),state.spirits.size(),state.capacity()]
+				refresh("外观已保存。")
+			)
+			box.add_child(panel)
 		"技能": skill_tree_content(box)
 		"随从": companion_content(box)
 		"书信": mail_content(box)

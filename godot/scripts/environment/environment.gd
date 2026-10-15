@@ -9,6 +9,7 @@ var indoor: bool = false
 var ground: YinEnvironmentLayer
 var foreground: YinEnvironmentLayer
 var light_field := YinLightField.new()
+var terrain_types: ImageTexture
 var ground_mask: ImageTexture
 var reflections: Array[Sprite2D] = []
 var reflected_prop_count: int = -1
@@ -20,6 +21,8 @@ var emit_clock: float = 0
 var leaf_clock: float = 0
 var last_step := Vector2.ZERO
 var baked: bool = false
+var soil_material: ShaderMaterial
+var plot_flags := PackedByteArray()
 var terrain_material: ShaderMaterial
 func _ready() -> void:
 	indoor = world.state.zone in ["hall", "shop"]
@@ -40,21 +43,44 @@ func _ready() -> void:
 		wetness = 0.8
 	terrain_material = ShaderMaterial.new()
 	terrain_material.shader = preload("res://shaders/terrain_weather.gdshader")
+	terrain_material.set_shader_parameter("material_atlas", YinWorldArt.GROUND)
+	terrain_material.set_shader_parameter("indoor", indoor)
 	world.tile_farm.ground.material = terrain_material
+	if world.state.zone == "farm":
+		soil_material = ShaderMaterial.new()
+		soil_material.shader = preload("res://shaders/soil_material.gdshader")
+		soil_material.set_shader_parameter("material_atlas",YinWorldArt.GROUND)
+		world.tile_farm.soil.material = soil_material
+		refresh_soil()
 	light_field.setup(world)
 	call_deferred("bake")
 func bake() -> void:
+	if not is_inside_tree(): return
 	var size_cells := Vector2i(world.level_size / 32)
 	var image := Image.create(size_cells.x, size_cells.y, false, Image.FORMAT_RGBA8)
+	var types := Image.create(size_cells.x, size_cells.y, false, Image.FORMAT_RGBA8)
 	for y in range(size_cells.y):
 		for x in range(size_cells.x):
 			var tile: int = world.tile_farm.ground.get_cell_atlas_coords(Vector2i(x, y)).x
+			types.set_pixel(x, y, Color(maxi(0,tile)/255.0,0,0,1))
 			var value: float = 1.0 if tile >= 16 or tile == 10 else (0.8 if tile in [11, 12, 13] else 0.04)
 			image.set_pixel(x, y, Color(value, value, value))
+	terrain_types = ImageTexture.create_from_image(types)
+	terrain_material.set_shader_parameter("terrain_types", terrain_types)
+	terrain_material.set_shader_parameter("map_size", world.level_size)
 	ground_mask = ImageTexture.create_from_image(image)
 	light_field.rebuild()
 	refresh_reflections()
 	baked = true
+func refresh_soil() -> void:
+	if soil_material == null: return
+	var flags := PackedByteArray()
+	for plot in world.state.plots: flags.append((2 if plot.tilled else 0)+(1 if plot.watered else 0))
+	if flags == plot_flags: return
+	plot_flags = flags
+	var image := Image.create(8,6,false,Image.FORMAT_RGBA8)
+	for i in range(flags.size()): image.set_pixel(i%8,i/8,Color(1 if flags[i]&2 else 0,1 if flags[i]&1 else 0,0,1))
+	soil_material.set_shader_parameter("plots",ImageTexture.create_from_image(image))
 func refresh_reflections() -> void:
 	for sprite in reflections:
 		if is_instance_valid(sprite): sprite.queue_free()
@@ -87,6 +113,7 @@ func _process(delta: float) -> void:
 	if not baked or not is_instance_valid(world.player): return
 	var game = world.get_tree().get_first_node_in_group("yintian_game")
 	if game != null and game.modal != null: return
+	refresh_soil()
 	time += delta
 	rain = move_toward(rain, 1.0 if world.state.weather == "rain" and not indoor else 0.0, delta * 1.2)
 	wetness = move_toward(wetness, 1.0 if rain > 0.1 else 0.0, delta * (0.14 if rain > 0.1 else 0.025))
@@ -148,7 +175,7 @@ func emit_leaf() -> void:
 	var trees: Array = world.get_tree().get_nodes_in_group("wind_trees").filter(func(t): return not t.is_queued_for_deletion() and t.get_parent() == world.actors and screen.has_point(t.position))
 	if trees.is_empty(): return
 	var tree: Node2D = trees[random.randi_range(0, trees.size() - 1)]
-	leaves.append({"at": tree.position + Vector2(random.randf_range(-25, 20), random.randf_range(-5, 8)), "height": random.randf_range(40, 72), "age": 0.0, "angle": random.randf_range(0, TAU), "phase": random.randf() * TAU, "color": [Color("aab57b"), Color("b8a16a"), Color("7f9b6e")][random.randi_range(0, 2)]})
+	leaves.append({"at": tree.position + Vector2(random.randf_range(-25, 20), random.randf_range(-5, 8)), "height": random.randf_range(65, 110), "age": 0.0, "angle": random.randf_range(0, TAU), "phase": random.randf() * TAU, "color": [Color("aab57b"), Color("b8a16a"), Color("7f9b6e")][random.randi_range(0, 2)]})
 func is_water(at: Vector2) -> bool:
 	var tile: int = world.tile_farm.ground.get_cell_atlas_coords(Vector2i(at / 32)).x
 	return tile in [11, 12, 13]
@@ -160,7 +187,7 @@ func draw_ground(canvas: Node2D) -> void:
 	for tree in world.get_tree().get_nodes_in_group("wind_trees"):
 		if tree.is_queued_for_deletion() or tree.get_parent() != world.actors or not screen.has_point(tree.position): continue
 		canvas.draw_set_transform(tree.position + Vector2(10 - sun * 32 + sin(time + tree.position.x) * wind, 5), -0.15 + sun * 0.3, Vector2(1.0, 0.43))
-		canvas.draw_texture(tree.get_node("ArtSprite").texture, Vector2(-28, -32), Color(0.08, 0.17, 0.17, 0.20 * (1.0 - rain * 0.5)))
+		canvas.draw_texture(tree.get_node("ArtSprite").texture, Vector2(-48, -42), Color(0.08, 0.17, 0.17, 0.20 * (1.0 - rain * 0.5)))
 		canvas.draw_set_transform(Vector2.ZERO)
 	# A shallow projected footprint gives buildings height without altering collisions.
 	for body in world.actors.get_children():

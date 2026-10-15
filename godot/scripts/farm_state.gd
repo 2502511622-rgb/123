@@ -11,6 +11,7 @@ const CROPS = {
 }
 const SPIRITS = {"hungry_ghost": "施食役灵", "wraith": "幽魂役灵", "rakshasa": "罗刹役灵", "kumbhanda": "梦守役灵", "asura": "修罗役灵", "yaksha": "夜叉役灵", "kappa": "河童役灵", "chochin": "纸灯役灵", "ippon_datara": "踏鞴役灵", "jorogumo": "蛛姬役灵", "sogenbi": "罪火役灵", "itsumade": "金羽役灵", "daitengu": "山风役灵", "ryomen_sukuna": "双面武灵", "water": "担水尸", "bone": "掘土骨", "child": "食秽童", "archer": "吐骨役灵", "lantern": "追灯役灵", "gunner": "纸铳役灵", "brute": "山魈役灵", "boss": "棺将", "well_boss": "井中龙婆", "opera_boss": "无面伶王"}
 const INVENTORY_KEYS = ["candle_seeds", "vine_seeds", "gourd_seeds", "rice_seeds", "candle", "vine", "gourd", "rice"]
+var appearance: Dictionary = YinAppearance.initial()
 var temple_journal: Dictionary = YinTemple.initial()
 var factions: Dictionary = YinFactions.initial()
 var island_journal: Dictionary = {"visited": false, "hunted": [], "defeated": []}
@@ -516,14 +517,14 @@ func choose_ending(choice: String) -> String:
 func snapshot() -> Dictionary:
 	YinInventoryModel.new(self, "bag").sync()
 	YinInventoryModel.new(self, "chest").sync()
-	var data: Dictionary = {"version": 10}
+	var data: Dictionary = {"version": 11}
 	for key in save_keys(): data[key] = get(key)
 	data.player_position = [player_position.x, player_position.y]
 	data.saved_facing = [saved_facing.x, saved_facing.y]
 	return data.duplicate(true)
 
 static func save_keys() -> Array:
-	return ["temple_journal", "factions", "island_journal", "opened_chests", "quests", "tracked_quest", "visited_landmarks", "weapon_slots", "active_slot", "skill_ranks", "skill_charges", "skill_timers", "villagers", "letters", "raid_day", "raid_status", "village_integrity", "equipment", "gear_drops", "equipped_gear", "equipped_armor", "next_gear_id", "smart_farming", "day", "money", "energy", "health", "minutes", "weather", "selected_crop", "inventory", "supplies", "storage", "bag_slots", "chest_slots", "terrain", "drops", "placements", "plots", "oil", "talismans", "bones", "ash", "reputation", "cultivation", "pollution", "ward", "hall_level", "spirits", "remains", "cargo", "enemies", "enemy_day", "next_id", "total_harvest", "called_day", "ritual_count", "ritual_path", "boss_spawned", "boss_defeated", "ending", "intro_seen", "zone", "journal", "last_report", "order"]
+	return ["appearance", "temple_journal", "factions", "island_journal", "opened_chests", "quests", "tracked_quest", "visited_landmarks", "weapon_slots", "active_slot", "skill_ranks", "skill_charges", "skill_timers", "villagers", "letters", "raid_day", "raid_status", "village_integrity", "equipment", "gear_drops", "equipped_gear", "equipped_armor", "next_gear_id", "smart_farming", "day", "money", "energy", "health", "minutes", "weather", "selected_crop", "inventory", "supplies", "storage", "bag_slots", "chest_slots", "terrain", "drops", "placements", "plots", "oil", "talismans", "bones", "ash", "reputation", "cultivation", "pollution", "ward", "hall_level", "spirits", "remains", "cargo", "enemies", "enemy_day", "next_id", "total_harvest", "called_day", "ritual_count", "ritual_path", "boss_spawned", "boss_defeated", "ending", "intro_seen", "zone", "journal", "last_report", "order"]
 
 static func valid_int(value: Variant, minimum: int, maximum: int = 100000000) -> bool:
 	return (value is int or value is float) and is_finite(float(value)) and float(value) == floor(float(value)) and value >= minimum and value <= maximum
@@ -532,7 +533,7 @@ static func valid_point(value: Variant) -> bool:
 	return value is Array and value.size() == 2 and (value[0] is float or value[0] is int) and (value[1] is float or value[1] is int) and is_finite(float(value[0])) and is_finite(float(value[1])) and value[0] >= 0 and value[0] <= 2880 and value[1] >= 0 and value[1] <= 1920
 
 func restore(data: Dictionary) -> bool:
-	if not valid_int(data.get("version"), 3, 10): return false
+	if not valid_int(data.get("version"), 3, 11): return false
 	var defaults := FarmState.new()
 	if int(data.version) == 3:
 		data = data.duplicate(true)
@@ -601,6 +602,10 @@ func restore(data: Dictionary) -> bool:
 		data.temple_journal = YinTemple.initial()
 		if not data.get("factions") is Dictionary or not data.factions.get("powers") is Dictionary: return false
 		data.factions.powers.temple = YinFactions.initial().powers.temple
+	if int(data.version)==10:
+		data=data.duplicate(true)
+		data.version=11
+		data.appearance=defaults.appearance.duplicate(true)
 	for key in save_keys():
 		if not data.has(key): return false
 		var expected: Variant = defaults.get(key)
@@ -609,6 +614,7 @@ func restore(data: Dictionary) -> bool:
 		if expected is String and not data[key] is String: return false
 		if expected is Array and not data[key] is Array: return false
 		if expected is Dictionary and not data[key] is Dictionary: return false
+	if not YinAppearance.validate(data.appearance): return false
 	if not YinFactions.validate(data.factions): return false
 	for e in data.enemies:
 		if not e is Dictionary: return false
@@ -732,6 +738,7 @@ func restore(data: Dictionary) -> bool:
 		if not valid_int(data.weapon_slots.get(slot), 0): return false
 		if data.weapon_slots[slot] != 0 and not data.equipment.any(func(gear): return gear.id == data.weapon_slots[slot] and gear_slot(gear.weapon) == slot): return false
 	var normalized: Dictionary = data.duplicate(true)
+	for key in YinAppearance.LABELS: normalized.appearance[key]=int(normalized.appearance[key])
 	YinFactions.normalize(normalized.factions)
 	for e in normalized.enemies:
 		if e.has("war_id"): e.war_id = int(e.war_id)

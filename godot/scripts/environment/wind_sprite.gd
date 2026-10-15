@@ -16,5 +16,5 @@ func _process(delta: float) -> void:
 	material.set_shader_parameter("wetness", environment.wetness)
 	if not is_instance_valid(world.player): return
 	var relative: Vector2 = world.player.position - get_parent().position
-	var under_canopy: bool = absf(relative.x) < 27 and relative.y < -8 and relative.y > -72
+	var under_canopy: bool = absf(relative.x) < 43 and relative.y < -8 and relative.y > -110
 	modulate.a = move_toward(modulate.a, 0.46 if under_canopy else 1.0, delta * 2.5)

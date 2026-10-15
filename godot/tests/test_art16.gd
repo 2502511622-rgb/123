@@ -16,6 +16,9 @@ func capture(name_value: String) -> void:
 		game.player.get_node("Camera2D").reset_smoothing()
 		game.player.get_node("Camera2D").force_update_scroll()
 	await frames()
+	# Visual uniforms update in _process, after a possible batch of physics ticks.
+	await process_frame
+	await process_frame
 	if DisplayServer.get_name() == "headless" or OS.get_environment("YINTIAN_CAPTURE_DIR") == "": return
 	await RenderingServer.frame_post_draw
 	var folder: String = OS.get_environment("YINTIAN_CAPTURE_DIR")
@@ -79,7 +82,7 @@ func run() -> void:
 	enemy.record.hp = enemy.record.max_hp
 	enemy.receive_hit(roundi(enemy.record.max_hp * 0.78), "bullet")
 	var fragments: Array = game.world.feedback.get_children().filter(func(n): return n is YinSeveredLimb)
-	check(not fragments.is_empty() and fragments.all(func(n): return n.source_region.has_area() and n.draw_size.length() > 0 and n.source_texture == YinActorArt.ROSTER), "detached body parts use matching reference atlas regions")
+	check(not fragments.is_empty() and fragments.all(func(n): return n.source_region.has_area() and n.draw_size.length() > 0 and n.source_atlas == YinActorArt.ROSTER), "detached body parts use matching reference atlas regions")
 	check(FarmState.new().restore(JSON.parse_string(JSON.stringify(game.state.snapshot()))), "visual refactor preserves valid persisted gameplay data")
 	game.queue_free()
 	await frames()

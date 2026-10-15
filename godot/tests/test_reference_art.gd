@@ -74,13 +74,10 @@ func run() -> void:
 	for kind in YinBalance.MONSTERS:
 		var pose: Dictionary = YinActorArt.enemy_pose(kind, Vector2.LEFT, 0.2, true, false, kind in YinAbilities.BOSSES)
 		var texture_bounds := Rect2(Vector2.ZERO, pose.texture.get_size())
-		var parts: Array = YinActorArt.pieces(kind, pose)
-		var area: float = 0
-		var valid: bool = texture_bounds.encloses(pose.source)
-		for i in range(parts.size()):
-			area += parts[i].rect.get_area()
-			for j in range(i): valid = valid and not parts[i].rect.intersects(parts[j].rect)
-		check(valid and is_equal_approx(area, 1), kind + " source valid; anatomy covers exactly whole sprite without overlap")
+		var parts: Array = YinActorArt.posed_parts(kind,pose,0.2,true,false)
+		var valid: bool=texture_bounds.encloses(pose.source)
+		for part in parts: valid=valid and part.pose.texture!=null and part.pose.origin_texture==pose.texture and part.pose.source.has_area()
+		check(valid,kind+" anatomical alpha layers trace to complete source pose")
 	for direction in [Vector2.DOWN, Vector2.UP, Vector2.LEFT, Vector2.RIGHT]:
 		var idle: Dictionary = YinActorArt.hero_pose(direction, 0)
 		check(is_zero_approx(idle.destination.end.y) and is_equal_approx(idle.destination.size.y, 58), "hero feet stay anchored in direction " + str(direction))
@@ -111,7 +108,7 @@ func run() -> void:
 	enemy.update_dismemberment()
 	var fragments: Array = game.world.feedback.get_children().filter(func(n): return n is YinSeveredLimb)
 	check(enemy.record.severed == ["arm", "leg", "head"] and fragments.size() == 3, "live enemy detaches all three distinct parts at thresholds")
-	check(fragments.all(func(n): return n.source_texture == YinActorArt.TENGU and n.source_region.has_area() and n.draw_size.length() > 0), "fragments use current new pose regions and exact rendered scale")
+	check(fragments.all(func(n): return n.source_atlas == YinActorArt.TENGU and n.source_region.has_area() and n.draw_size.length() > 0), "fragments use current new pose regions and exact rendered scale")
 	var hp: int = game.state.health
 	enemy.victim = game.player
 	enemy.hurt_victim(20)

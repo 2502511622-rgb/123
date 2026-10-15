@@ -7,6 +7,8 @@ const ENEMIES = preload("res://assets/art16/enemies.png")
 const SCENERY = preload("res://assets/art16/scenery.png")
 static var cache: Dictionary = {}
 static func texture(name_value: String) -> Texture2D:
+	if YinWorldArt.REGIONS.has(name_value): return YinWorldArt.texture(name_value)
+	if name_value == "npc": return YinActorArt.npc_texture(2)
 	if not cache.has(name_value): cache[name_value] = load(ROOT + name_value + ".png")
 	return cache[name_value]
 static func enemy_row(kind: String) -> int:

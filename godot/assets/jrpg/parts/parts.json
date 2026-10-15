@@ -1,0 +1,3974 @@
+{
+	"archer": {
+		"atlas": "roster",
+		"frame": {
+			"anchor": [
+				92.0,
+				254.0
+			],
+			"mirror": false,
+			"rect": [
+				1042.0,
+				561.0,
+				227.0,
+				254.0
+			]
+		},
+		"parts": [
+			{
+				"crop": [
+					0,
+					0,
+					227,
+					254
+				],
+				"joint": "body",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/archer_body.png",
+				"pivot": [
+					0.405286341905594,
+					0.519999980926514
+				]
+			},
+			{
+				"crop": [
+					45,
+					0,
+					137,
+					84
+				],
+				"joint": "head",
+				"part": "head",
+				"path": "res://assets/jrpg/parts/archer_head.png",
+				"pivot": [
+					0.405286341905594,
+					0.330000013113022
+				]
+			},
+			{
+				"crop": [
+					149,
+					71,
+					78,
+					117
+				],
+				"joint": "arm",
+				"part": "arm",
+				"path": "res://assets/jrpg/parts/archer_arm.png",
+				"pivot": [
+					0.689999997615814,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					0,
+					71,
+					77,
+					117
+				],
+				"joint": "arm_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/archer_arm_left.png",
+				"pivot": [
+					0.310000002384186,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					92,
+					185,
+					66,
+					69
+				],
+				"joint": "leg",
+				"part": "leg",
+				"path": "res://assets/jrpg/parts/archer_leg.png",
+				"pivot": [
+					0.475286334753036,
+					0.75
+				]
+			},
+			{
+				"crop": [
+					26,
+					185,
+					66,
+					69
+				],
+				"joint": "leg_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/archer_leg_left.png",
+				"pivot": [
+					0.335286349058151,
+					0.75
+				]
+			}
+		]
+	},
+	"asura": {
+		"atlas": "roster",
+		"frame": {
+			"anchor": [
+				143.0,
+				292.0
+			],
+			"mirror": false,
+			"rect": [
+				1012.0,
+				11.0,
+				284.0,
+				292.0
+			]
+		},
+		"parts": [
+			{
+				"crop": [
+					0,
+					0,
+					284,
+					292
+				],
+				"joint": "body",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/asura_body.png",
+				"pivot": [
+					0.503521144390106,
+					0.519999980926514
+				]
+			},
+			{
+				"crop": [
+					62,
+					0,
+					160,
+					105
+				],
+				"joint": "head",
+				"part": "head",
+				"path": "res://assets/jrpg/parts/asura_head.png",
+				"pivot": [
+					0.503521144390106,
+					0.360000014305115
+				]
+			},
+			{
+				"crop": [
+					187,
+					82,
+					97,
+					134
+				],
+				"joint": "arm",
+				"part": "arm",
+				"path": "res://assets/jrpg/parts/asura_arm.png",
+				"pivot": [
+					0.689999997615814,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					0,
+					82,
+					97,
+					134
+				],
+				"joint": "arm_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/asura_arm_left.png",
+				"pivot": [
+					0.310000002384186,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					143,
+					213,
+					82,
+					79
+				],
+				"joint": "leg",
+				"part": "leg",
+				"path": "res://assets/jrpg/parts/asura_leg.png",
+				"pivot": [
+					0.573521137237549,
+					0.75
+				]
+			},
+			{
+				"crop": [
+					61,
+					213,
+					82,
+					79
+				],
+				"joint": "leg_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/asura_leg_left.png",
+				"pivot": [
+					0.433521121740341,
+					0.75
+				]
+			}
+		]
+	},
+	"bone": {
+		"atlas": "roster",
+		"frame": {
+			"anchor": [
+				90.0,
+				254.0
+			],
+			"mirror": false,
+			"rect": [
+				785.0,
+				561.0,
+				215.0,
+				254.0
+			]
+		},
+		"parts": [
+			{
+				"crop": [
+					0,
+					0,
+					215,
+					254
+				],
+				"joint": "body",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/bone_body.png",
+				"pivot": [
+					0.418604642152786,
+					0.519999980926514
+				]
+			},
+			{
+				"crop": [
+					43,
+					0,
+					129,
+					84
+				],
+				"joint": "head",
+				"part": "head",
+				"path": "res://assets/jrpg/parts/bone_head.png",
+				"pivot": [
+					0.418604642152786,
+					0.330000013113022
+				]
+			},
+			{
+				"crop": [
+					140,
+					71,
+					75,
+					117
+				],
+				"joint": "arm",
+				"part": "arm",
+				"path": "res://assets/jrpg/parts/bone_arm.png",
+				"pivot": [
+					0.689999997615814,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					12,
+					71,
+					61,
+					117
+				],
+				"joint": "arm_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/bone_arm_left.png",
+				"pivot": [
+					0.310000002384186,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					90,
+					185,
+					62,
+					69
+				],
+				"joint": "leg",
+				"part": "leg",
+				"path": "res://assets/jrpg/parts/bone_leg.png",
+				"pivot": [
+					0.488604664802551,
+					0.75
+				]
+			},
+			{
+				"crop": [
+					28,
+					185,
+					62,
+					69
+				],
+				"joint": "leg_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/bone_leg_left.png",
+				"pivot": [
+					0.348604649305344,
+					0.75
+				]
+			}
+		]
+	},
+	"boss": {
+		"atlas": "roster",
+		"frame": {
+			"anchor": [
+				97.0,
+				207.0
+			],
+			"mirror": false,
+			"rect": [
+				1039.0,
+				815.0,
+				194.0,
+				207.0
+			]
+		},
+		"parts": [
+			{
+				"crop": [
+					0,
+					0,
+					194,
+					207
+				],
+				"joint": "body",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/boss_body.png",
+				"pivot": [
+					0.5,
+					0.519999980926514
+				]
+			},
+			{
+				"crop": [
+					39,
+					0,
+					116,
+					68
+				],
+				"joint": "head",
+				"part": "head",
+				"path": "res://assets/jrpg/parts/boss_head.png",
+				"pivot": [
+					0.5,
+					0.330000013113022
+				]
+			},
+			{
+				"crop": [
+					127,
+					58,
+					67,
+					95
+				],
+				"joint": "arm",
+				"part": "arm",
+				"path": "res://assets/jrpg/parts/boss_arm.png",
+				"pivot": [
+					0.689999997615814,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					0,
+					58,
+					67,
+					95
+				],
+				"joint": "arm_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/boss_arm_left.png",
+				"pivot": [
+					0.310000002384186,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					97,
+					151,
+					56,
+					56
+				],
+				"joint": "leg",
+				"part": "leg",
+				"path": "res://assets/jrpg/parts/boss_leg.png",
+				"pivot": [
+					0.569999992847443,
+					0.75
+				]
+			},
+			{
+				"crop": [
+					41,
+					151,
+					56,
+					56
+				],
+				"joint": "leg_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/boss_leg_left.png",
+				"pivot": [
+					0.430000007152557,
+					0.75
+				]
+			}
+		]
+	},
+	"brute": {
+		"atlas": "roster",
+		"frame": {
+			"anchor": [
+				122.5,
+				209.0
+			],
+			"mirror": false,
+			"rect": [
+				257.0,
+				815.0,
+				245.0,
+				209.0
+			]
+		},
+		"parts": [
+			{
+				"crop": [
+					0,
+					0,
+					245,
+					209
+				],
+				"joint": "body",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/brute_body.png",
+				"pivot": [
+					0.5,
+					0.519999980926514
+				]
+			},
+			{
+				"crop": [
+					44,
+					0,
+					172,
+					82
+				],
+				"joint": "head",
+				"part": "head",
+				"path": "res://assets/jrpg/parts/brute_head.png",
+				"pivot": [
+					0.5,
+					0.389999985694885
+				]
+			},
+			{
+				"crop": [
+					163,
+					59,
+					82,
+					96
+				],
+				"joint": "arm",
+				"part": "arm",
+				"path": "res://assets/jrpg/parts/brute_arm.png",
+				"pivot": [
+					0.689999997615814,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					0,
+					59,
+					82,
+					96
+				],
+				"joint": "arm_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/brute_arm_left.png",
+				"pivot": [
+					0.310000002384186,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					122,
+					153,
+					71,
+					56
+				],
+				"joint": "leg",
+				"part": "leg",
+				"path": "res://assets/jrpg/parts/brute_leg.png",
+				"pivot": [
+					0.569999992847443,
+					0.75
+				]
+			},
+			{
+				"crop": [
+					52,
+					153,
+					70,
+					56
+				],
+				"joint": "leg_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/brute_leg_left.png",
+				"pivot": [
+					0.430000007152557,
+					0.75
+				]
+			}
+		]
+	},
+	"chochin": {
+		"atlas": "roster",
+		"frame": {
+			"anchor": [
+				113.5,
+				250.0
+			],
+			"mirror": false,
+			"rect": [
+				270.0,
+				311.0,
+				218.0,
+				250.0
+			]
+		},
+		"parts": [
+			{
+				"crop": [
+					0,
+					0,
+					218,
+					250
+				],
+				"joint": "head",
+				"part": "head",
+				"path": "res://assets/jrpg/parts/chochin_head.png",
+				"pivot": [
+					0.520642220973969,
+					0.330000013113022
+				]
+			}
+		]
+	},
+	"daitengu": {
+		"atlas": "roster",
+		"frame": {
+			"anchor": [
+				124.0,
+				254.0
+			],
+			"mirror": false,
+			"rect": [
+				19.0,
+				561.0,
+				241.0,
+				254.0
+			]
+		},
+		"parts": [
+			{
+				"crop": [
+					0,
+					32,
+					241,
+					222
+				],
+				"joint": "body",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/daitengu_body.png",
+				"pivot": [
+					0.514522850513458,
+					0.519999980926514
+				]
+			},
+			{
+				"crop": [
+					48,
+					0,
+					131,
+					84
+				],
+				"joint": "head",
+				"part": "head",
+				"path": "res://assets/jrpg/parts/daitengu_head.png",
+				"pivot": [
+					0.514522850513458,
+					0.330000013113022
+				]
+			},
+			{
+				"crop": [
+					158,
+					71,
+					83,
+					117
+				],
+				"joint": "arm",
+				"part": "arm",
+				"path": "res://assets/jrpg/parts/daitengu_arm.png",
+				"pivot": [
+					0.689999997615814,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					0,
+					71,
+					84,
+					117
+				],
+				"joint": "arm_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/daitengu_arm_left.png",
+				"pivot": [
+					0.310000002384186,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					124,
+					185,
+					63,
+					69
+				],
+				"joint": "leg",
+				"part": "leg",
+				"path": "res://assets/jrpg/parts/daitengu_leg.png",
+				"pivot": [
+					0.584522843360901,
+					0.75
+				]
+			},
+			{
+				"crop": [
+					54,
+					185,
+					70,
+					69
+				],
+				"joint": "leg_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/daitengu_leg_left.png",
+				"pivot": [
+					0.444522827863693,
+					0.75
+				]
+			}
+		]
+	},
+	"daitengu:0:0": {
+		"atlas": "tengu",
+		"frame": {
+			"anchor": [
+				85.0,
+				288.0
+			],
+			"mirror": false,
+			"rect": [
+				58.0,
+				24.0,
+				234.0,
+				288.0
+			]
+		},
+		"parts": [
+			{
+				"crop": [
+					7,
+					65,
+					227,
+					222
+				],
+				"joint": "body",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/daitengu_0_0_body.png",
+				"pivot": [
+					0.363247871398926,
+					0.519999980926514
+				]
+			},
+			{
+				"crop": [
+					33,
+					0,
+					124,
+					98
+				],
+				"joint": "head",
+				"part": "head",
+				"path": "res://assets/jrpg/parts/daitengu_0_0_head.png",
+				"pivot": [
+					0.363247871398926,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					152,
+					81,
+					65,
+					132
+				],
+				"joint": "arm",
+				"part": "arm",
+				"path": "res://assets/jrpg/parts/daitengu_0_0_arm.png",
+				"pivot": [
+					0.689999997615814,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					0,
+					81,
+					78,
+					132
+				],
+				"joint": "arm_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/daitengu_0_0_arm_left.png",
+				"pivot": [
+					0.310000002384186,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					85,
+					210,
+					68,
+					78
+				],
+				"joint": "leg",
+				"part": "leg",
+				"path": "res://assets/jrpg/parts/daitengu_0_0_leg.png",
+				"pivot": [
+					0.433247864246368,
+					0.75
+				]
+			},
+			{
+				"crop": [
+					19,
+					210,
+					66,
+					78
+				],
+				"joint": "leg_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/daitengu_0_0_leg_left.png",
+				"pivot": [
+					0.293247848749161,
+					0.75
+				]
+			}
+		]
+	},
+	"daitengu:0:1": {
+		"atlas": "tengu",
+		"frame": {
+			"anchor": [
+				100.0,
+				284.0
+			],
+			"mirror": false,
+			"rect": [
+				334.0,
+				24.0,
+				261.0,
+				284.0
+			]
+		},
+		"parts": [
+			{
+				"crop": [
+					19,
+					43,
+					242,
+					240
+				],
+				"joint": "body",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/daitengu_0_1_body.png",
+				"pivot": [
+					0.383141756057739,
+					0.519999980926514
+				]
+			},
+			{
+				"crop": [
+					37,
+					0,
+					140,
+					97
+				],
+				"joint": "head",
+				"part": "head",
+				"path": "res://assets/jrpg/parts/daitengu_0_1_head.png",
+				"pivot": [
+					0.383141756057739,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					170,
+					80,
+					91,
+					130
+				],
+				"joint": "arm",
+				"part": "arm",
+				"path": "res://assets/jrpg/parts/daitengu_0_1_arm.png",
+				"pivot": [
+					0.689999997615814,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					0,
+					81,
+					87,
+					129
+				],
+				"joint": "arm_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/daitengu_0_1_arm_left.png",
+				"pivot": [
+					0.310000002384186,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					100,
+					207,
+					69,
+					77
+				],
+				"joint": "leg",
+				"part": "leg",
+				"path": "res://assets/jrpg/parts/daitengu_0_1_leg.png",
+				"pivot": [
+					0.453141748905182,
+					0.75
+				]
+			},
+			{
+				"crop": [
+					30,
+					207,
+					70,
+					77
+				],
+				"joint": "leg_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/daitengu_0_1_leg_left.png",
+				"pivot": [
+					0.313141763210297,
+					0.75
+				]
+			}
+		]
+	},
+	"daitengu:0:2": {
+		"atlas": "tengu",
+		"frame": {
+			"anchor": [
+				162.5,
+				286.0
+			],
+			"mirror": false,
+			"rect": [
+				625.0,
+				25.0,
+				256.0,
+				286.0
+			]
+		},
+		"parts": [
+			{
+				"crop": [
+					0,
+					4,
+					249,
+					282
+				],
+				"joint": "body",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/daitengu_0_2_body.png",
+				"pivot": [
+					0.634765625,
+					0.519999980926514
+				]
+			},
+			{
+				"crop": [
+					1,
+					0,
+					178,
+					97
+				],
+				"joint": "head",
+				"part": "head",
+				"path": "res://assets/jrpg/parts/daitengu_0_2_head.png",
+				"pivot": [
+					0.634765625,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					170,
+					80,
+					86,
+					132
+				],
+				"joint": "arm",
+				"part": "arm",
+				"path": "res://assets/jrpg/parts/daitengu_0_2_arm.png",
+				"pivot": [
+					0.689999997615814,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					15,
+					80,
+					73,
+					132
+				],
+				"joint": "arm_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/daitengu_0_2_arm_left.png",
+				"pivot": [
+					0.310000002384186,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					162,
+					209,
+					75,
+					77
+				],
+				"joint": "leg",
+				"part": "leg",
+				"path": "res://assets/jrpg/parts/daitengu_0_2_leg.png",
+				"pivot": [
+					0.704765617847443,
+					0.75
+				]
+			},
+			{
+				"crop": [
+					93,
+					209,
+					69,
+					75
+				],
+				"joint": "leg_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/daitengu_0_2_leg_left.png",
+				"pivot": [
+					0.564765632152557,
+					0.75
+				]
+			}
+		]
+	},
+	"daitengu:0:3": {
+		"atlas": "tengu",
+		"frame": {
+			"anchor": [
+				183.0,
+				291.0
+			],
+			"mirror": false,
+			"rect": [
+				916.0,
+				19.0,
+				332.0,
+				291.0
+			]
+		},
+		"parts": [
+			{
+				"crop": [
+					0,
+					0,
+					306,
+					291
+				],
+				"joint": "body",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/daitengu_0_3_body.png",
+				"pivot": [
+					0.551204800605774,
+					0.519999980926514
+				]
+			},
+			{
+				"crop": [
+					180,
+					26,
+					96,
+					55
+				],
+				"joint": "head",
+				"part": "head",
+				"path": "res://assets/jrpg/parts/daitengu_0_3_head.png",
+				"pivot": [
+					0.551204800605774,
+					0.280000001192093
+				]
+			},
+			{
+				"crop": [
+					216,
+					81,
+					116,
+					134
+				],
+				"joint": "arm",
+				"part": "arm",
+				"path": "res://assets/jrpg/parts/daitengu_0_3_arm.png",
+				"pivot": [
+					0.689999997615814,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					0,
+					81,
+					116,
+					134
+				],
+				"joint": "arm_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/daitengu_0_3_arm_left.png",
+				"pivot": [
+					0.310000002384186,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					183,
+					212,
+					96,
+					79
+				],
+				"joint": "leg",
+				"part": "leg",
+				"path": "res://assets/jrpg/parts/daitengu_0_3_leg.png",
+				"pivot": [
+					0.621204793453217,
+					0.75
+				]
+			},
+			{
+				"crop": [
+					87,
+					212,
+					96,
+					79
+				],
+				"joint": "leg_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/daitengu_0_3_leg_left.png",
+				"pivot": [
+					0.481204807758331,
+					0.75
+				]
+			}
+		]
+	},
+	"daitengu:1:0": {
+		"atlas": "tengu",
+		"frame": {
+			"anchor": [
+				136.0,
+				287.0
+			],
+			"mirror": false,
+			"rect": [
+				33.0,
+				321.0,
+				221.0,
+				287.0
+			]
+		},
+		"parts": [
+			{
+				"crop": [
+					0,
+					47,
+					221,
+					240
+				],
+				"joint": "body",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/daitengu_1_0_body.png",
+				"pivot": [
+					0.615384638309479,
+					0.519999980926514
+				]
+			},
+			{
+				"crop": [
+					66,
+					0,
+					126,
+					98
+				],
+				"joint": "head",
+				"part": "head",
+				"path": "res://assets/jrpg/parts/daitengu_1_0_head.png",
+				"pivot": [
+					0.615384638309479,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					147,
+					85,
+					74,
+					127
+				],
+				"joint": "arm",
+				"part": "arm",
+				"path": "res://assets/jrpg/parts/daitengu_1_0_arm.png",
+				"pivot": [
+					0.689999997615814,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					10,
+					80,
+					67,
+					132
+				],
+				"joint": "arm_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/daitengu_1_0_arm_left.png",
+				"pivot": [
+					0.310000002384186,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					136,
+					210,
+					64,
+					77
+				],
+				"joint": "leg",
+				"part": "leg",
+				"path": "res://assets/jrpg/parts/daitengu_1_0_leg.png",
+				"pivot": [
+					0.685384631156921,
+					0.75
+				]
+			},
+			{
+				"crop": [
+					72,
+					210,
+					64,
+					77
+				],
+				"joint": "leg_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/daitengu_1_0_leg_left.png",
+				"pivot": [
+					0.545384585857391,
+					0.75
+				]
+			}
+		]
+	},
+	"daitengu:1:1": {
+		"atlas": "tengu",
+		"frame": {
+			"anchor": [
+				138.0,
+				289.0
+			],
+			"mirror": false,
+			"rect": [
+				333.0,
+				319.0,
+				244.0,
+				289.0
+			]
+		},
+		"parts": [
+			{
+				"crop": [
+					2,
+					51,
+					226,
+					234
+				],
+				"joint": "body",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/daitengu_1_1_body.png",
+				"pivot": [
+					0.565573751926422,
+					0.519999980926514
+				]
+			},
+			{
+				"crop": [
+					73,
+					0,
+					127,
+					98
+				],
+				"joint": "head",
+				"part": "head",
+				"path": "res://assets/jrpg/parts/daitengu_1_1_head.png",
+				"pivot": [
+					0.565573751926422,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					162,
+					83,
+					82,
+					131
+				],
+				"joint": "arm",
+				"part": "arm",
+				"path": "res://assets/jrpg/parts/daitengu_1_1_arm.png",
+				"pivot": [
+					0.689999997615814,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					0,
+					81,
+					85,
+					133
+				],
+				"joint": "arm_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/daitengu_1_1_arm_left.png",
+				"pivot": [
+					0.310000002384186,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					138,
+					211,
+					51,
+					78
+				],
+				"joint": "leg",
+				"part": "leg",
+				"path": "res://assets/jrpg/parts/daitengu_1_1_leg.png",
+				"pivot": [
+					0.635573744773865,
+					0.75
+				]
+			},
+			{
+				"crop": [
+					77,
+					211,
+					61,
+					78
+				],
+				"joint": "leg_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/daitengu_1_1_leg_left.png",
+				"pivot": [
+					0.495573759078979,
+					0.75
+				]
+			}
+		]
+	},
+	"daitengu:1:2": {
+		"atlas": "tengu",
+		"frame": {
+			"anchor": [
+				154.5,
+				287.0
+			],
+			"mirror": false,
+			"rect": [
+				638.0,
+				321.0,
+				238.0,
+				287.0
+			]
+		},
+		"parts": [
+			{
+				"crop": [
+					0,
+					48,
+					234,
+					239
+				],
+				"joint": "body",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/daitengu_1_2_body.png",
+				"pivot": [
+					0.649159669876099,
+					0.519999980926514
+				]
+			},
+			{
+				"crop": [
+					71,
+					0,
+					145,
+					98
+				],
+				"joint": "head",
+				"part": "head",
+				"path": "res://assets/jrpg/parts/daitengu_1_2_head.png",
+				"pivot": [
+					0.649159669876099,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					158,
+					85,
+					80,
+					127
+				],
+				"joint": "arm",
+				"part": "arm",
+				"path": "res://assets/jrpg/parts/daitengu_1_2_arm.png",
+				"pivot": [
+					0.689999997615814,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					3,
+					80,
+					80,
+					132
+				],
+				"joint": "arm_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/daitengu_1_2_arm_left.png",
+				"pivot": [
+					0.310000002384186,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					154,
+					210,
+					69,
+					77
+				],
+				"joint": "leg",
+				"part": "leg",
+				"path": "res://assets/jrpg/parts/daitengu_1_2_leg.png",
+				"pivot": [
+					0.719159662723541,
+					0.75
+				]
+			},
+			{
+				"crop": [
+					86,
+					210,
+					68,
+					77
+				],
+				"joint": "leg_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/daitengu_1_2_leg_left.png",
+				"pivot": [
+					0.579159677028656,
+					0.75
+				]
+			}
+		]
+	},
+	"daitengu:1:3": {
+		"atlas": "tengu",
+		"frame": {
+			"anchor": [
+				234.5,
+				291.0
+			],
+			"mirror": false,
+			"rect": [
+				891.0,
+				321.0,
+				350.0,
+				291.0
+			]
+		},
+		"parts": [
+			{
+				"crop": [
+					0,
+					0,
+					350,
+					290
+				],
+				"joint": "body",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/daitengu_1_3_body.png",
+				"pivot": [
+					0.670000016689301,
+					0.519999980926514
+				]
+			},
+			{
+				"crop": [
+					196,
+					1,
+					154,
+					80
+				],
+				"joint": "head",
+				"part": "head",
+				"path": "res://assets/jrpg/parts/daitengu_1_3_head.png",
+				"pivot": [
+					0.670000016689301,
+					0.280000001192093
+				]
+			},
+			{
+				"crop": [
+					228,
+					81,
+					122,
+					134
+				],
+				"joint": "arm",
+				"part": "arm",
+				"path": "res://assets/jrpg/parts/daitengu_1_3_arm.png",
+				"pivot": [
+					0.689999997615814,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					0,
+					81,
+					122,
+					134
+				],
+				"joint": "arm_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/daitengu_1_3_arm_left.png",
+				"pivot": [
+					0.310000002384186,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					234,
+					212,
+					101,
+					79
+				],
+				"joint": "leg",
+				"part": "leg",
+				"path": "res://assets/jrpg/parts/daitengu_1_3_leg.png",
+				"pivot": [
+					0.740000009536743,
+					0.75
+				]
+			},
+			{
+				"crop": [
+					134,
+					212,
+					100,
+					79
+				],
+				"joint": "leg_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/daitengu_1_3_leg_left.png",
+				"pivot": [
+					0.600000023841858,
+					0.75
+				]
+			}
+		]
+	},
+	"daitengu:2:0": {
+		"atlas": "tengu",
+		"frame": {
+			"anchor": [
+				69.0,
+				281.0
+			],
+			"mirror": false,
+			"rect": [
+				28.0,
+				626.0,
+				227.0,
+				281.0
+			]
+		},
+		"parts": [
+			{
+				"crop": [
+					0,
+					8,
+					227,
+					269
+				],
+				"joint": "body",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/daitengu_2_0_body.png",
+				"pivot": [
+					0.303964763879776,
+					0.519999980926514
+				]
+			},
+			{
+				"crop": [
+					0,
+					0,
+					152,
+					96
+				],
+				"joint": "head",
+				"part": "head",
+				"path": "res://assets/jrpg/parts/daitengu_2_0_head.png",
+				"pivot": [
+					0.303964763879776,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					148,
+					79,
+					68,
+					129
+				],
+				"joint": "arm",
+				"part": "arm",
+				"path": "res://assets/jrpg/parts/daitengu_2_0_arm.png",
+				"pivot": [
+					0.689999997615814,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					0,
+					79,
+					76,
+					129
+				],
+				"joint": "arm_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/daitengu_2_0_arm_left.png",
+				"pivot": [
+					0.310000002384186,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					69,
+					205,
+					62,
+					76
+				],
+				"joint": "leg",
+				"part": "leg",
+				"path": "res://assets/jrpg/parts/daitengu_2_0_leg.png",
+				"pivot": [
+					0.373964756727219,
+					0.75
+				]
+			},
+			{
+				"crop": [
+					9,
+					205,
+					60,
+					76
+				],
+				"joint": "leg_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/daitengu_2_0_leg_left.png",
+				"pivot": [
+					0.233964756131172,
+					0.75
+				]
+			}
+		]
+	},
+	"daitengu:2:1": {
+		"atlas": "tengu",
+		"frame": {
+			"anchor": [
+				84.0,
+				273.0
+			],
+			"mirror": false,
+			"rect": [
+				319.0,
+				626.0,
+				266.0,
+				273.0
+			]
+		},
+		"parts": [
+			{
+				"crop": [
+					0,
+					63,
+					266,
+					210
+				],
+				"joint": "body",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/daitengu_2_1_body.png",
+				"pivot": [
+					0.315789461135864,
+					0.519999980926514
+				]
+			},
+			{
+				"crop": [
+					4,
+					0,
+					165,
+					93
+				],
+				"joint": "head",
+				"part": "head",
+				"path": "res://assets/jrpg/parts/daitengu_2_1_head.png",
+				"pivot": [
+					0.315789461135864,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					173,
+					76,
+					71,
+					126
+				],
+				"joint": "arm",
+				"part": "arm",
+				"path": "res://assets/jrpg/parts/daitengu_2_1_arm.png",
+				"pivot": [
+					0.689999997615814,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					1,
+					76,
+					88,
+					126
+				],
+				"joint": "arm_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/daitengu_2_1_arm_left.png",
+				"pivot": [
+					0.310000002384186,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					84,
+					199,
+					77,
+					74
+				],
+				"joint": "leg",
+				"part": "leg",
+				"path": "res://assets/jrpg/parts/daitengu_2_1_leg.png",
+				"pivot": [
+					0.385789483785629,
+					0.75
+				]
+			},
+			{
+				"crop": [
+					8,
+					199,
+					76,
+					74
+				],
+				"joint": "leg_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/daitengu_2_1_leg_left.png",
+				"pivot": [
+					0.245789468288422,
+					0.75
+				]
+			}
+		]
+	},
+	"daitengu:2:2": {
+		"atlas": "tengu",
+		"frame": {
+			"anchor": [
+				83.0,
+				277.0
+			],
+			"mirror": false,
+			"rect": [
+				635.0,
+				630.0,
+				256.0,
+				277.0
+			]
+		},
+		"parts": [
+			{
+				"crop": [
+					0,
+					62,
+					256,
+					215
+				],
+				"joint": "body",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/daitengu_2_2_body.png",
+				"pivot": [
+					0.32421875,
+					0.519999980926514
+				]
+			},
+			{
+				"crop": [
+					3,
+					0,
+					170,
+					94
+				],
+				"joint": "head",
+				"part": "head",
+				"path": "res://assets/jrpg/parts/daitengu_2_2_head.png",
+				"pivot": [
+					0.32421875,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					167,
+					78,
+					70,
+					127
+				],
+				"joint": "arm",
+				"part": "arm",
+				"path": "res://assets/jrpg/parts/daitengu_2_2_arm.png",
+				"pivot": [
+					0.689999997615814,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					3,
+					78,
+					83,
+					127
+				],
+				"joint": "arm_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/daitengu_2_2_arm_left.png",
+				"pivot": [
+					0.310000002384186,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					83,
+					202,
+					74,
+					75
+				],
+				"joint": "leg",
+				"part": "leg",
+				"path": "res://assets/jrpg/parts/daitengu_2_2_leg.png",
+				"pivot": [
+					0.394218742847443,
+					0.75
+				]
+			},
+			{
+				"crop": [
+					9,
+					202,
+					74,
+					75
+				],
+				"joint": "leg_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/daitengu_2_2_leg_left.png",
+				"pivot": [
+					0.254218757152557,
+					0.75
+				]
+			}
+		]
+	},
+	"daitengu:2:3": {
+		"atlas": "tengu",
+		"frame": {
+			"anchor": [
+				194.0,
+				287.0
+			],
+			"mirror": false,
+			"rect": [
+				906.0,
+				628.0,
+				340.0,
+				287.0
+			]
+		},
+		"parts": [
+			{
+				"crop": [
+					0,
+					0,
+					330,
+					287
+				],
+				"joint": "body",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/daitengu_2_3_body.png",
+				"pivot": [
+					0.570588231086731,
+					0.519999980926514
+				]
+			},
+			{
+				"crop": [
+					184,
+					20,
+					112,
+					60
+				],
+				"joint": "head",
+				"part": "head",
+				"path": "res://assets/jrpg/parts/daitengu_2_3_head.png",
+				"pivot": [
+					0.570588231086731,
+					0.280000001192093
+				]
+			},
+			{
+				"crop": [
+					221,
+					80,
+					119,
+					132
+				],
+				"joint": "arm",
+				"part": "arm",
+				"path": "res://assets/jrpg/parts/daitengu_2_3_arm.png",
+				"pivot": [
+					0.689999997615814,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					2,
+					80,
+					117,
+					132
+				],
+				"joint": "arm_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/daitengu_2_3_arm_left.png",
+				"pivot": [
+					0.310000002384186,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					194,
+					210,
+					98,
+					77
+				],
+				"joint": "leg",
+				"part": "leg",
+				"path": "res://assets/jrpg/parts/daitengu_2_3_leg.png",
+				"pivot": [
+					0.640588223934174,
+					0.75
+				]
+			},
+			{
+				"crop": [
+					96,
+					210,
+					98,
+					77
+				],
+				"joint": "leg_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/daitengu_2_3_leg_left.png",
+				"pivot": [
+					0.500588238239288,
+					0.75
+				]
+			}
+		]
+	},
+	"daitengu:3:0": {
+		"atlas": "tengu",
+		"frame": {
+			"anchor": [
+				145.0,
+				298.0
+			],
+			"mirror": false,
+			"rect": [
+				17.0,
+				916.0,
+				215.0,
+				298.0
+			]
+		},
+		"parts": [
+			{
+				"crop": [
+					0,
+					66,
+					210,
+					226
+				],
+				"joint": "body",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/daitengu_3_0_body.png",
+				"pivot": [
+					0.67441862821579,
+					0.519999980926514
+				]
+			},
+			{
+				"crop": [
+					64,
+					0,
+					144,
+					101
+				],
+				"joint": "head",
+				"part": "head",
+				"path": "res://assets/jrpg/parts/daitengu_3_0_head.png",
+				"pivot": [
+					0.67441862821579,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					143,
+					94,
+					72,
+					127
+				],
+				"joint": "arm",
+				"part": "arm",
+				"path": "res://assets/jrpg/parts/daitengu_3_0_arm.png",
+				"pivot": [
+					0.689999997615814,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					14,
+					83,
+					61,
+					138
+				],
+				"joint": "arm_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/daitengu_3_0_arm_left.png",
+				"pivot": [
+					0.310000002384186,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					145,
+					218,
+					61,
+					80
+				],
+				"joint": "leg",
+				"part": "leg",
+				"path": "res://assets/jrpg/parts/daitengu_3_0_leg.png",
+				"pivot": [
+					0.744418621063232,
+					0.75
+				]
+			},
+			{
+				"crop": [
+					87,
+					218,
+					58,
+					78
+				],
+				"joint": "leg_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/daitengu_3_0_leg_left.png",
+				"pivot": [
+					0.604418575763702,
+					0.75
+				]
+			}
+		]
+	},
+	"daitengu:3:1": {
+		"atlas": "tengu",
+		"frame": {
+			"anchor": [
+				174.5,
+				287.0
+			],
+			"mirror": false,
+			"rect": [
+				304.0,
+				916.0,
+				268.0,
+				287.0
+			]
+		},
+		"parts": [
+			{
+				"crop": [
+					0,
+					65,
+					268,
+					219
+				],
+				"joint": "body",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/daitengu_3_1_body.png",
+				"pivot": [
+					0.651119410991669,
+					0.519999980926514
+				]
+			},
+			{
+				"crop": [
+					84,
+					0,
+					157,
+					98
+				],
+				"joint": "head",
+				"part": "head",
+				"path": "res://assets/jrpg/parts/daitengu_3_1_head.png",
+				"pivot": [
+					0.651119410991669,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					178,
+					91,
+					83,
+					121
+				],
+				"joint": "arm",
+				"part": "arm",
+				"path": "res://assets/jrpg/parts/daitengu_3_1_arm.png",
+				"pivot": [
+					0.689999997615814,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					16,
+					80,
+					78,
+					132
+				],
+				"joint": "arm_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/daitengu_3_1_arm_left.png",
+				"pivot": [
+					0.310000002384186,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					174,
+					210,
+					73,
+					77
+				],
+				"joint": "leg",
+				"part": "leg",
+				"path": "res://assets/jrpg/parts/daitengu_3_1_leg.png",
+				"pivot": [
+					0.721119403839111,
+					0.75
+				]
+			},
+			{
+				"crop": [
+					100,
+					210,
+					74,
+					77
+				],
+				"joint": "leg_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/daitengu_3_1_leg_left.png",
+				"pivot": [
+					0.581119418144226,
+					0.75
+				]
+			}
+		]
+	},
+	"daitengu:3:2": {
+		"atlas": "tengu",
+		"frame": {
+			"anchor": [
+				172.0,
+				291.0
+			],
+			"mirror": false,
+			"rect": [
+				632.0,
+				917.0,
+				263.0,
+				291.0
+			]
+		},
+		"parts": [
+			{
+				"crop": [
+					0,
+					66,
+					263,
+					223
+				],
+				"joint": "body",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/daitengu_3_2_body.png",
+				"pivot": [
+					0.653992414474487,
+					0.519999980926514
+				]
+			},
+			{
+				"crop": [
+					82,
+					0,
+					155,
+					99
+				],
+				"joint": "head",
+				"part": "head",
+				"path": "res://assets/jrpg/parts/daitengu_3_2_head.png",
+				"pivot": [
+					0.653992414474487,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					175,
+					94,
+					87,
+					121
+				],
+				"joint": "arm",
+				"part": "arm",
+				"path": "res://assets/jrpg/parts/daitengu_3_2_arm.png",
+				"pivot": [
+					0.689999997615814,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					10,
+					81,
+					82,
+					134
+				],
+				"joint": "arm_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/daitengu_3_2_arm_left.png",
+				"pivot": [
+					0.310000002384186,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					172,
+					212,
+					74,
+					79
+				],
+				"joint": "leg",
+				"part": "leg",
+				"path": "res://assets/jrpg/parts/daitengu_3_2_leg.png",
+				"pivot": [
+					0.72399240732193,
+					0.75
+				]
+			},
+			{
+				"crop": [
+					97,
+					212,
+					75,
+					79
+				],
+				"joint": "leg_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/daitengu_3_2_leg_left.png",
+				"pivot": [
+					0.583992421627045,
+					0.75
+				]
+			}
+		]
+	},
+	"daitengu:3:3": {
+		"atlas": "tengu",
+		"frame": {
+			"anchor": [
+				199.0,
+				296.0
+			],
+			"mirror": false,
+			"rect": [
+				906.0,
+				915.0,
+				335.0,
+				296.0
+			]
+		},
+		"parts": [
+			{
+				"crop": [
+					0,
+					0,
+					335,
+					296
+				],
+				"joint": "body",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/daitengu_3_3_body.png",
+				"pivot": [
+					0.59402984380722,
+					0.519999980926514
+				]
+			},
+			{
+				"crop": [
+					181,
+					0,
+					135,
+					83
+				],
+				"joint": "head",
+				"part": "head",
+				"path": "res://assets/jrpg/parts/daitengu_3_3_head.png",
+				"pivot": [
+					0.59402984380722,
+					0.280000001192093
+				]
+			},
+			{
+				"crop": [
+					218,
+					83,
+					117,
+					136
+				],
+				"joint": "arm",
+				"part": "arm",
+				"path": "res://assets/jrpg/parts/daitengu_3_3_arm.png",
+				"pivot": [
+					0.689999997615814,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					0,
+					83,
+					117,
+					136
+				],
+				"joint": "arm_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/daitengu_3_3_arm_left.png",
+				"pivot": [
+					0.310000002384186,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					199,
+					216,
+					95,
+					78
+				],
+				"joint": "leg",
+				"part": "leg",
+				"path": "res://assets/jrpg/parts/daitengu_3_3_leg.png",
+				"pivot": [
+					0.664029836654663,
+					0.75
+				]
+			},
+			{
+				"crop": [
+					102,
+					216,
+					97,
+					80
+				],
+				"joint": "leg_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/daitengu_3_3_leg_left.png",
+				"pivot": [
+					0.524029850959778,
+					0.75
+				]
+			}
+		]
+	},
+	"gunner": {
+		"atlas": "roster",
+		"frame": {
+			"anchor": [
+				109.0,
+				207.0
+			],
+			"mirror": false,
+			"rect": [
+				14.0,
+				815.0,
+				226.0,
+				207.0
+			]
+		},
+		"parts": [
+			{
+				"crop": [
+					3,
+					0,
+					223,
+					207
+				],
+				"joint": "body",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/gunner_body.png",
+				"pivot": [
+					0.482300877571106,
+					0.519999980926514
+				]
+			},
+			{
+				"crop": [
+					45,
+					0,
+					136,
+					68
+				],
+				"joint": "head",
+				"part": "head",
+				"path": "res://assets/jrpg/parts/gunner_head.png",
+				"pivot": [
+					0.482300877571106,
+					0.330000013113022
+				]
+			},
+			{
+				"crop": [
+					147,
+					58,
+					53,
+					95
+				],
+				"joint": "arm",
+				"part": "arm",
+				"path": "res://assets/jrpg/parts/gunner_arm.png",
+				"pivot": [
+					0.689999997615814,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					0,
+					58,
+					78,
+					95
+				],
+				"joint": "arm_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/gunner_arm_left.png",
+				"pivot": [
+					0.310000002384186,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					109,
+					151,
+					52,
+					56
+				],
+				"joint": "leg",
+				"part": "leg",
+				"path": "res://assets/jrpg/parts/gunner_leg.png",
+				"pivot": [
+					0.552300870418549,
+					0.75
+				]
+			},
+			{
+				"crop": [
+					44,
+					151,
+					65,
+					56
+				],
+				"joint": "leg_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/gunner_leg_left.png",
+				"pivot": [
+					0.412300884723663,
+					0.75
+				]
+			}
+		]
+	},
+	"hungry_ghost": {
+		"atlas": "roster",
+		"frame": {
+			"anchor": [
+				93.0,
+				281.0
+			],
+			"mirror": false,
+			"rect": [
+				44.0,
+				22.0,
+				182.0,
+				281.0
+			]
+		},
+		"parts": [
+			{
+				"crop": [
+					0,
+					14,
+					182,
+					267
+				],
+				"joint": "body",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/hungry_ghost_body.png",
+				"pivot": [
+					0.510989010334015,
+					0.519999980926514
+				]
+			},
+			{
+				"crop": [
+					36,
+					0,
+					98,
+					93
+				],
+				"joint": "head",
+				"part": "head",
+				"path": "res://assets/jrpg/parts/hungry_ghost_head.png",
+				"pivot": [
+					0.510989010334015,
+					0.330000013113022
+				]
+			},
+			{
+				"crop": [
+					119,
+					79,
+					63,
+					129
+				],
+				"joint": "arm",
+				"part": "arm",
+				"path": "res://assets/jrpg/parts/hungry_ghost_arm.png",
+				"pivot": [
+					0.689999997615814,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					0,
+					79,
+					63,
+					129
+				],
+				"joint": "arm_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/hungry_ghost_arm_left.png",
+				"pivot": [
+					0.310000002384186,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					93,
+					205,
+					53,
+					76
+				],
+				"joint": "leg",
+				"part": "leg",
+				"path": "res://assets/jrpg/parts/hungry_ghost_leg.png",
+				"pivot": [
+					0.580989003181458,
+					0.75
+				]
+			},
+			{
+				"crop": [
+					40,
+					205,
+					53,
+					76
+				],
+				"joint": "leg_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/hungry_ghost_leg_left.png",
+				"pivot": [
+					0.440989017486572,
+					0.75
+				]
+			}
+		]
+	},
+	"ippon_datara": {
+		"atlas": "roster",
+		"frame": {
+			"anchor": [
+				136.0,
+				250.0
+			],
+			"mirror": false,
+			"rect": [
+				494.0,
+				311.0,
+				237.0,
+				250.0
+			]
+		},
+		"parts": [
+			{
+				"crop": [
+					0,
+					26,
+					237,
+					224
+				],
+				"joint": "body",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/ippon_datara_body.png",
+				"pivot": [
+					0.573839664459229,
+					0.519999980926514
+				]
+			},
+			{
+				"crop": [
+					47,
+					0,
+					143,
+					82
+				],
+				"joint": "head",
+				"part": "head",
+				"path": "res://assets/jrpg/parts/ippon_datara_head.png",
+				"pivot": [
+					0.573839664459229,
+					0.330000013113022
+				]
+			},
+			{
+				"crop": [
+					157,
+					70,
+					80,
+					115
+				],
+				"joint": "arm",
+				"part": "arm",
+				"path": "res://assets/jrpg/parts/ippon_datara_arm.png",
+				"pivot": [
+					0.689999997615814,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					0,
+					70,
+					83,
+					115
+				],
+				"joint": "arm_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/ippon_datara_arm_left.png",
+				"pivot": [
+					0.310000002384186,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					65,
+					182,
+					142,
+					68
+				],
+				"joint": "leg",
+				"part": "leg",
+				"path": "res://assets/jrpg/parts/ippon_datara_leg.png",
+				"pivot": [
+					0.643839657306671,
+					0.75
+				]
+			}
+		]
+	},
+	"itsumade": {
+		"atlas": "roster",
+		"frame": {
+			"anchor": [
+				105.5,
+				250.0
+			],
+			"mirror": false,
+			"rect": [
+				1264.0,
+				311.0,
+				263.0,
+				250.0
+			]
+		},
+		"parts": [
+			{
+				"crop": [
+					1,
+					8,
+					258,
+					232
+				],
+				"joint": "body",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/itsumade_body.png",
+				"pivot": [
+					0.401140689849854,
+					0.519999980926514
+				]
+			},
+			{
+				"crop": [
+					53,
+					0,
+					157,
+					82
+				],
+				"joint": "head",
+				"part": "head",
+				"path": "res://assets/jrpg/parts/itsumade_head.png",
+				"pivot": [
+					0.401140689849854,
+					0.330000013113022
+				]
+			},
+			{
+				"crop": [
+					171,
+					70,
+					92,
+					115
+				],
+				"joint": "arm",
+				"part": "arm",
+				"path": "res://assets/jrpg/parts/itsumade_arm.png",
+				"pivot": [
+					0.689999997615814,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					0,
+					70,
+					89,
+					115
+				],
+				"joint": "arm_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/itsumade_arm_left.png",
+				"pivot": [
+					0.310000002384186,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					105,
+					182,
+					71,
+					68
+				],
+				"joint": "leg",
+				"part": "leg",
+				"path": "res://assets/jrpg/parts/itsumade_leg.png",
+				"pivot": [
+					0.471140682697296,
+					0.75
+				]
+			},
+			{
+				"crop": [
+					39,
+					182,
+					66,
+					68
+				],
+				"joint": "leg_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/itsumade_leg_left.png",
+				"pivot": [
+					0.331140697002411,
+					0.75
+				]
+			}
+		]
+	},
+	"jorogumo": {
+		"atlas": "roster",
+		"frame": {
+			"anchor": [
+				158.5,
+				243.0
+			],
+			"mirror": false,
+			"rect": [
+				755.0,
+				311.0,
+				294.0,
+				243.0
+			]
+		},
+		"parts": [
+			{
+				"crop": [
+					8,
+					39,
+					286,
+					204
+				],
+				"joint": "body",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/jorogumo_body.png",
+				"pivot": [
+					0.53911566734314,
+					0.519999980926514
+				]
+			},
+			{
+				"crop": [
+					59,
+					0,
+					170,
+					80
+				],
+				"joint": "head",
+				"part": "head",
+				"path": "res://assets/jrpg/parts/jorogumo_head.png",
+				"pivot": [
+					0.53911566734314,
+					0.330000013113022
+				]
+			},
+			{
+				"crop": [
+					193,
+					68,
+					101,
+					112
+				],
+				"joint": "arm",
+				"part": "arm",
+				"path": "res://assets/jrpg/parts/jorogumo_arm.png",
+				"pivot": [
+					0.689999997615814,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					0,
+					68,
+					103,
+					112
+				],
+				"joint": "arm_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/jorogumo_arm_left.png",
+				"pivot": [
+					0.310000002384186,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					158,
+					177,
+					85,
+					66
+				],
+				"joint": "leg",
+				"part": "leg",
+				"path": "res://assets/jrpg/parts/jorogumo_leg.png",
+				"pivot": [
+					0.609115660190582,
+					0.75
+				]
+			},
+			{
+				"crop": [
+					74,
+					177,
+					84,
+					66
+				],
+				"joint": "leg_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/jorogumo_leg_left.png",
+				"pivot": [
+					0.469115644693375,
+					0.75
+				]
+			}
+		]
+	},
+	"kappa": {
+		"atlas": "roster",
+		"frame": {
+			"anchor": [
+				100.5,
+				244.0
+			],
+			"mirror": false,
+			"rect": [
+				43.0,
+				317.0,
+				183.0,
+				244.0
+			]
+		},
+		"parts": [
+			{
+				"crop": [
+					15,
+					37,
+					168,
+					207
+				],
+				"joint": "body",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/kappa_body.png",
+				"pivot": [
+					0.549180328845978,
+					0.519999980926514
+				]
+			},
+			{
+				"crop": [
+					18,
+					0,
+					116,
+					83
+				],
+				"joint": "head",
+				"part": "head",
+				"path": "res://assets/jrpg/parts/kappa_head.png",
+				"pivot": [
+					0.549180328845978,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					120,
+					68,
+					63,
+					113
+				],
+				"joint": "arm",
+				"part": "arm",
+				"path": "res://assets/jrpg/parts/kappa_arm.png",
+				"pivot": [
+					0.689999997615814,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					0,
+					68,
+					63,
+					113
+				],
+				"joint": "arm_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/kappa_arm_left.png",
+				"pivot": [
+					0.310000002384186,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					100,
+					178,
+					53,
+					66
+				],
+				"joint": "leg",
+				"part": "leg",
+				"path": "res://assets/jrpg/parts/kappa_leg.png",
+				"pivot": [
+					0.61918032169342,
+					0.75
+				]
+			},
+			{
+				"crop": [
+					48,
+					178,
+					52,
+					66
+				],
+				"joint": "leg_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/kappa_leg_left.png",
+				"pivot": [
+					0.479180335998535,
+					0.75
+				]
+			}
+		]
+	},
+	"kumbhanda": {
+		"atlas": "roster",
+		"frame": {
+			"anchor": [
+				125.0,
+				276.0
+			],
+			"mirror": false,
+			"rect": [
+				756.0,
+				35.0,
+				250.0,
+				276.0
+			]
+		},
+		"parts": [
+			{
+				"crop": [
+					13,
+					43,
+					237,
+					230
+				],
+				"joint": "body",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/kumbhanda_body.png",
+				"pivot": [
+					0.5,
+					0.519999980926514
+				]
+			},
+			{
+				"crop": [
+					54,
+					0,
+					146,
+					91
+				],
+				"joint": "head",
+				"part": "head",
+				"path": "res://assets/jrpg/parts/kumbhanda_head.png",
+				"pivot": [
+					0.5,
+					0.330000013113022
+				]
+			},
+			{
+				"crop": [
+					163,
+					77,
+					87,
+					127
+				],
+				"joint": "arm",
+				"part": "arm",
+				"path": "res://assets/jrpg/parts/kumbhanda_arm.png",
+				"pivot": [
+					0.689999997615814,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					0,
+					77,
+					87,
+					127
+				],
+				"joint": "arm_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/kumbhanda_arm_left.png",
+				"pivot": [
+					0.310000002384186,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					125,
+					201,
+					69,
+					75
+				],
+				"joint": "leg",
+				"part": "leg",
+				"path": "res://assets/jrpg/parts/kumbhanda_leg.png",
+				"pivot": [
+					0.569999992847443,
+					0.75
+				]
+			},
+			{
+				"crop": [
+					54,
+					201,
+					71,
+					75
+				],
+				"joint": "leg_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/kumbhanda_leg_left.png",
+				"pivot": [
+					0.430000007152557,
+					0.75
+				]
+			}
+		]
+	},
+	"lantern": {
+		"atlas": "roster",
+		"frame": {
+			"anchor": [
+				86.0,
+				254.0
+			],
+			"mirror": false,
+			"rect": [
+				1269.0,
+				561.0,
+				221.0,
+				254.0
+			]
+		},
+		"parts": [
+			{
+				"crop": [
+					0,
+					32,
+					219,
+					222
+				],
+				"joint": "body",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/lantern_body.png",
+				"pivot": [
+					0.389140278100967,
+					0.519999980926514
+				]
+			},
+			{
+				"crop": [
+					48,
+					0,
+					129,
+					84
+				],
+				"joint": "head",
+				"part": "head",
+				"path": "res://assets/jrpg/parts/lantern_head.png",
+				"pivot": [
+					0.389140278100967,
+					0.330000013113022
+				]
+			},
+			{
+				"crop": [
+					144,
+					71,
+					77,
+					117
+				],
+				"joint": "arm",
+				"part": "arm",
+				"path": "res://assets/jrpg/parts/lantern_arm.png",
+				"pivot": [
+					0.689999997615814,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					0,
+					71,
+					75,
+					117
+				],
+				"joint": "arm_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/lantern_arm_left.png",
+				"pivot": [
+					0.310000002384186,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					86,
+					185,
+					64,
+					69
+				],
+				"joint": "leg",
+				"part": "leg",
+				"path": "res://assets/jrpg/parts/lantern_leg.png",
+				"pivot": [
+					0.45914027094841,
+					0.75
+				]
+			},
+			{
+				"crop": [
+					25,
+					185,
+					61,
+					69
+				],
+				"joint": "leg_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/lantern_leg_left.png",
+				"pivot": [
+					0.319140285253525,
+					0.75
+				]
+			}
+		]
+	},
+	"opera_boss": {
+		"atlas": "roster",
+		"frame": {
+			"anchor": [
+				116.5,
+				209.0
+			],
+			"mirror": false,
+			"rect": [
+				770.0,
+				815.0,
+				236.0,
+				209.0
+			]
+		},
+		"parts": [
+			{
+				"crop": [
+					1,
+					0,
+					235,
+					209
+				],
+				"joint": "body",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/opera_boss_body.png",
+				"pivot": [
+					0.493644058704376,
+					0.519999980926514
+				]
+			},
+			{
+				"crop": [
+					47,
+					0,
+					142,
+					69
+				],
+				"joint": "head",
+				"part": "head",
+				"path": "res://assets/jrpg/parts/opera_boss_head.png",
+				"pivot": [
+					0.493644058704376,
+					0.330000013113022
+				]
+			},
+			{
+				"crop": [
+					154,
+					59,
+					82,
+					96
+				],
+				"joint": "arm",
+				"part": "arm",
+				"path": "res://assets/jrpg/parts/opera_boss_arm.png",
+				"pivot": [
+					0.689999997615814,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					0,
+					59,
+					82,
+					96
+				],
+				"joint": "arm_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/opera_boss_arm_left.png",
+				"pivot": [
+					0.310000002384186,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					117,
+					153,
+					68,
+					56
+				],
+				"joint": "leg",
+				"part": "leg",
+				"path": "res://assets/jrpg/parts/opera_boss_leg.png",
+				"pivot": [
+					0.563644051551819,
+					0.75
+				]
+			},
+			{
+				"crop": [
+					48,
+					153,
+					69,
+					56
+				],
+				"joint": "leg_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/opera_boss_leg_left.png",
+				"pivot": [
+					0.423644065856934,
+					0.75
+				]
+			}
+		]
+	},
+	"rakshasa": {
+		"atlas": "roster",
+		"frame": {
+			"anchor": [
+				119.0,
+				301.0
+			],
+			"mirror": false,
+			"rect": [
+				498.0,
+				10.0,
+				249.0,
+				301.0
+			]
+		},
+		"parts": [
+			{
+				"crop": [
+					0,
+					14,
+					236,
+					284
+				],
+				"joint": "body",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/rakshasa_body.png",
+				"pivot": [
+					0.477911651134491,
+					0.519999980926514
+				]
+			},
+			{
+				"crop": [
+					55,
+					0,
+					139,
+					108
+				],
+				"joint": "head",
+				"part": "head",
+				"path": "res://assets/jrpg/parts/rakshasa_head.png",
+				"pivot": [
+					0.477911651134491,
+					0.360000014305115
+				]
+			},
+			{
+				"crop": [
+					163,
+					84,
+					86,
+					139
+				],
+				"joint": "arm",
+				"part": "arm",
+				"path": "res://assets/jrpg/parts/rakshasa_arm.png",
+				"pivot": [
+					0.689999997615814,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					0,
+					84,
+					85,
+					139
+				],
+				"joint": "arm_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/rakshasa_arm_left.png",
+				"pivot": [
+					0.310000002384186,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					119,
+					220,
+					70,
+					81
+				],
+				"joint": "leg",
+				"part": "leg",
+				"path": "res://assets/jrpg/parts/rakshasa_leg.png",
+				"pivot": [
+					0.547911643981934,
+					0.75
+				]
+			},
+			{
+				"crop": [
+					49,
+					220,
+					70,
+					81
+				],
+				"joint": "leg_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/rakshasa_leg_left.png",
+				"pivot": [
+					0.407911658287048,
+					0.75
+				]
+			}
+		]
+	},
+	"ryomen_sukuna": {
+		"atlas": "roster",
+		"frame": {
+			"anchor": [
+				122.5,
+				254.0
+			],
+			"mirror": false,
+			"rect": [
+				265.0,
+				561.0,
+				267.0,
+				254.0
+			]
+		},
+		"parts": [
+			{
+				"crop": [
+					0,
+					0,
+					267,
+					254
+				],
+				"joint": "body",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/ryomen_sukuna_body.png",
+				"pivot": [
+					0.458801507949829,
+					0.519999980926514
+				]
+			},
+			{
+				"crop": [
+					63,
+					0,
+					151,
+					84
+				],
+				"joint": "head",
+				"part": "head",
+				"path": "res://assets/jrpg/parts/ryomen_sukuna_head.png",
+				"pivot": [
+					0.458801507949829,
+					0.330000013113022
+				]
+			},
+			{
+				"crop": [
+					174,
+					71,
+					93,
+					117
+				],
+				"joint": "arm",
+				"part": "arm",
+				"path": "res://assets/jrpg/parts/ryomen_sukuna_arm.png",
+				"pivot": [
+					0.689999997615814,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					0,
+					71,
+					92,
+					117
+				],
+				"joint": "arm_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/ryomen_sukuna_arm_left.png",
+				"pivot": [
+					0.310000002384186,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					122,
+					185,
+					78,
+					69
+				],
+				"joint": "leg",
+				"part": "leg",
+				"path": "res://assets/jrpg/parts/ryomen_sukuna_leg.png",
+				"pivot": [
+					0.528801500797272,
+					0.75
+				]
+			},
+			{
+				"crop": [
+					45,
+					185,
+					77,
+					69
+				],
+				"joint": "leg_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/ryomen_sukuna_leg_left.png",
+				"pivot": [
+					0.388801485300064,
+					0.75
+				]
+			}
+		]
+	},
+	"sogenbi": {
+		"atlas": "roster",
+		"frame": {
+			"anchor": [
+				113.5,
+				249.0
+			],
+			"mirror": false,
+			"rect": [
+				1069.0,
+				312.0,
+				163.0,
+				249.0
+			]
+		},
+		"parts": [
+			{
+				"crop": [
+					0,
+					0,
+					163,
+					249
+				],
+				"joint": "body",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/sogenbi_body.png",
+				"pivot": [
+					0.696319043636322,
+					0.519999980926514
+				]
+			}
+		]
+	},
+	"water": {
+		"atlas": "roster",
+		"frame": {
+			"anchor": [
+				98.5,
+				254.0
+			],
+			"mirror": false,
+			"rect": [
+				532.0,
+				561.0,
+				201.0,
+				254.0
+			]
+		},
+		"parts": [
+			{
+				"crop": [
+					0,
+					6,
+					201,
+					248
+				],
+				"joint": "body",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/water_body.png",
+				"pivot": [
+					0.490049749612808,
+					0.519999980926514
+				]
+			},
+			{
+				"crop": [
+					40,
+					0,
+					121,
+					84
+				],
+				"joint": "head",
+				"part": "head",
+				"path": "res://assets/jrpg/parts/water_head.png",
+				"pivot": [
+					0.490049749612808,
+					0.330000013113022
+				]
+			},
+			{
+				"crop": [
+					131,
+					71,
+					70,
+					117
+				],
+				"joint": "arm",
+				"part": "arm",
+				"path": "res://assets/jrpg/parts/water_arm.png",
+				"pivot": [
+					0.689999997615814,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					0,
+					71,
+					70,
+					117
+				],
+				"joint": "arm_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/water_arm_left.png",
+				"pivot": [
+					0.310000002384186,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					99,
+					185,
+					58,
+					69
+				],
+				"joint": "leg",
+				"part": "leg",
+				"path": "res://assets/jrpg/parts/water_leg.png",
+				"pivot": [
+					0.560049772262573,
+					0.75
+				]
+			},
+			{
+				"crop": [
+					40,
+					185,
+					59,
+					69
+				],
+				"joint": "leg_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/water_leg_left.png",
+				"pivot": [
+					0.420049756765366,
+					0.75
+				]
+			}
+		]
+	},
+	"well_boss": {
+		"atlas": "roster",
+		"frame": {
+			"anchor": [
+				122.5,
+				208.0
+			],
+			"mirror": false,
+			"rect": [
+				519.0,
+				815.0,
+				236.0,
+				208.0
+			]
+		},
+		"parts": [
+			{
+				"crop": [
+					0,
+					0,
+					236,
+					208
+				],
+				"joint": "body",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/well_boss_body.png",
+				"pivot": [
+					0.519067823886871,
+					0.519999980926514
+				]
+			},
+			{
+				"crop": [
+					47,
+					0,
+					142,
+					69
+				],
+				"joint": "head",
+				"part": "head",
+				"path": "res://assets/jrpg/parts/well_boss_head.png",
+				"pivot": [
+					0.519067823886871,
+					0.330000013113022
+				]
+			},
+			{
+				"crop": [
+					155,
+					58,
+					81,
+					96
+				],
+				"joint": "arm",
+				"part": "arm",
+				"path": "res://assets/jrpg/parts/well_boss_arm.png",
+				"pivot": [
+					0.689999997615814,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					0,
+					58,
+					82,
+					96
+				],
+				"joint": "arm_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/well_boss_arm_left.png",
+				"pivot": [
+					0.310000002384186,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					122,
+					152,
+					69,
+					56
+				],
+				"joint": "leg",
+				"part": "leg",
+				"path": "res://assets/jrpg/parts/well_boss_leg.png",
+				"pivot": [
+					0.589067816734314,
+					0.75
+				]
+			},
+			{
+				"crop": [
+					54,
+					152,
+					68,
+					56
+				],
+				"joint": "leg_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/well_boss_leg_left.png",
+				"pivot": [
+					0.449067801237106,
+					0.75
+				]
+			}
+		]
+	},
+	"wraith": {
+		"atlas": "roster",
+		"frame": {
+			"anchor": [
+				116.5,
+				295.0
+			],
+			"mirror": false,
+			"rect": [
+				260.0,
+				16.0,
+				227.0,
+				295.0
+			]
+		},
+		"parts": [
+			{
+				"crop": [
+					0,
+					0,
+					227,
+					295
+				],
+				"joint": "body",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/wraith_body.png",
+				"pivot": [
+					0.513215839862823,
+					0.519999980926514
+				]
+			}
+		]
+	},
+	"yaksha": {
+		"atlas": "roster",
+		"frame": {
+			"anchor": [
+				115.0,
+				309.0
+			],
+			"mirror": false,
+			"rect": [
+				1303.0,
+				2.0,
+				219.0,
+				309.0
+			]
+		},
+		"parts": [
+			{
+				"crop": [
+					0,
+					0,
+					219,
+					309
+				],
+				"joint": "body",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/yaksha_body.png",
+				"pivot": [
+					0.525114178657532,
+					0.519999980926514
+				]
+			},
+			{
+				"crop": [
+					62,
+					0,
+					109,
+					111
+				],
+				"joint": "head",
+				"part": "head",
+				"path": "res://assets/jrpg/parts/yaksha_head.png",
+				"pivot": [
+					0.525114178657532,
+					0.360000014305115
+				]
+			},
+			{
+				"crop": [
+					145,
+					87,
+					74,
+					142
+				],
+				"joint": "arm",
+				"part": "arm",
+				"path": "res://assets/jrpg/parts/yaksha_arm.png",
+				"pivot": [
+					0.689999997615814,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					0,
+					87,
+					75,
+					142
+				],
+				"joint": "arm_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/yaksha_arm_left.png",
+				"pivot": [
+					0.310000002384186,
+					0.340000003576279
+				]
+			},
+			{
+				"crop": [
+					115,
+					226,
+					61,
+					83
+				],
+				"joint": "leg",
+				"part": "leg",
+				"path": "res://assets/jrpg/parts/yaksha_leg.png",
+				"pivot": [
+					0.595114171504974,
+					0.75
+				]
+			},
+			{
+				"crop": [
+					52,
+					226,
+					63,
+					83
+				],
+				"joint": "leg_left",
+				"part": "body",
+				"path": "res://assets/jrpg/parts/yaksha_leg_left.png",
+				"pivot": [
+					0.455114156007767,
+					0.75
+				]
+			}
+		]
+	}
+}

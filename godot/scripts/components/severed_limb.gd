@@ -1,5 +1,8 @@
 class_name YinSeveredLimb
 extends Node2D
+var source_atlas: Texture2D
+var origin_region := Rect2()
+var joint: String = ""
 var source_region := Rect2()
 var draw_size := Vector2.ZERO
 var flip_h: bool = false

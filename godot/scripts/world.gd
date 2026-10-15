@@ -16,6 +16,7 @@ const TILE_TEXTURE = preload("res://assets/tiles.png")
 const CROP_TEXTURE = preload("res://assets/crops.png")
 var level_size := Vector2(960, 640)
 var environment_revision: int = 0
+var grass: YinLivingGrass
 var environment: YinEnvironment
 var projectiles: YinProjectiles
 var state: FarmState
@@ -52,6 +53,10 @@ func _ready() -> void:
 	environment.name = "Environment"
 	environment.world = self
 	add_child(environment)
+	grass = YinLivingGrass.new()
+	grass.name = "LivingGrass"
+	grass.world = self
+	add_child(grass)
 	projectiles = YinProjectiles.new()
 	projectiles.name = "Projectiles"
 	projectiles.game = get_tree().get_first_node_in_group("yintian_game")
@@ -178,7 +183,7 @@ func prop(name_text: String, at: Vector2, offset: Vector2, collision_rect: Rect2
 	if name_text == "tree":
 		sprite.texture = YinArt.texture(["tree", "tree_autumn", "tree_pine"][absi(hash(at)) % 3])
 	sprite.centered = false
-	sprite.position = offset
+	sprite.position = Vector2(-48, -124) if name_text == "tree" else (Vector2(-16, -48) if name_text == "npc" else offset)
 	sprite.scale = Vector2.ONE if detailed else Vector2(2, 2)
 	body.add_child(sprite)
 	if name_text == "lantern": body.add_to_group("art_lights")
@@ -299,35 +304,23 @@ func _draw() -> void:
 		draw_rect(Rect2(0, 480, 960, 160), Color("293b3b"))
 		draw_rect(Rect2(0, 120, 176, 360), Color("293b3b"))
 		draw_rect(Rect2(784, 120, 176, 360), Color("293b3b"))
-		draw_rect(Rect2(192, 128, 576, 60), Color("56665d"))
-		for x in range(196, 768, 32):
-			draw_line(Vector2(x, 132), Vector2(x, 184), Color("6f7d6b"), 2)
-		for y in range(192, 478, 16):
-			draw_line(Vector2(192, y), Vector2(768, y), Color("a18b66"), 2)
-			for x in range(192 + (16 if y % 32 == 0 else 0), 768, 64): draw_line(Vector2(x, y), Vector2(x, y + 16), Color("a18b66"), 1)
-		draw_rect(Rect2(420, 278, 120, 74), Color("7e6a4f"))
-		draw_rect(Rect2(424, 282, 112, 66), Color("a5946d"), false, 2)
-		for x in range(432, 532, 12): draw_rect(Rect2(x, 288, 4, 54), Color("8b7959"))
+		draw_texture_rect(YinWorldArt.surface(3),Rect2(192,128,576,60),true,Color("6f756c"))
+		draw_line(Vector2(192,188),Vector2(768,188),Color("4c4838"),2)
 		return
 	if state.zone == "forest":
-		draw_rect(Rect2(948, 544, 88, 96), Color("806a4d"))
-		for y in range(546, 638, 8): draw_rect(Rect2(950, y, 84, 5), Color("b19768"))
-		draw_rect(Rect2(948, 1360, 88, 96), Color("806a4d"))
-		for y in range(1362, 1454, 8): draw_rect(Rect2(950, y, 84, 5), Color("b19768"))
+		draw_texture_rect(YinWorldArt.surface(3),Rect2(948,544,88,96),true)
+		draw_texture_rect(YinWorldArt.surface(3),Rect2(948,1360,88,96),true)
 		return
 	if state.zone == "graveyard":
 		draw_rect(Rect2(0, 0, 960, 640), Color(0.15, 0.21, 0.23, 0.24))
-		for y in range(160, 576, 32): tile(10, Vector2(128, y))
-		for x in range(128, 864, 32): tile(10, Vector2(x, 512))
+
 		return
 	# River banks and plank bridge.
 	draw_rect(Rect2(636, 0, 4, 224), Color("647c61"))
 	draw_rect(Rect2(704, 0, 4, 224), Color("647c61"))
 	draw_rect(Rect2(636, 288, 4, 352), Color("647c61"))
 	draw_rect(Rect2(704, 288, 4, 352), Color("647c61"))
-	draw_rect(Rect2(628, 224, 88, 64), Color("6f6c4e"))
-	for y in range(226, 286, 6):
-		draw_rect(Rect2(630, y, 84, 4), Color("a29268"))
+	draw_texture_rect(YinWorldArt.surface(3),Rect2(628,224,88,64),true)
 	draw_rect(Rect2(628, 224, 88, 4), Color("405548"))
 	draw_rect(Rect2(628, 284, 88, 4), Color("405548"))
 	# Field tiles and crop sprites.
@@ -564,13 +557,9 @@ func build_island() -> void:
 	add_sign(Vector2(1664, 1376), "双面社 ↑ 两面宿傩 · 剑弓交替")
 func draw_island() -> void:
 	for y_range in [Vector2i(704, 832), Vector2i(1216, 1312)]:
-		draw_rect(Rect2(948, y_range.x, 88, y_range.y - y_range.x), Color("927454"))
-		for y in range(y_range.x, y_range.y, 8): draw_rect(Rect2(948, y, 88, 5), Color("c1a16f"))
+		draw_texture_rect(YinWorldArt.surface(3),Rect2(948,y_range.x,88,y_range.y-y_range.x),true)
 	for at in [Vector2(700, 288), Vector2(1568, 256), Vector2(1824, 1120)]:
-		draw_rect(Rect2(at + Vector2(-42, -72), Vector2(8, 76)), Color("935b4e"))
-		draw_rect(Rect2(at + Vector2(34, -72), Vector2(8, 76)), Color("935b4e"))
-		draw_rect(Rect2(at + Vector2(-54, -80), Vector2(108, 8)), Color("483e3d"))
-		draw_rect(Rect2(at + Vector2(-48, -60), Vector2(96, 6)), Color("b0775b"))
+		draw_texture(YinArt.texture("torii"),at-Vector2(64,122))
 	for kind in ["daitengu", "ryomen_sukuna"]:
 		if not YinIsland.available(state, kind):
 			var at: Vector2 = YinIsland.ARENAS[kind]
@@ -617,9 +606,15 @@ func build_temple() -> void:
 
 func draw_temple() -> void:
 	for at in [Vector2(704, 512), Vector2(1248, 288)]:
-		draw_circle(at, 108, Color("706d59"))
-		draw_arc(at, 104, 0, TAU, 48, Color("b8a774"), 3)
-		for i in range(8): draw_line(at + Vector2.from_angle(i * TAU / 8) * 35, at + Vector2.from_angle(i * TAU / 8) * 100, Color("9a8e66"), 2)
+		var points := PackedVector2Array()
+		var uv := PackedVector2Array()
+		for i in range(48):
+			var direction := Vector2.from_angle(TAU*i/48.0)
+			points.append(at+direction*108)
+			uv.append(Vector2(0.5,0.5)+direction*0.5)
+		draw_colored_polygon(points,Color("c0b997"),uv,YinWorldArt.surface(1))
+		draw_arc(at, 104, 0, TAU, 48, Color("a3976d"), 2)
+		for i in range(8): draw_line(at + Vector2.from_angle(i * TAU / 8) * 35, at + Vector2.from_angle(i * TAU / 8) * 100, Color("8b8469"), 1)
 	for at in [Vector2(256, 352), Vector2(448, 352), Vector2(256, 544), Vector2(512, 672)]:
 		draw_texture(YinArt.texture("stupa"), at - Vector2(24, 84))
 	draw_texture(YinArt.texture("buddha"), Vector2(1144, 0))

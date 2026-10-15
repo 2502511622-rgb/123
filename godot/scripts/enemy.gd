@@ -70,8 +70,10 @@ func _physics_process(delta: float) -> void:
 		queue_free()
 		return
 	if game.modal != null or is_queued_for_deletion(): return
-	if freeze_lock <= 0 and hit_stop <= 0: art_clock += delta
+	if freeze_lock <= 0 and hit_stop <= 0: art_clock += delta*(0.62 if "leg" in record.get("severed",[]) else 1.0)
 	if velocity.length() > 2: art_facing = velocity.normalized()
+	material.set_shader_parameter("motion_clock", art_clock)
+	material.set_shader_parameter("motion_amount", 0.0)
 	art_strike = 0.18 if windup > 0 else maxf(0, art_strike - delta)
 	hit_flash = maxf(0, hit_flash - delta)
 	material.set_shader_parameter("flash", 1.0 if hit_flash > 0.065 else 0.0)
@@ -288,15 +290,13 @@ func _draw() -> void:
 	if record.has("faction"):
 		draw_circle(Vector2(0, 1), 13, YinFactions.COLORS[record.faction])
 		draw_string(ThemeDB.fallback_font, Vector2(-18, -72), YinFactions.NAMES[record.faction], HORIZONTAL_ALIGNMENT_LEFT, -1, 10, YinFactions.COLORS[record.faction])
-	draw_rect(Rect2(-12, -3, 24, 5), Color("253b3a66"))
+	YinActorArt.contact_shadow(self,15 if record.kind in YinAbilities.BOSSES else 10)
 	var boss: bool = record.kind in YinAbilities.BOSSES
 	var tint := Color.WHITE if hit_flash > 0.065 else (Color("d79279") if hit_flash > 0 else (Color("8eafd0") if stun > 0.3 or chill_time > 0 else Color.WHITE))
 	if record.kind == "wraith": tint.a = 0.55 if not record.suppressed else 1.0
 	if YinTempleCombat.phantom(self): tint = Color("c8a3e0aa")
 	var missing: Array = record.get("severed", [])
 	var pose: Dictionary = art_pose()
-	var stagger := Vector2(sin(hit_flash * 80) * 1.5, 0) if hit_flash > 0 else Vector2.ZERO
-	draw_set_transform(stagger, -0.035 if hit_flash > 0 else 0.0)
 	YinActorArt.draw_enemy(self, record.kind, pose, missing, art_clock, velocity.length() > 2 and freeze_lock <= 0, art_strike > 0, tint)
 	draw_set_transform(Vector2.ZERO)
 	var art_height: float = -pose.destination.position.y + 7
@@ -348,17 +348,20 @@ func update_dismemberment() -> void:
 			burst_remaining = 0
 			charge_time = 0
 		var pose: Dictionary = art_pose()
-		for piece in YinActorArt.pieces(record.kind, pose):
+		for piece in YinActorArt.posed_parts(record.kind,pose,art_clock,velocity.length()>2 and freeze_lock<=0,art_strike>0):
 			if piece.part != part: continue
-			var cut: Dictionary = YinActorArt.sub_pose(pose, piece.rect)
+			var cut: Dictionary = piece.pose
 			var fragment := YinSeveredLimb.new()
 			fragment.part = part
+			fragment.source_atlas = cut.origin_texture
+			fragment.origin_region = cut.origin_region
+			fragment.joint = cut.joint
 			fragment.source_texture = cut.texture
 			fragment.source_region = cut.source
 			fragment.draw_size = cut.destination.size
 			fragment.flip_h = cut.flip
-			var center: Vector2 = cut.destination.get_center()
-			if cut.flip: center.x = -center.x
+			var center: Vector2 = YinActorArt.part_center(cut)
+			fragment.rotation = float(cut.get("rotation",0))*(-1.0 if cut.flip else 1.0)
 			fragment.position = position + center
 			fragment.height = 0
 			fragment.velocity = game.player.position.direction_to(position).rotated(-0.6 if part == "arm" else 0.6) * 85
@@ -368,7 +371,9 @@ func update_dismemberment() -> void:
 	queue_redraw()
 
 func art_pose() -> Dictionary:
-	return YinActorArt.enemy_pose(record.kind, art_facing, art_clock, velocity.length() > 2, art_strike > 0, record.kind in YinAbilities.BOSSES)
+	var pose: Dictionary = YinActorArt.enemy_pose(record.kind,art_facing,art_clock,velocity.length()>2,art_strike>0,record.kind in YinAbilities.BOSSES)
+	if hit_flash>0: pose.destination.position.x+=sin(hit_flash*80)*1.5
+	return pose
 
 func apply_element(element: String, power: int = 3, harmonious: bool = false) -> void:
 	if record.dead: return
