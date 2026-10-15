@@ -40,6 +40,11 @@ func _ready() -> void:
 	feedback.z_index = 20
 	add_child(feedback)
 	add_child(actors)
+	var scenery := YinScenery.new()
+	scenery.name = "ArtScenery"
+	scenery.world = self
+	scenery.z_index = -1
+	add_child(scenery)
 	level_size = Vector2(1600, 1280) if state.zone == "temple" else Vector2(2240, 1600) if state.zone == "island" else Vector2(2880, 1920) if state.zone == "forest" else (Vector2(1280, 960) if state.zone in ["sunken", "theatre", "village"] else SIZE)
 	projectiles = YinProjectiles.new()
 	projectiles.name = "Projectiles"
@@ -157,11 +162,18 @@ func prop(name_text: String, at: Vector2, offset: Vector2, collision_rect: Rect2
 	body.position = at
 	actors.add_child(body)
 	var sprite := Sprite2D.new()
-	sprite.texture = load("res://assets/%s.png" % name_text)
+	var detailed: bool = name_text in ["cottage", "store", "tree", "lantern", "fence", "rock", "grave", "chest", "altar", "bed", "workbench", "npc"]
+	sprite.texture = YinArt.texture(name_text) if detailed else load("res://assets/%s.png" % name_text)
 	sprite.centered = false
 	sprite.position = offset
-	sprite.scale = Vector2(2, 2)
+	sprite.scale = Vector2.ONE if detailed else Vector2(2, 2)
 	body.add_child(sprite)
+	if name_text == "lantern": body.add_to_group("art_lights")
+	if name_text in ["cottage", "store"]:
+		var window_light := Marker2D.new()
+		window_light.position = Vector2(-32, -44)
+		window_light.add_to_group("art_lights")
+		body.add_child(window_light)
 	var collision := CollisionShape2D.new()
 	var shape := RectangleShape2D.new()
 	shape.size = collision_rect.size
@@ -169,14 +181,15 @@ func prop(name_text: String, at: Vector2, offset: Vector2, collision_rect: Rect2
 	collision.shape = shape
 	body.add_child(collision)
 	obstacles.append(Rect2(at + collision_rect.position, collision_rect.size))
+	get_node("ArtScenery").queue_redraw()
 
 func add_sign(at: Vector2, text: String) -> void:
 	var label := Label.new()
 	label.position = at
 	label.text = text
-	label.add_theme_font_size_override("font_size", 12)
-	label.add_theme_color_override("font_color", Color("f8e2b3"))
-	label.add_theme_color_override("font_shadow_color", Color("574e38"))
+	label.add_theme_font_size_override("font_size", 10)
+	label.add_theme_color_override("font_color", Color("d9cfad"))
+	label.add_theme_color_override("font_shadow_color", Color("172d2d"))
 	label.add_theme_constant_override("shadow_offset_x", 1)
 	label.add_theme_constant_override("shadow_offset_y", 1)
 	add_child(label)
@@ -255,11 +268,12 @@ func _process(delta: float) -> void:
 		queue_redraw()
 
 func tile(id: int, at: Vector2) -> void:
-	draw_texture_rect_region(TILE_TEXTURE, Rect2(at, Vector2(32, 32)), Rect2(id * 16, 0, 16, 16))
+	draw_texture_rect_region(YinArt.terrain(state.zone), Rect2(at, Vector2(32, 32)), Rect2(id * 32, 0, 32, 32))
 
 func _draw() -> void:
 	if state == null:
 		return
+	if state.zone == "village": return
 	if state.zone == "temple":
 		draw_temple()
 		return
@@ -293,15 +307,15 @@ func _draw() -> void:
 		for x in range(128, 864, 32): tile(10, Vector2(x, 512))
 		return
 	# River banks and plank bridge.
-	draw_rect(Rect2(636, 0, 4, 224), Color("c2b47c"))
-	draw_rect(Rect2(704, 0, 4, 224), Color("c2b47c"))
-	draw_rect(Rect2(636, 288, 4, 352), Color("c2b47c"))
-	draw_rect(Rect2(704, 288, 4, 352), Color("c2b47c"))
-	draw_rect(Rect2(628, 224, 88, 64), Color("97704b"))
+	draw_rect(Rect2(636, 0, 4, 224), Color("647c61"))
+	draw_rect(Rect2(704, 0, 4, 224), Color("647c61"))
+	draw_rect(Rect2(636, 288, 4, 352), Color("647c61"))
+	draw_rect(Rect2(704, 288, 4, 352), Color("647c61"))
+	draw_rect(Rect2(628, 224, 88, 64), Color("6f6c4e"))
 	for y in range(226, 286, 6):
-		draw_rect(Rect2(630, y, 84, 4), Color("c1a16b"))
-	draw_rect(Rect2(628, 224, 88, 4), Color("71553b"))
-	draw_rect(Rect2(628, 284, 88, 4), Color("71553b"))
+		draw_rect(Rect2(630, y, 84, 4), Color("a29268"))
+	draw_rect(Rect2(628, 224, 88, 4), Color("405548"))
+	draw_rect(Rect2(628, 284, 88, 4), Color("405548"))
 	# Field tiles and crop sprites.
 	for i in range(state.plots.size()):
 		var p: Dictionary = state.plots[i]
@@ -591,22 +605,8 @@ func draw_temple() -> void:
 		draw_arc(at, 104, 0, TAU, 48, Color("b8a774"), 3)
 		for i in range(8): draw_line(at + Vector2.from_angle(i * TAU / 8) * 35, at + Vector2.from_angle(i * TAU / 8) * 100, Color("9a8e66"), 2)
 	for at in [Vector2(256, 352), Vector2(448, 352), Vector2(256, 544), Vector2(512, 672)]:
-		draw_rect(Rect2(at - Vector2(24, 10), Vector2(48, 20)), Color("757d70"))
-		for floor_index in range(3):
-			var offset := Vector2(0, -18 - floor_index * 18)
-			draw_rect(Rect2(at + offset - Vector2(14, 14), Vector2(28, 18)), Color("a4a48b"))
-			draw_colored_polygon(PackedVector2Array([at + offset + Vector2(-24, -12), at + offset + Vector2(0, -24), at + offset + Vector2(24, -12)]), Color("4a6260"))
-	# Seated stone Buddha, lotus seat and weathered aureole.
-	var statue := Vector2(1248, 156)
-	draw_arc(statue + Vector2(0, -64), 65, 0, TAU, 48, Color("a6996c"), 5)
-	draw_circle(statue + Vector2(0, -100), 19, Color("a9aa8b"))
-	draw_rect(Rect2(statue + Vector2(-14, -121), Vector2(28, 8)), Color("62736d"))
-	draw_colored_polygon(PackedVector2Array([statue + Vector2(-17, -83), statue + Vector2(17, -83), statue + Vector2(42, -12), statue + Vector2(-42, -12)]), Color("969e82"))
-	draw_line(statue + Vector2(-12, -72), statue + Vector2(26, -18), Color("707e6e"), 5)
-	for side in [-1, 1]: draw_line(statue + Vector2(side * 21, -64), statue + Vector2(side * 38, -26), Color("b4b596"), 9)
-	draw_rect(Rect2(statue + Vector2(-88, -12), Vector2(176, 28)), Color("aaa482"))
-	draw_rect(Rect2(statue + Vector2(-104, 16), Vector2(208, 20)), Color("778374"))
-	for i in range(9): draw_circle(statue + Vector2(-72 + i * 18, 0), 9, Color("c2af7b"))
+		draw_texture(YinArt.texture("stupa"), at - Vector2(24, 84))
+	draw_texture(YinArt.texture("buddha"), Vector2(1144, 0))
 	if not YinTemple.available(state, "yaksha"):
 		draw_arc(YinTemple.ARENAS.yaksha, 90, 0, TAU, 40, Color("dabf73"), 3)
 		draw_string(ThemeDB.fallback_font, YinTemple.ARENAS.yaksha + Vector2(-64, 0), "先平息阿修罗战意", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color("ead4a1"))

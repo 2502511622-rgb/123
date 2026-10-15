@@ -1,29 +1,48 @@
 class_name YinPixelTheme
 extends RefCounted
-static func box(bg: String = "e9e0c9", border: String = "798274") -> StyleBoxFlat:
+const TEXT = Color("ded9bf")
+const MUTED = Color("acb6a2")
+const GOLD = Color("c6ac73")
+const INK = Color("152c2b")
+static func box(bg: String = "1b3330", border: String = "66745c") -> StyleBoxFlat:
 	var s := StyleBoxFlat.new()
 	s.bg_color = Color(bg)
 	s.border_color = Color(border)
 	s.set_border_width_all(1)
-	s.set_corner_radius_all(0)
+	s.set_corner_radius_all(1)
 	s.content_margin_left = 8
 	s.content_margin_right = 8
 	s.content_margin_top = 5
 	s.content_margin_bottom = 5
-	s.shadow_color = Color("1e292bcc")
+	s.shadow_color = Color("0d1e2099")
+	s.shadow_size = 3
+	s.shadow_offset = Vector2(1, 2)
+	return s
+static func focus() -> StyleBoxFlat:
+	var s := box("00000000", "ceb47c")
+	s.draw_center = false
 	s.shadow_size = 0
-	s.shadow_offset = Vector2(2, 2)
 	return s
 static func install() -> Theme:
 	var t := Theme.new()
 	t.default_font = preload("res://assets/mossfield-font.ttf")
 	t.default_font_size = 12
-	t.set_stylebox("normal", "Button", box())
-	t.set_stylebox("hover", "Button", box("f0ddb0", "aa8351"))
-	t.set_stylebox("pressed", "Button", box("9caf9b", "405c53"))
-	t.set_stylebox("focus", "Button", box("e1d2ae", "ba8050"))
-	t.set_stylebox("disabled", "Button", box("7c8274", "4c574e"))
-	for state in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
-		t.set_color(state, "Button", Color("33453e"))
-	t.set_color("font_color", "Label", Color("e6d8b8"))
+	for type_name in ["Button", "OptionButton"]:
+		t.set_stylebox("normal", type_name, box())
+		t.set_stylebox("hover", type_name, box("2c463b", "c2a96e"))
+		t.set_stylebox("pressed", type_name, box("3c5140", "d1b67e"))
+		t.set_stylebox("focus", type_name, focus())
+		t.set_stylebox("disabled", type_name, box("172e2c", "3d5349"))
+		for state in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]: t.set_color(state, type_name, TEXT)
+		t.set_color("font_disabled_color", type_name, Color("6c7f70"))
+	for type_name in ["Label", "CheckButton", "CheckBox", "PopupMenu", "LineEdit"]: t.set_color("font_color", type_name, TEXT)
+	t.set_stylebox("panel", "PopupMenu", box("152c2b", "a28e61"))
+	t.set_stylebox("normal", "LineEdit", box("102624", "68775f"))
+	t.set_stylebox("focus", "LineEdit", focus())
+	t.set_color("caret_color", "LineEdit", GOLD)
+	t.set_color("selection_color", "LineEdit", Color("53694c"))
+	t.set_stylebox("panel", "TooltipPanel", box("102725f5", "b19c69"))
+	t.set_color("font_color", "TooltipLabel", TEXT)
+	t.set_stylebox("scroll", "VScrollBar", box("122926", "31473d"))
+	for state in ["grabber", "grabber_highlight", "grabber_pressed"]: t.set_stylebox(state, "VScrollBar", box("718066", "a59d72"))
 	return t

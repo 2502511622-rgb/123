@@ -19,6 +19,7 @@ func strike(tool: int) -> bool:
 	world.effect(position, Color("b7b68d"))
 	if state.terrain[key].hp == 0:
 		world.obstacles.erase(world_rect)
+		world.get_node("ArtScenery").queue_redraw()
 		world.loot_requested.emit("wood" if kind == "tree" else "stone", 2, position)
 		queue_free()
 	return true

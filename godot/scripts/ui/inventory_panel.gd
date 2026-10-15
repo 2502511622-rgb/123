@@ -17,7 +17,7 @@ func _ready() -> void:
 	add_theme_constant_override("separation", 6)
 	hint = Label.new()
 	hint.add_theme_font_size_override("font_size", 10)
-	hint.add_theme_color_override("font_color", Color("48584a"))
+	hint.add_theme_color_override("font_color", YinPixelTheme.TEXT)
 	hint.text = ""
 	hint.visible = false
 	add_child(hint)
@@ -68,7 +68,7 @@ func create_grid(model: YinInventoryModel, name_text: String, parent: Node) -> v
 	var title := Label.new()
 	title.text = name_text
 	title.add_theme_font_size_override("font_size", 11)
-	title.add_theme_color_override("font_color", Color("48584a"))
+	title.add_theme_color_override("font_color", YinPixelTheme.TEXT)
 	column.add_child(title)
 	var grid := GridContainer.new()
 	grid.columns = 6 if show_chest else 8

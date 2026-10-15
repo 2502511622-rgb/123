@@ -202,7 +202,7 @@ func setup_inputs() -> void:
 			event.physical_keycode = key
 			InputMap.action_add_event(action, event)
 
-func style(bg: String = "e1d2ae", border: String = "514b40") -> StyleBoxFlat:
+func style(bg: String = "172e2cf2", border: String = "788064") -> StyleBoxFlat:
 	return YinPixelTheme.box(bg, border)
 
 func panel(at: Vector2, size_value: Vector2, parent: Node = null) -> Panel:
@@ -218,7 +218,7 @@ func label(text: String, at: Vector2, parent: Node, font_size: int = 12) -> Labe
 	l.text = text
 	l.position = at
 	l.add_theme_font_size_override("font_size", font_size)
-	l.add_theme_color_override("font_color", Color("424c42"))
+	l.add_theme_color_override("font_color", Color("ded9bf"))
 	parent.add_child(l)
 	return l
 
@@ -226,14 +226,14 @@ func button(text: String, action: Callable, size_value: Vector2 = Vector2(100, 2
 	var b := Button.new()
 	b.text = text
 	b.custom_minimum_size = size_value
-	b.add_theme_stylebox_override("normal", style("dedecb", "a0a68e"))
-	b.add_theme_stylebox_override("hover", style("f3e8cb", "7c957f"))
-	b.add_theme_stylebox_override("pressed", style("9eb7a4", "586963"))
-	b.add_theme_stylebox_override("focus", style("d3d4b6", "748a76"))
-	b.add_theme_color_override("font_color", Color("3e4a42"))
-	b.add_theme_color_override("font_hover_color", Color("3e4a42"))
-	b.add_theme_color_override("font_focus_color", Color("3e4a42"))
-	b.add_theme_color_override("font_pressed_color", Color("263932"))
+	b.add_theme_stylebox_override("normal", style("1f3732", "617359"))
+	b.add_theme_stylebox_override("hover", style("2d493d", "bea56d"))
+	b.add_theme_stylebox_override("pressed", style("3d5140", "c7af77"))
+	b.add_theme_stylebox_override("focus", YinPixelTheme.focus())
+	b.add_theme_color_override("font_color", Color("ded9bf"))
+	b.add_theme_color_override("font_hover_color", Color("ded9bf"))
+	b.add_theme_color_override("font_focus_color", Color("ded9bf"))
+	b.add_theme_color_override("font_pressed_color", Color("e8dfbf"))
 	b.add_theme_font_size_override("font_size", 11)
 	b.pressed.connect(action)
 	return b
@@ -286,10 +286,10 @@ func build_hud() -> void:
 	context_label = label("", Vector2(5, 3), hint, 9)
 	context_label.size.x = 415
 	context_label.clip_text = true
-	var toast := panel(Vector2(194, 10), Vector2(308, 35))
+	var toast := panel(Vector2(208, 280), Vector2(300, 35))
 	toast.name = "Toast"
 	status_label = label("", Vector2(6, 3), toast, 10)
-	status_label.size = Vector2(296, 29)
+	status_label.size = Vector2(288, 29)
 	status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	minimap = YinMinimap.new()
 	minimap.game = self
@@ -595,6 +595,12 @@ func open_modal(title_text: String, description: String) -> VBoxContainer:
 	modal.add_child(dim)
 	var card := panel(Vector2(88, 25), Vector2(464, 309), modal)
 	card.name = "ModalCard"
+	var accent := ColorRect.new()
+	accent.position = Vector2(14, 37)
+	accent.size = Vector2(436, 1)
+	accent.color = Color("788064")
+	accent.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	card.add_child(accent)
 	var layout := VBoxContainer.new()
 	layout.name = "Layout"
 	layout.position = Vector2(14, 10)
@@ -604,7 +610,7 @@ func open_modal(title_text: String, description: String) -> VBoxContainer:
 	var heading := Label.new()
 	heading.text = title_text
 	heading.add_theme_font_size_override("font_size", 18)
-	heading.add_theme_color_override("font_color", Color("3d4b42"))
+	heading.add_theme_color_override("font_color", Color("d9bf83"))
 	layout.add_child(heading)
 	var scroll := ScrollContainer.new()
 	scroll.name = "Scroll"
@@ -622,7 +628,7 @@ func open_modal(title_text: String, description: String) -> VBoxContainer:
 	desc.custom_minimum_size.x = 418
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	desc.add_theme_font_size_override("font_size", 12)
-	desc.add_theme_color_override("font_color", Color("59604b"))
+	desc.add_theme_color_override("font_color", Color("acb6a2"))
 	column.add_child(desc)
 	var back := button("合上 · Esc", close_modal)
 	layout.add_child(back)
@@ -986,9 +992,9 @@ func equipment_content(box: VBoxContainer) -> void:
 			persist()
 			show_equipment()
 		)
-		equip_button.add_theme_color_override("font_color", YinBalance.COLORS[int(gear.quality)].darkened(0.65))
+		equip_button.add_theme_color_override("font_color", YinBalance.COLORS[int(gear.quality)].lightened(0.12))
 		equip_button.add_theme_font_size_override("font_size", 11)
-		equip_button.add_theme_stylebox_override("normal", style("e1d2ae", YinBalance.COLORS[int(gear.quality)].darkened(0.35).to_html(false)))
+		equip_button.add_theme_stylebox_override("normal", style("223a33", YinBalance.COLORS[int(gear.quality)].darkened(0.35).to_html(false)))
 		equip_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		equip_button.icon = YinBalance.icon(gear.weapon)
 		equip_button.tooltip_text = "获取时自带词条，无需加工\n" + YinAbilities.affix_text(gear, YinBalance.level(state.cultivation))
@@ -1077,7 +1083,7 @@ func show_character(tab: String = "背包") -> void:
 			var worn := Label.new()
 			worn.text = "护甲：%s · 护甲值 %d" % ["未穿戴" if state.armor_gear().is_empty() else YinBalance.gear_name(state.armor_gear()), YinBalance.armor_value(state.armor_gear())]
 			worn.add_theme_font_size_override("font_size", 11)
-			worn.add_theme_color_override("font_color", Color("424c42"))
+			worn.add_theme_color_override("font_color", Color("ded9bf"))
 			box.add_child(worn)
 			equipment_content(box)
 		"技能": skill_tree_content(box)
@@ -1091,7 +1097,7 @@ func show_character(tab: String = "背包") -> void:
 			var route_label := Label.new()
 			route_label.text = "义庄 → 乱葬坡 → 后山铳林\n后山东北 → 沉水村【井中龙婆】\n后山东南 → 废戏台【无面伶王】\n后山向东 → 断碑营地 / 枯井 / 山门遗址\n村东码头 → 岛国【荒冢 / 风山 / 双面社】\n村北山道 → 大佛寺【修罗道场 / 护法殿】\n黄点出口 · 红点敌人 · 蓝点役灵 · 白点自己"
 			route_label.add_theme_font_size_override("font_size", 11)
-			route_label.add_theme_color_override("font_color", Color("424c42"))
+			route_label.add_theme_color_override("font_color", Color("ded9bf"))
 			box.add_child(route_label)
 		"设置": box.add_child(YinDisplaySettings.panel())
 
@@ -1122,7 +1128,7 @@ func paragraph(box: VBoxContainer, text: String, font_size: int = 11) -> Label:
 	result.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	result.custom_minimum_size.x = 492
 	result.add_theme_font_size_override("font_size", font_size)
-	result.add_theme_color_override("font_color", Color("465340"))
+	result.add_theme_color_override("font_color", Color("c0c8ad"))
 	box.add_child(result)
 	return result
 func skill_tree_content(box: VBoxContainer) -> void:
@@ -1143,7 +1149,7 @@ func skill_tree_content(box: VBoxContainer) -> void:
 		grid.add_child(card)
 		var title := Label.new()
 		title.text = "%s · %s" % [spec.name, "未学" if rank_value == 0 else "%d 阶" % rank_value]
-		title.add_theme_color_override("font_color", Color("424c42"))
+		title.add_theme_color_override("font_color", Color("ded9bf"))
 		card.add_child(title)
 		var learn := button("学习 / 升阶 " + spec.name, func():
 			var message: String = state.learn_skill(id)
@@ -1256,9 +1262,14 @@ func update_quest_tracker() -> void:
 	if not is_instance_valid(quest_tracker): return
 	var id: String = state.tracked_quest
 	if id == "" or not state.quests.has(id):
-		quest_tracker.text = "O 委托 · 查看任务"
+		quest_tracker.custom_minimum_size = Vector2(114, 24)
+		quest_tracker.size = Vector2(114, 24)
+		quest_tracker.position = Vector2(520, 104)
+		quest_tracker.text = "O 委托"
 		quest_tracker.tooltip_text = "向村民接取委托；这里只追踪一项。"
 		return
+	quest_tracker.custom_minimum_size = Vector2(194, 40)
+	quest_tracker.position = Vector2(436, 104)
 	var spec: Dictionary = YinAdventure.QUESTS[id]
 	var count: int = YinAdventure.progress(state, id)
 	quest_tracker.text = "O %s  %d/%d\n%s" % [spec.name, count, spec.target, "返回村庄复命" if count >= spec.target else {"hunt": "前往乱葬坡", "delivery": "收集物资后交给委托人", "survey": "探索后山三处遗址", "temple_visit": "从村北山道前往大佛寺", "temple_hunt": "调查佛寺四类异怪", "temple_boss": "大佛寺平息护法战意", "temple_relic": "向阿祁领取般若剑", "island_visit": "从村东码头乘船", "island_hunt": "岛国调查五类妖怪", "island_boss": "岛国祭场平息首领", "island_relic": "向阿祁缔结神器契约"}[spec.kind]]
@@ -1274,7 +1285,7 @@ func show_quests() -> void:
 		summary.text = "%s · %s\n%s" % [spec.name, "已领取奖励" if completed else "%d/%d" % [YinAdventure.progress(state, id), spec.target], spec.description]
 		summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		summary.custom_minimum_size.x = 410
-		summary.add_theme_color_override("font_color", Color("424c42"))
+		summary.add_theme_color_override("font_color", Color("ded9bf"))
 		summary.add_theme_font_size_override("font_size", 11)
 		box.add_child(summary)
 		if not completed:
@@ -1294,7 +1305,7 @@ func show_npc_quests(record: Dictionary) -> void:
 		detail.text = "%s\n%s\n报酬：%d 文 + %s" % [spec.name, spec.description, spec.money, YinBalance.WEAPONS[spec.weapon].name if spec.weapon != "" else "异闻进展"]
 		detail.custom_minimum_size.x = 410
 		detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		detail.add_theme_color_override("font_color", Color("424c42"))
+		detail.add_theme_color_override("font_color", Color("ded9bf"))
 		detail.add_theme_font_size_override("font_size", 11)
 		box.add_child(detail)
 		if not state.quests.has(id):
@@ -1330,7 +1341,7 @@ func show_chat(record: Dictionary) -> void:
 	transcript.custom_minimum_size = Vector2(410, 62)
 	transcript.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	transcript.add_theme_font_size_override("font_size", 11)
-	transcript.add_theme_color_override("font_color", Color("424c42"))
+	transcript.add_theme_color_override("font_color", Color("ded9bf"))
 	box.add_child(transcript)
 	var input := LineEdit.new()
 	input.name = "NpcChatInput"

@@ -108,8 +108,8 @@ func _draw() -> void:
 		draw_texture_rect_region(TEXTURE, Rect2(-16, -40 + roundf(sin(time * 2)), 32, 40), Rect2(0, row * 20, 16, 20), Color(1, 1, 1, 0.9))
 	else:
 		var source_row: int = {"archer": 3, "lantern": 4, "gunner": 5, "brute": 6, "boss": 2, "well_boss": 0, "opera_boss": 5}.get(record.source_kind, 1)
-		source_row = YinTemple.ROWS.get(record.source_kind, YinIsland.ROWS.get(record.source_kind, source_row))
-		draw_texture_rect_region(YinIsland.texture(record.source_kind), Rect2(-16, -44, 32, 48), Rect2(0, source_row * 24, 16, 24), Color("9ecdc7"))
+		source_row = YinArt.enemy_row(record.source_kind)
+		draw_texture_rect_region(YinIsland.texture(record.source_kind), Rect2(-16, -44, 32, 48), Rect2(0, source_row * 48, 32, 48), Color("9ecdc7"))
 
 	var fraction: float = float(record.hp) / record.max_hp
 	draw_rect(Rect2(-16, -46, 32, 4), Color("263938"))

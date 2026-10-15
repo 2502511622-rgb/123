@@ -2,30 +2,43 @@ extends Control
 var state: FarmState
 var game: Node2D
 var time: float = 0.0
+var lighting: ShaderMaterial
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var veil := ColorRect.new()
+	veil.size = Vector2(640, 360)
+	veil.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	lighting = ShaderMaterial.new()
+	lighting.shader = preload("res://shaders/atmosphere.gdshader")
+	veil.material = lighting
+	add_child(veil)
 func _process(delta: float) -> void:
-	time += delta
+	if state == null or not is_instance_valid(game.world): return
+	if game.modal == null: time += delta
+	var transform: Transform2D = game.world.get_global_transform_with_canvas()
+	var points := PackedVector4Array()
+	for node in get_tree().get_nodes_in_group("art_lights"):
+		if not node.is_inside_tree() or not game.world.is_ancestor_of(node): continue
+		var at: Vector2 = transform * (node.global_position - Vector2(0, 22))
+		if at.x < -85 or at.y < -85 or at.x > 725 or at.y > 445: continue
+		points.append(Vector4(at.x, at.y, 76, 1.0 + sin(time * 2 + at.x) * 0.05))
+		if points.size() >= 24: break
+	var count: int = points.size()
+	while points.size() < 24: points.append(Vector4.ZERO)
+	lighting.set_shader_parameter("lights", points)
+	lighting.set_shader_parameter("light_count", count)
+	lighting.set_shader_parameter("night", night_alpha() / 0.59)
+	lighting.set_shader_parameter("mist", 0.12 if state.zone in ["graveyard", "temple", "sunken"] else (0.07 if state.zone in ["forest", "island"] else 0.025))
+	lighting.set_shader_parameter("clock_time", time)
+	lighting.set_shader_parameter("world_offset", -transform.origin)
+	lighting.set_shader_parameter("hero", transform * game.player.position)
 	queue_redraw()
 func _draw() -> void:
-	if state == null:
-		return
-	var darkness: float = night_alpha()
-	draw_rect(Rect2(Vector2.ZERO, Vector2(640, 360)), Color(0.09, 0.15, 0.28, darkness))
-	if darkness > 0.2 and is_instance_valid(game) and state.zone == "farm":
-		var lights: Array = [Vector2(190, 190), Vector2(214, 406), Vector2(600, 450)]
-		for placed in state.placements:
-			if placed.kind == "paper_lamp" and placed.zone == state.zone: lights.append(Vector2(placed.at[0], placed.at[1]) - Vector2(0, 28))
-		for at in lights:
-			var screen: Vector2 = game.world.get_global_transform_with_canvas() * at
-			draw_circle(screen, 28, Color(0.80, 0.50, 0.33, 0.12))
-	if state.weather == "rain":
-		draw_rect(Rect2(Vector2.ZERO, Vector2(640, 360)), Color(0.3, 0.4, 0.5, 0.13))
+	if state != null and state.weather == "rain":
 		for i in range(65):
 			var x: float = fposmod(i * 97 - time * 45, 640)
 			var y: float = fposmod(i * 53 + time * 145, 360)
-			draw_line(Vector2(x, y), Vector2(x - 3, y + 7), Color(0.73, 0.85, 0.90, 0.4), 1)
-
+			draw_line(Vector2(x, y), Vector2(x - 3, y + 7), Color(0.73, 0.85, 0.90, 0.35), 1)
 func night_alpha() -> float:
 	if state == null or state.zone in ["hall", "shop"]: return 0
 	var alpha: float = clampf((state.minutes - 1020) / 300, 0, 0.59)

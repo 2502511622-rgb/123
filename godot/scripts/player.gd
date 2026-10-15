@@ -23,7 +23,7 @@ var dodge_direction := Vector2.DOWN
 var attack_time: float = 0
 var hit_feedback: float = 0
 var ghosts: Array = []
-var texture: Texture2D = preload("res://assets/farmer.png")
+var texture: Texture2D = YinArt.HERO
 
 var state_machine: YinPlayerStateMachine
 var hitbox: YinHitbox
@@ -88,7 +88,7 @@ func _physics_process(delta: float) -> void:
 
 func _draw() -> void:
 	for ghost in ghosts:
-		draw_texture_rect_region(texture, Rect2(ghost.at - position + Vector2(-16, -40), Vector2(32, 40)), Rect2(0, 0, 16, 20), Color(0.55, 0.85, 0.79, (1 - ghost.age / 0.18) * 0.3))
+		draw_texture_rect_region(texture, Rect2(ghost.at - position + Vector2(-16, -40), Vector2(32, 40)), Rect2(0, 0, 32, 40), Color(0.55, 0.85, 0.79, (1 - ghost.age / 0.18) * 0.3))
 	draw_rect(Rect2(-10, -3, 20, 5), Color(0.18, 0.25, 0.20, 0.22))
 	var row: int = 0
 	if facing == Vector2.UP:
@@ -98,7 +98,7 @@ func _draw() -> void:
 	elif facing == Vector2.RIGHT:
 		row = 3
 	var frame: int = int(animation_time * 9) % 4
-	draw_texture_rect_region(texture, Rect2(-16, -40, 32, 40), Rect2(frame * 16, row * 20, 16, 20), Color("ef9a82") if hit_feedback > 0 else (Color(1, 1, 1, 0.55 if int(invincible * 20) % 2 == 0 else 1.0) if invincible > 0 else Color.WHITE))
+	draw_texture_rect_region(texture, Rect2(-16, -40, 32, 40), Rect2(frame * 32, row * 40, 32, 40), Color("ef9a82") if hit_feedback > 0 else (Color(1, 1, 1, 0.55 if int(invincible * 20) % 2 == 0 else 1.0) if invincible > 0 else Color.WHITE))
 	draw_held_item()
 	if attack_time > 0 and held_item in YinBalance.MELEE:
 		var sweep: float = 1 - attack_time / 0.22

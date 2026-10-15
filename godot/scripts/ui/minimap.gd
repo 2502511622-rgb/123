@@ -7,11 +7,11 @@ func _process(_delta: float) -> void: queue_redraw()
 func point(at: Vector2) -> Vector2: return Vector2(5, 17) + at / game.world.level_size * (size - Vector2(10, 23))
 func _draw() -> void:
 	if not is_instance_valid(game.world): return
-	draw_rect(Rect2(Vector2.ZERO, size), Color("182c2de8"))
-	draw_rect(Rect2(Vector2.ZERO, size), Color("758b75"), false, 1)
+	draw_rect(Rect2(Vector2.ZERO, size), Color("112a29ef"))
+	draw_rect(Rect2(Vector2.ZERO, size), YinPixelTheme.GOLD, false, 1)
 	draw_string(ThemeDB.fallback_font, Vector2(5, 12), NAMES.get(game.state.zone, game.state.zone), HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color("d3d0b0"))
 	for rect in game.world.obstacles:
-		draw_rect(Rect2(point(rect.position), rect.size / game.world.level_size * (size - Vector2(10, 23))), Color("52664f"))
+		draw_rect(Rect2(point(rect.position), rect.size / game.world.level_size * (size - Vector2(10, 23))), Color("4c6555"))
 	for id in YinAdventure.CHESTS:
 		var spec: Dictionary = YinAdventure.CHESTS[id]
 		if spec.zone == game.state.zone and id not in game.state.opened_chests:

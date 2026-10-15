@@ -6,14 +6,14 @@ var soil: TileMapLayer
 var crops: TileMapLayer
 var zone: String = "farm"
 var water_frame: int = -1
-func tileset(texture: Texture2D, columns: int, rows: int) -> TileSet:
+func tileset(texture: Texture2D, columns: int, rows: int, cell: int = 16) -> TileSet:
 	var atlas := TileSetAtlasSource.new()
 	atlas.texture = texture
-	atlas.texture_region_size = Vector2i(16, 16)
+	atlas.texture_region_size = Vector2i(cell, cell)
 	for y in range(rows):
 		for x in range(columns): atlas.create_tile(Vector2i(x, y))
 	var set := TileSet.new()
-	set.tile_size = Vector2i(16, 16)
+	set.tile_size = Vector2i(cell, cell)
 	set.add_source(atlas, 0)
 	return set
 func layer(name_text: String, set: TileSet, depth: int, at: Vector2) -> TileMapLayer:
@@ -27,28 +27,31 @@ func layer(name_text: String, set: TileSet, depth: int, at: Vector2) -> TileMapL
 	return node
 func build(zone_name: String) -> void:
 	zone = zone_name
-	var terrain := tileset(preload("res://assets/tiles.png"), 16, 1)
+	var terrain := tileset(YinArt.terrain(zone), 32, 1, 32)
 	ground = layer("Ground", terrain, -3, Vector2.ZERO)
 	soil = layer("TilledAndWatered", terrain, -2, FIELD)
+	ground.scale = Vector2.ONE
+	soil.scale = Vector2.ONE
 	crops = layer("CropStages", tileset(preload("res://assets/crops.png"), 6, 4), -1, FIELD - Vector2(0, 4))
 	for y in range(40 if zone == "temple" else 50 if zone == "island" else 60 if zone == "forest" else (30 if zone in ["sunken", "theatre", "village"] else 20)):
 		for x in range(50 if zone == "temple" else 70 if zone == "island" else 90 if zone == "forest" else (40 if zone in ["sunken", "theatre", "village"] else 30)):
-			var id: int = (x * 7 + y * 11) % 8
+			var id: int = absi(hash(Vector2i(x, y))) % 8
 			if y in [7, 8] or (x == 8 and y >= 6 and y <= 17) or (x >= 22 and x <= 25 and y >= 6 and y <= 11): id = 10
-			if x in [20, 21]: id = 11 if zone == "farm" else 8
+			if x in [20, 21] and zone == "farm": id = 11
 			if (x * 13 + y * 7) % 31 == 0 and id < 8: id = 14
 			if zone in ["hall", "shop"]: id = 10
 			if zone == "forest":
-				id = (x * 7 + y * 11) % 8
+				id = absi(hash(Vector2i(x, y))) % 8
 				if x == 10 or y == 32 or y in [17, 18]: id = 10
 				if x in [30, 31] and y not in [17, 18, 43, 44]: id = 11
 				if x >= 57 and (y in [17, 18, 31, 32, 49, 50] or x in [63, 64, 75, 76]): id = 10
-				if x >= 65 and y in [11, 12, 13, 30, 31, 32, 50, 51, 52]: id = 8
-			if zone == "village": id = 10 if y in [9, 10, 19, 20, 25] or x in [5, 6] else (14 if (x + y) % 17 == 0 else 2)
+				if x >= 65 and y in [11, 12, 13, 30, 31, 32, 50, 51, 52]: id = 10
+			if zone == "village": id = 10 if y in [9, 10, 19, 20, 25] or x in [5, 6] else (14 if (x + y) % 17 == 0 else absi(hash(Vector2i(x, y))) % 8)
+			if zone == "village" and y in [7, 8, 17, 18] and x in [7, 8, 9, 16, 17, 18, 25, 26, 27]: id = 10
 			if zone == "sunken":
 				id = 11 if x == 18 and y in range(5, 23) and y not in range(12, 15) else (10 if y in [24, 25] else 4)
-			if zone == "theatre": id = 10 if x > 26 and y < 16 else (8 if (x + y) % 6 == 0 else 3)
-			if zone == "temple": id = 10 if x in [6, 7, 21, 22, 38, 39] or y in [9, 10, 16, 17, 28, 29, 34, 35] else (8 if (x + y) % 7 == 0 else 3)
+			if zone == "theatre": id = 10 if x > 26 and y < 16 else 3
+			if zone == "temple": id = 10 if x in [6, 7, 21, 22, 38, 39] or y in [9, 10, 16, 17, 28, 29, 34, 35] else absi(hash(Vector2i(x, y))) % 8
 			if zone == "island": id = 11 if YinIsland.water_tile(x, y) else (10 if y >= 38 else (4 if x < 30 else 3))
 			ground.set_cell(Vector2i(x, y), 0, Vector2i(id, 0))
 	if zone == "forest":
@@ -64,6 +67,19 @@ func build(zone_name: String) -> void:
 	if zone == "island":
 		for route in [[Vector2i(6, 44), Vector2i(24, 44), Vector2i(24, 24), Vector2i(24, 11), Vector2i(22, 11)], [Vector2i(24, 24), Vector2i(49, 24), Vector2i(49, 10)], [Vector2i(24, 39), Vector2i(57, 39), Vector2i(57, 37)]]:
 			for i in range(route.size() - 1): paint_road(route[i], route[i + 1])
+	finish_edges()
+
+func finish_edges() -> void:
+	var roads: Dictionary = {}
+	for cell in ground.get_used_cells():
+		if ground.get_cell_atlas_coords(cell).x == 10: roads[cell] = true
+	for cell in roads:
+		var mask: int = 0
+		var directions: Array = [Vector2i.UP, Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT]
+		for i in range(4):
+			if roads.has(cell + directions[i]): mask |= 1 << i
+		ground.set_cell(cell, 0, Vector2i(16 + mask, 0))
+
 func paint_road(start: Vector2i, end: Vector2i) -> void:
 	var at: Vector2i = start
 	var direction := Vector2i(signi(end.x - start.x), signi(end.y - start.y))

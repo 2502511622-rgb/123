@@ -34,7 +34,11 @@ func _draw() -> void:
 		if YinAdventure.QUESTS[id].npc != int(record.id) or not YinAdventure.available(game.state, id): continue
 		var mark: String = "!" if not game.state.quests.has(id) else ("?" if not game.state.quests[id].claimed and YinAdventure.progress(game.state, id) >= YinAdventure.QUESTS[id].target else "")
 		if mark != "" and record.hp > 0: draw_string(ThemeDB.fallback_font, Vector2(-3, -65), mark, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("f1cf83"))
-	draw_texture_rect_region(preload("res://assets/npc.png"), Rect2(-16, -40, 32, 40), Rect2(0, 0, 16, 20), Color("98aaa0") if record.hp == 0 else Color.from_hsv(float(record.id) / 12, 0.15, 1))
-	draw_rect(Rect2(-18, -46, 36, 4), Color("31443c"))
-	draw_rect(Rect2(-18, -46, 36 * float(record.hp) / 100, 4), Color("9daf75"))
-	draw_string(ThemeDB.fallback_font, Vector2(-25, -50), record.name + (" · 养伤" if record.hp == 0 else ""), HORIZONTAL_ALIGNMENT_LEFT, -1, 9, Color("e5d4ab"))
+	draw_texture_rect_region(YinArt.VILLAGERS, Rect2(-16, -44, 32, 44), Rect2((int(record.id) - 1) * 32, 0, 32, 44), Color("98aaa0") if record.hp == 0 else Color.WHITE)
+	if record.hp < 100:
+		draw_rect(Rect2(-18, -46, 36, 3), Color("162d2c"))
+		draw_rect(Rect2(-18, -46, 36 * float(record.hp) / 100, 3), Color("a5b780"))
+	if position.distance_to(game.player.position) < 125 or record.hp < 100:
+		var caption: String = record.name + (" · 养伤" if record.hp == 0 else "")
+		draw_string_outline(ThemeDB.fallback_font, Vector2(-25, -50), caption, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, 2, Color("102725"))
+		draw_string(ThemeDB.fallback_font, Vector2(-25, -50), caption, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color("e5d4ab"))

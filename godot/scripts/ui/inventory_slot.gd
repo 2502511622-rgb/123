@@ -14,13 +14,13 @@ func _ready() -> void:
 	focus_mode = Control.FOCUS_NONE
 	toggle_mode = true
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color("bdc4a5")
-	style.border_color = Color("748675")
+	style.bg_color = Color("243d34")
+	style.border_color = Color("64775c")
 	style.set_border_width_all(1)
 	style.content_margin_left = 4
 	style.content_margin_right = 4
 	add_theme_stylebox_override("normal", style)
-	add_theme_color_override("font_color", Color("3b4f44"))
+	add_theme_color_override("font_color", YinPixelTheme.TEXT)
 	add_theme_font_size_override("font_size", 9)
 	picture = TextureRect.new()
 	picture.position = Vector2(4, 3)
@@ -31,7 +31,7 @@ func _ready() -> void:
 	name_label.position = Vector2(2, 23)
 	name_label.size = Vector2(cell_width - 4, 13)
 	name_label.add_theme_font_size_override("font_size", 8)
-	name_label.add_theme_color_override("font_color", Color("3b4f44"))
+	name_label.add_theme_color_override("font_color", YinPixelTheme.TEXT)
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -40,7 +40,7 @@ func _ready() -> void:
 	count_label.position = Vector2(cell_width - 22, 5)
 	count_label.size = Vector2(20, 12)
 	count_label.add_theme_font_size_override("font_size", 9)
-	count_label.add_theme_color_override("font_color", Color("3b4f44"))
+	count_label.add_theme_color_override("font_color", YinPixelTheme.TEXT)
 	count_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(count_label)
 	pressed.connect(func(): selected.emit(self, false))

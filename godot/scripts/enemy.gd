@@ -285,7 +285,7 @@ func _draw() -> void:
 		draw_string(ThemeDB.fallback_font, Vector2(-18, -72), YinFactions.NAMES[record.faction], HORIZONTAL_ALIGNMENT_LEFT, -1, 10, YinFactions.COLORS[record.faction])
 	draw_rect(Rect2(-12, -3, 24, 5), Color("253b3a66"))
 	var row: int = {"water": 0, "bone": 1, "boss": 2, "archer": 3, "lantern": 4, "gunner": 5, "brute": 6, "well_boss": 0, "opera_boss": 5}.get(record.kind, 0)
-	row = YinTemple.ROWS.get(record.kind, YinIsland.ROWS.get(record.kind, row))
+	row = YinArt.enemy_row(record.kind)
 	var body_texture: Texture2D = YinIsland.texture(record.kind)
 	var scale_value: float = 3 if record.kind in YinAbilities.BOSSES else 2
 	var tint := Color.WHITE if hit_flash > 0.065 else (Color("d79279") if hit_flash > 0 else (Color("8eafd0") if stun > 0.3 or chill_time > 0 else Color.WHITE))
@@ -299,7 +299,7 @@ func _draw() -> void:
 		if part.position == Vector2(8, 18) and "leg" in missing: continue
 		if record.kind == "ippon_datara" and part.position == Vector2(0, 18) and "leg" in missing: continue
 		var destination := Rect2(Vector2(-8, -22) * scale_value + part.position * scale_value, part.size * scale_value)
-		draw_texture_rect_region(body_texture, destination, Rect2(part.position + Vector2(0, row * 24), part.size), tint)
+		draw_texture_rect_region(body_texture, destination, Rect2((part.position + Vector2(0, row * 24)) * 2, part.size * 2), tint)
 	if record.kind == "well_boss":
 		draw_arc(Vector2(0, -18), 24, 0, TAU, 16, Color("85c9ce"), 3)
 		draw_rect(Rect2(-20, -70, 40, 8), Color("366777"))
@@ -307,16 +307,19 @@ func _draw() -> void:
 		draw_rect(Rect2(-12, -62, 24, 16), Color("e7d6b9"))
 		draw_rect(Rect2(-9, -56, 18, 4), Color("9d495c"))
 		for side in [-1, 1]: draw_line(Vector2(side * 15, -38), Vector2(side * 31, -7), Color("c26f85"), 4)
-	draw_rect(Rect2(-16, -50 * (1.4 if record.kind in YinAbilities.BOSSES else 1), 32, 3), Color("413e3e"))
-	draw_rect(Rect2(-16, -50 * (1.4 if record.kind in YinAbilities.BOSSES else 1), 32 * health_trail / record.max_hp, 3), Color("e6bb83"))
-	draw_rect(Rect2(-16, -50 * (1.4 if record.kind in YinAbilities.BOSSES else 1), 32 * float(record.hp) / record.max_hp, 3), Color("aa7164"))
+	var reveal: bool = record.hp < record.max_hp or record.kind in YinAbilities.BOSSES or record.get("elite", false) or position.distance_to(game.player.position) < 160
+	if reveal:
+		draw_rect(Rect2(-16, -50 * (1.4 if record.kind in YinAbilities.BOSSES else 1), 32, 3), Color("413e3e"))
+		draw_rect(Rect2(-16, -50 * (1.4 if record.kind in YinAbilities.BOSSES else 1), 32 * health_trail / record.max_hp, 3), Color("e6bb83"))
+		draw_rect(Rect2(-16, -50 * (1.4 if record.kind in YinAbilities.BOSSES else 1), 32 * float(record.hp) / record.max_hp, 3), Color("aa7164"))
 	if shield > 0: draw_arc(Vector2(0, -25), 25, 0, TAU, 20, Color("96c0db"), 2)
 	if burn_time > 0: draw_circle(Vector2(8, -24), 3, Color("f4a261"))
 	if chill_time > 0: draw_arc(Vector2(0, -20), 18, 0, TAU, 12, Color("91d8ee"), 1)
 	if bleed_time > 0: draw_rect(Rect2(-3, -56, 6, 6), Color("b54e5c"))
 	var caption: String = YinBalance.MONSTERS[record.kind].name + " Lv%d" % int(record.get("level", 1)) + (" · 精英" if record.get("elite", false) else "")
 	if record.get("faction", "") == "village": caption = "护村役卫 Lv%d" % int(record.get("level", 1))
-	draw_string(ThemeDB.fallback_font, Vector2(-24, -56 * (1.4 if record.kind in YinAbilities.BOSSES else 1)), caption, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color("e6c485") if record.get("elite", false) else Color("c8c9ae"))
+	if reveal:
+		draw_string(ThemeDB.fallback_font, Vector2(-24, -56 * (1.4 if record.kind in YinAbilities.BOSSES else 1)), caption, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color("e6c485") if record.get("elite", false) else Color("c8c9ae"))
 	if YinTemple.ROWS.has(record.kind):
 		YinTempleCombat.draw_warning(self)
 	elif YinIsland.ROWS.has(record.kind):
@@ -354,8 +357,9 @@ func update_dismemberment() -> void:
 		var fragment := YinSeveredLimb.new()
 		fragment.part = part
 		fragment.row = {"water": 0, "bone": 1, "boss": 2, "archer": 3, "lantern": 4, "gunner": 5, "brute": 6, "well_boss": 0, "opera_boss": 5}.get(record.kind, 0)
-		fragment.row = YinTemple.ROWS.get(record.kind, YinIsland.ROWS.get(record.kind, fragment.row))
+		fragment.row = YinArt.enemy_row(record.kind)
 		fragment.source_texture = YinIsland.texture(record.kind)
+		fragment.source_density = 2
 		fragment.sprite_scale = 3.0 if record.kind in YinAbilities.BOSSES else 2.0
 		fragment.position = position + Vector2(10, -20 if part == "arm" else -2)
 		fragment.velocity = game.player.position.direction_to(position).rotated(-0.6 if part == "arm" else 0.6) * 85

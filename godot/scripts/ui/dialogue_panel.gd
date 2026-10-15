@@ -19,17 +19,17 @@ func _ready() -> void:
 		row.add_child(image)
 	var speaker := Label.new()
 	speaker.text = data.speaker
-	speaker.add_theme_color_override("font_color", Color("49624f"))
+	speaker.add_theme_color_override("font_color", YinPixelTheme.TEXT)
 	row.add_child(speaker)
 	text_label = RichTextLabel.new()
 	text_label.custom_minimum_size = Vector2(404, 70)
 	text_label.fit_content = true
 	text_label.add_theme_font_size_override("normal_font_size", 12)
-	text_label.add_theme_color_override("default_color", Color("48584b"))
+	text_label.add_theme_color_override("default_color", YinPixelTheme.TEXT)
 	add_child(text_label)
 	progress = Label.new()
 	progress.add_theme_font_size_override("font_size", 10)
-	progress.add_theme_color_override("font_color", Color("526653"))
+	progress.add_theme_color_override("font_color", YinPixelTheme.TEXT)
 	add_child(progress)
 	var next := Button.new()
 	next.text = "继续 / 显示整句"

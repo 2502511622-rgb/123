@@ -5,9 +5,8 @@ const BOSSES = ["itsumade", "daitengu", "ryomen_sukuna"]
 const ROWS = {"kappa": 0, "chochin": 1, "ippon_datara": 2, "jorogumo": 3, "sogenbi": 4, "itsumade": 5, "daitengu": 6, "ryomen_sukuna": 7}
 const ARENAS = {"itsumade": Vector2(700, 352), "daitengu": Vector2(1568, 320), "ryomen_sukuna": Vector2(1824, 1184)}
 const REGIONS = {"苇岸": Vector2(448, 960), "荒冢": Vector2(704, 352), "风山": Vector2(1568, 320), "双面社": Vector2(1824, 1184)}
-static func texture(kind: String) -> Texture2D:
-	if YinTemple.ROWS.has(kind): return preload("res://assets/temple_spirits.svg")
-	return preload("res://assets/island_yokai.svg") if ROWS.has(kind) else preload("res://assets/enemies.png")
+static func texture(_kind: String) -> Texture2D:
+	return YinArt.ENEMIES
 static func anatomy(kind: String) -> Array:
 	if kind in ["sogenbi", "wraith"]: return []
 	if kind == "chochin": return ["head"]

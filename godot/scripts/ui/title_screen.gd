@@ -9,29 +9,29 @@ func _ready() -> void:
 	ThemeDB.fallback_font = preload("res://assets/mossfield-font.ttf")
 	var title := Label.new()
 	title.text = "阴 田 录"
-	title.position = Vector2(225, 48)
+	title.position = Vector2(48, 50)
 	title.add_theme_font_size_override("font_size", 38)
 	title.add_theme_color_override("font_color", Color("d4cfad"))
 	add_child(title)
 	var subtitle := Label.new()
 	subtitle.text = "槐阴村 · 十日祭帖"
-	subtitle.position = Vector2(242, 102)
+	subtitle.position = Vector2(50, 104)
 	subtitle.add_theme_font_size_override("font_size", 13)
 	subtitle.add_theme_color_override("font_color", Color("99ad9a"))
 	add_child(subtitle)
 	var saved := FarmState.new()
 	existing_valid = FileAccess.file_exists(SaveStore.PATH) and SaveStore.load_game(saved)
-	var start := make_button("新建义庄", Vector2(242, 161))
+	var start := make_button("新建义庄", Vector2(48, 160))
 	start.pressed.connect(func():
 		if FileAccess.file_exists(SaveStore.PATH): confirmation.popup_centered()
 		else: new_game()
 	)
-	var continue_button := make_button("继续 · 第 %d 日" % saved.day if existing_valid else "继续 · 尚无有效存档", Vector2(242, 204))
+	var continue_button := make_button("继续 · 第 %d 日" % saved.day if existing_valid else "继续 · 尚无有效存档", Vector2(48, 203))
 	continue_button.disabled = not existing_valid
 	continue_button.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/main.tscn"))
-	var exit := make_button("退出", Vector2(242, 247))
+	var exit := make_button("退出", Vector2(48, 246))
 	exit.pressed.connect(func(): get_tree().quit())
-	var settings := make_button("画面设置", Vector2(410, 247))
+	var settings := make_button("画面设置", Vector2(216, 246))
 	settings.pressed.connect(func():
 		var dialog := AcceptDialog.new()
 		dialog.title = "分辨率与像素显示"
@@ -42,7 +42,7 @@ func _ready() -> void:
 	)
 	hint = Label.new()
 	hint.text = "种田谋生。杀鬼留骸。每夜点名。"
-	hint.position = Vector2(194, 304)
+	hint.position = Vector2(48, 307)
 	hint.add_theme_font_size_override("font_size", 12)
 	hint.add_theme_color_override("font_color", Color("91a28f"))
 	add_child(hint)
@@ -69,19 +69,19 @@ func new_game() -> void:
 	if SaveStore.save_game(FarmState.new()): get_tree().change_scene_to_file("res://scenes/main.tscn")
 	else: hint.text = "无法写入存档，请检查用户数据目录。"
 func _draw() -> void:
-	draw_rect(Rect2(0, 0, 640, 360), Color("263d3d"))
-	var trees: Texture2D = preload("res://assets/tree.png")
-	for x in [-12, 25, 546, 584]: draw_texture_rect(trees, Rect2(x, 110, 64, 92), false, Color("839786"))
-	draw_texture_rect(preload("res://assets/cottage.png"), Rect2(56, 177, 144, 122), false, Color("8b9b8d"))
-	draw_texture_rect(preload("res://assets/lantern.png"), Rect2(488, 198, 32, 48), false)
-	draw_rect(Rect2(8, 8, 624, 344), Color("657767"), false, 1)
-	for at in [Vector2(8, 8), Vector2(620, 8), Vector2(8, 340), Vector2(620, 340)]:
-		draw_rect(Rect2(at, Vector2(12, 12)), Color("c6ac78"), false, 2)
-	# Stepped moon and small stars keep the scene on the pixel grid.
-	draw_rect(Rect2(504, 51, 24, 36), Color("afbaa2"))
-	draw_rect(Rect2(498, 57, 36, 24), Color("afbaa2"))
-	draw_rect(Rect2(502, 60, 8, 4), Color("8da18e"))
-	for at in [Vector2(85, 53), Vector2(136, 90), Vector2(466, 31), Vector2(574, 104)]:
-		draw_rect(Rect2(at, Vector2(2, 2)), Color("9cac98"))
-	for x in range(16, 626, 8):
-		draw_rect(Rect2(x, 348, 4, 2), Color("596e60"))
+	draw_rect(Rect2(0, 0, 640, 360), Color("132d30"))
+	# A vignette built from real game assets, not a painted gameplay mockup.
+	for i in range(5):
+		var shade := Color("28433e")
+		shade.a = 0.7 - i * 0.1
+		draw_colored_polygon(PackedVector2Array([Vector2(300, 200 + i * 16), Vector2(410, 115 + i * 18), Vector2(480, 144 + i * 10), Vector2(570, 90 + i * 16), Vector2(640, 130 + i * 20), Vector2(640, 360), Vector2(300, 360)]), shade)
+	draw_circle(Vector2(515, 68), 25, Color("c3c4a0"))
+	draw_circle(Vector2(525, 61), 23, Color("132d30"))
+	for x in [348, 390, 566, 610]: draw_texture(YinArt.texture("tree"), Vector2(x, 100 + x % 37), Color("738c7a"))
+	draw_texture(YinArt.texture("cottage"), Vector2(390, 174))
+	draw_texture(YinArt.texture("lantern"), Vector2(372, 258))
+	draw_texture(YinArt.texture("tree"), Vector2(558, 235))
+	for i in range(3): draw_rect(Rect2(300, 285 + i * 20, 340, 7), Color(0.5, 0.66, 0.60, 0.035))
+	draw_rect(Rect2(24, 24, 592, 312), Color("748065"), false, 1)
+	draw_line(Vector2(48, 132), Vector2(210, 132), Color("b49c68"), 1)
+	for at in [Vector2(24, 24), Vector2(608, 24), Vector2(24, 328), Vector2(608, 328)]: draw_rect(Rect2(at, Vector2(8, 8)), Color("bda56f"), false, 1)

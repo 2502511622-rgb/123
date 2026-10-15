@@ -48,7 +48,7 @@ static func panel() -> VBoxContainer:
 	var info := Label.new()
 	info.text = "最近邻采样与整数像素缩放。\n窗口分辨率改变窗口大小；全屏使用桌面分辨率。"
 	info.add_theme_font_size_override("font_size", 11)
-	info.add_theme_color_override("font_color", Color("424c42"))
+	info.add_theme_color_override("font_color", YinPixelTheme.TEXT)
 	box.add_child(info)
 	var resolutions := OptionButton.new()
 	resolutions.name = "ResolutionChoice"
@@ -67,7 +67,7 @@ static func panel() -> VBoxContainer:
 	status.custom_minimum_size.x = 390
 	status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	status.add_theme_font_size_override("font_size", 11)
-	status.add_theme_color_override("font_color", Color("424c42"))
+	status.add_theme_color_override("font_color", YinPixelTheme.TEXT)
 	status.text = "编辑器嵌入运行：需打开独立窗口才能改变窗口大小。" if embedded_run() else "选择分辨率后点击应用。"
 	var apply_button := Button.new()
 	apply_button.text = "应用分辨率"
