@@ -53,6 +53,7 @@ func _ready() -> void:
 	environment.name = "Environment"
 	environment.world = self
 	add_child(environment)
+	call_deferred("install_interactions")
 	grass = YinLivingGrass.new()
 	grass.name = "LivingGrass"
 	grass.world = self
@@ -172,13 +173,14 @@ func prop(name_text: String, at: Vector2, offset: Vector2, collision_rect: Rect2
 		body = resource
 	else: body = StaticBody2D.new()
 	body.position = at
+	body.set_meta("interaction_anchor",at)
 	actors.add_child(body)
 	var sprite: Sprite2D = YinWindSprite.new() if name_text == "tree" else Sprite2D.new()
 	if sprite is YinWindSprite:
 		sprite.world = self
 		body.add_to_group("wind_trees")
 	var detailed: bool = name_text in ["cottage", "store", "tree", "lantern", "fence", "rock", "grave", "chest", "altar", "bed", "workbench", "npc"]
-	sprite.texture = YinArt.texture(name_text) if detailed else load("res://assets/%s.png" % name_text)
+	sprite.texture = YinArt.texture(name_text) if detailed or YinWorldArt.REGIONS.has(name_text) else load("res://assets/%s.png" % name_text)
 	sprite.name = "ArtSprite"
 	if name_text == "tree":
 		sprite.texture = YinArt.texture(["tree", "tree_autumn", "tree_pine"][absi(hash(at)) % 3])
@@ -213,15 +215,17 @@ func add_sign(at: Vector2, text: String) -> void:
 	label.add_theme_constant_override("shadow_offset_y", 1)
 	add_child(label)
 
-func is_safe_position(at: Vector2) -> bool:
-	if state.zone in ["hall", "shop"] and not Rect2(200, 140, 560, 330).has_point(at): return false
-	if at.x < 16 or at.x > level_size.x - 16 or at.y < 20 or at.y > level_size.y - 16:
-		return false
-	var body_rect := Rect2(at + Vector2(-7, -9), Vector2(14, 10))
+func is_safe_position(at: Vector2,half_size: Vector2=Vector2(7,5)) -> bool:
+	if not inside_level(at):return false
+	var body_rect := Rect2(at+Vector2(0,-4)-half_size,half_size*2)
 	for obstacle in obstacles:
 		if obstacle.intersects(body_rect):
 			return false
 	return true
+
+func inside_level(at: Vector2) -> bool:
+	if state.zone in ["hall","shop"] and not Rect2(200,140,560,330).has_point(at):return false
+	return at.x>=16 and at.x<=level_size.x-16 and at.y>=20 and at.y<=level_size.y-16
 
 func plot_at(at: Vector2) -> int:
 	return tile_farm.plot_at(at)
@@ -235,37 +239,41 @@ func reachable(index: int) -> bool:
 func front_plot() -> int:
 	return plot_at(player.position + Vector2(0, -6) + player.facing * 25)
 
+func can_interact(at: Vector2,reach: float=47) -> bool:
+	if not is_instance_valid(player) or player.position.distance_to(at)>reach:return false
+	var query:=PhysicsRayQueryParameters2D.create(player.position+Vector2(0,4),at,1)
+	var hit: Dictionary=get_world_2d().direct_space_state.intersect_ray(query)
+	if hit.is_empty():return true
+	# A gate lamp or chest is the target, not an intervening wall.
+	var blocker: Object=hit.collider
+	if blocker.has_meta("interaction_anchor") and Vector2(blocker.get_meta("interaction_anchor")).distance_to(at)<12:
+		query.exclude=[blocker.get_rid()]
+		return get_world_2d().direct_space_state.intersect_ray(query).is_empty()
+	return false
 func nearest_interaction() -> String:
-	if nearest_chest() != "": return "treasure"
-	if state.zone == "temple": return "temple_return" if player.position.distance_to(YinTemple.EXIT) < 47 else ""
-	if state.zone == "island": return "island_return" if player.position.distance_to(Vector2(180, 1440)) < 47 else ""
-	if state.zone == "village":
-		if player.position.distance_to(YinTemple.VILLAGE_GATE) < 47: return "temple_gate"
-		if player.position.distance_to(Vector2(1180, 820)) < 47: return "island_ferry"
-		if player.position.distance_to(Vector2(155, 820)) < 47: return "village_return"
+	var chest: String=nearest_chest()
+	var selected: String="treasure" if chest!="" else ""
+	var distance_value: float=player.position.distance_to(YinAdventure.CHESTS[chest].at) if chest!="" else INF
+	for point in YinWorldLayout.points(state.zone):
+		var distance_to: float=player.position.distance_to(point.at)
+		if distance_to<distance_value and can_interact(point.at,point.range):
+			selected=point.id;distance_value=distance_to
+	if state.zone=="village":
 		for villager in get_tree().get_nodes_in_group("villagers"):
-			if not villager.is_queued_for_deletion() and player.position.distance_to(villager.position) < 56: return "villager"
-		return ""
-	if state.zone == "farm" and player.position.distance_to(Vector2(900, 350)) < 47: return "village_gate"
-	if state.zone in ["hall", "shop"]:
-		if player.position.distance_to(Vector2(480, 461)) < 40: return "exit_interior"
-		if player.position.distance_to(Vector2(480, 267)) < 45: return "workbench" if state.zone == "hall" else "counter"
-		if state.zone == "hall" and player.position.distance_to(Vector2(306, 361)) < 45: return "storage"
-		if state.zone == "hall" and player.position.distance_to(Vector2(666, 327)) < 45: return "bed"
-		return ""
-	if state.zone in ["sunken", "theatre"]:
-		return "branch_return" if player.position.distance_to(Vector2(155, 820)) < 47 else ""
-	if state.zone == "forest":
-		if player.position.distance_to(Vector2(1760, 250)) < 47: return "sunken_gate"
-		if player.position.distance_to(Vector2(1760, 1050)) < 47: return "theatre_gate"
-		return "forest_return" if player.position.distance_to(Vector2(155, 1140)) < 47 else ""
-	if state.zone == "graveyard":
-		if player.position.distance_to(Vector2(850, 530)) < 47: return "forest_gate"
-		return "return" if player.position.distance_to(RETURN_GATE) < 47 else ""
-	for pair in [["home", HOME], ["shipping", SHIPPING], ["shop", SHOP], ["npc", NPC], ["altar", ALTAR], ["gate", GATE]]:
-		if player.position.distance_to(pair[1]) < 45:
-			return pair[0]
-	return ""
+			if not villager.is_queued_for_deletion() and player.position.distance_to(villager.position)<distance_value and can_interact(villager.position,56):
+				selected="villager";distance_value=player.position.distance_to(villager.position)
+	return selected
+func install_interactions() -> void:
+	if not is_inside_tree():return
+	for point in YinWorldLayout.points(state.zone):
+		var beacon:=YinInteractionBeacon.new()
+		beacon.world=self;beacon.point=point;beacon.position=point.at
+		feedback.add_child(beacon)
+	if state.zone=="forest":
+		for id in YinAdventure.LANDMARKS:
+			var kind: String={"well":"well","camp":"brazier","temple":"shrine"}[id]
+			var at: Vector2=YinAdventure.LANDMARKS[id].at
+			prop(kind,at,Vector2(-24,-48),Rect2(-17,-15,34,15))
 
 func effect(at: Vector2, tint: Color) -> void:
 	var burst := YinPixelBurst.new()
@@ -480,30 +488,58 @@ func build_village() -> void:
 	for y in [300, 620]:
 		for x in [180, 470, 770, 1060]: prop("lantern", Vector2(x, y + 70), Vector2(-16, -48), Rect2(-4, -6, 8, 6))
 
+var navigation_cache: Dictionary={}
+var navigation_revision: int=-1
 var combat_navigation: AStarGrid2D
 var navigation_obstacles: int = -1
-func path_to(start: Vector2, end: Vector2) -> PackedVector2Array:
-	if combat_navigation == null or navigation_obstacles != obstacles.size():
-		combat_navigation = AStarGrid2D.new()
-		combat_navigation.region = Rect2i(Vector2i.ZERO, Vector2i(level_size / 16))
-		combat_navigation.cell_size = Vector2(16, 16)
-		combat_navigation.offset = Vector2(8, 8)
-		combat_navigation.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_ONLY_IF_NO_OBSTACLES
-		combat_navigation.update()
-		for y in range(combat_navigation.region.size.y):
-			for x in range(combat_navigation.region.size.x):
-				combat_navigation.set_point_solid(Vector2i(x, y), not is_safe_position(Vector2(x * 16 + 8, y * 16 + 8)))
-		navigation_obstacles = obstacles.size()
-	var from_cell := Vector2i(start / 16)
-	var to_cell := Vector2i(end / 16)
-	if not combat_navigation.is_in_boundsv(from_cell) or not combat_navigation.is_in_boundsv(to_cell): return PackedVector2Array()
-	if combat_navigation.is_point_solid(from_cell):
-		for offset in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
-			var cell: Vector2i = from_cell + offset
-			if combat_navigation.is_in_boundsv(cell) and not combat_navigation.is_point_solid(cell):
-				from_cell = cell
-				break
-	return combat_navigation.get_point_path(from_cell, to_cell, true)
+func clear_body_path(start: Vector2,end: Vector2,half_size: Vector2) -> bool:
+	var query:=PhysicsShapeQueryParameters2D.new()
+	var shape:=RectangleShape2D.new()
+	shape.size=half_size*2
+	query.shape=shape
+	query.transform=Transform2D(0,start+Vector2(0,-4))
+	query.motion=end-start
+	query.collision_mask=1
+	query.margin=0.1
+	var fraction: PackedFloat32Array=get_world_2d().direct_space_state.cast_motion(query)
+	return fraction.size()==2 and fraction[0]>0.999
+
+func path_to(start: Vector2,end: Vector2,half_size: Vector2=Vector2(7,5)) -> PackedVector2Array:
+	if navigation_revision!=environment_revision:
+		navigation_cache.clear();navigation_revision=environment_revision
+	var key:=Vector2i(half_size.ceil())
+	if not navigation_cache.has(key):
+		var grid:=AStarGrid2D.new()
+		grid.region=Rect2i(Vector2i.ZERO,Vector2i(level_size/16))
+		grid.cell_size=Vector2(16,16);grid.offset=Vector2(8,8)
+		grid.diagonal_mode=AStarGrid2D.DIAGONAL_MODE_ONLY_IF_NO_OBSTACLES
+		grid.update()
+		for y in range(grid.region.size.y):
+			for x in range(grid.region.size.x):
+				if not inside_level(Vector2(x*16+8,y*16+8)):grid.set_point_solid(Vector2i(x,y))
+		# Rasterize each expanded obstacle locally rather than scan every obstacle per cell.
+		for obstacle in obstacles:
+			var bounds:=Rect2(obstacle.position-half_size+Vector2(0,4),obstacle.size+half_size*2)
+			var low:=Vector2i(((bounds.position-Vector2(8,8))/16).floor()).max(Vector2i.ZERO)
+			var high:=Vector2i(((bounds.end-Vector2(8,8))/16).ceil()).min(grid.region.size-Vector2i.ONE)
+			for y in range(low.y,high.y+1):
+				for x in range(low.x,high.x+1):
+					var body:=Rect2(Vector2(x*16+8,y*16+4)-half_size,half_size*2)
+					if obstacle.intersects(body):grid.set_point_solid(Vector2i(x,y))
+		navigation_cache[key]=grid
+	combat_navigation=navigation_cache[key]
+	navigation_obstacles=obstacles.size()
+	var from_cell: Vector2i=nearest_nav_cell(combat_navigation,Vector2i(start/16))
+	var to_cell: Vector2i=nearest_nav_cell(combat_navigation,Vector2i(end/16))
+	if from_cell.x<0 or to_cell.x<0:return PackedVector2Array()
+	return combat_navigation.get_point_path(from_cell,to_cell,false)
+func nearest_nav_cell(grid: AStarGrid2D,cell: Vector2i) -> Vector2i:
+	for radius in range(5):
+		for y in range(-radius,radius+1):
+			for x in range(-radius,radius+1):
+				var candidate:=cell+Vector2i(x,y)
+				if grid.is_in_boundsv(candidate) and not grid.is_point_solid(candidate):return candidate
+	return Vector2i(-1,-1)
 
 func impact(at: Vector2, direction: Vector2, method: String) -> void:
 	var fx:=YinCombatVfx.new()
@@ -517,7 +553,7 @@ func impact(at: Vector2, direction: Vector2, method: String) -> void:
 func nearest_chest() -> String:
 	for id in YinAdventure.CHESTS:
 		var spec: Dictionary = YinAdventure.CHESTS[id]
-		if spec.zone == state.zone and id not in state.opened_chests and is_instance_valid(player) and player.position.distance_to(spec.at) < 46: return id
+		if spec.zone == state.zone and id not in state.opened_chests and is_instance_valid(player) and can_interact(spec.at,46): return id
 	return ""
 func install_chests(game: Node2D) -> void:
 	for id in YinAdventure.CHESTS:

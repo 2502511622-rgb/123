@@ -117,8 +117,8 @@ func run() -> void:
 	check(game.world.level_size == Vector2(2880, 1920), "forest area expands by 2.25 times")
 	check(game.world.tile_farm.ground.get_cell_source_id(Vector2i(89, 59)) == 0, "terrain covers farthest expanded corner")
 	for destination in [Vector2(2304, 384), Vector2(2432, 1024), Vector2(2304, 1632)]:
-		var route: PackedVector2Array = game.world.path_to(Vector2(1800, 592), destination)
-		check(route.size() > 1 and route[-1].distance_to(destination) < 24, "new landmark has a navigable route: " + str(destination))
+		var route: PackedVector2Array = game.world.path_to(Vector2(1800, 592), destination+Vector2(0,40))
+		check(route.size() > 1 and route[-1].distance_to(destination+Vector2(0,40)) < 24, "new landmark has a navigable route: " + str(destination))
 	check(game.state.enemies.filter(func(e): return e.zone == "forest" and e.at[0] > 1920).size() == 12, "expanded territory contains twelve new enemies")
 	var original_ids: Array = game.state.enemies.filter(func(e): return e.zone == "forest" and e.at[0] <= 1920).map(func(e): return e.id)
 	game.state.enemies = game.state.enemies.filter(func(e): return e.zone != "forest" or e.at[0] <= 1920)

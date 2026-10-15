@@ -8,8 +8,7 @@ func _initialize() -> void:
 func kind_for(key: String) -> String:
 	return "daitengu" if key.begins_with("daitengu:") else key
 func classify(kind: String,p: Vector2,split: float,head: Vector3) -> String:
-	if kind in ["wraith","sogenbi"]:return "body"
-	if kind=="chochin":return "head"
+	if kind in ["sogenbi","chochin"]:return "head" if p.y<0.65 else "body"
 	var neck: float=clampf(split,head.x+0.06,head.y-0.06)
 	var t: float=clampf((p.y-head.z*0.65)/(head.z*0.35),0,1)
 	var left: float=lerpf(head.x,neck-0.08,t)

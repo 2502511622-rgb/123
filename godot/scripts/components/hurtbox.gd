@@ -7,7 +7,8 @@ func _ready() -> void:
 	monitoring = false
 	var shape := CollisionShape2D.new()
 	var box := RectangleShape2D.new()
-	box.size = Vector2(18, 30)
-	shape.position.y = -15
+	var body: Dictionary=YinBodyProfile.spec(actor.record.kind)
+	box.size=Vector2(body.size.x+4,body.height*0.62)
+	shape.position.y = -box.size.y*0.5
 	shape.shape = box
 	add_child(shape)

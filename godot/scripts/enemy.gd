@@ -1,5 +1,8 @@
 class_name YinEnemy
 extends CharacterBody2D
+var motion:=YinMonsterMotion.new()
+var model: YinMonsterRig
+var body_shape: CollisionShape2D
 var art_clock: float = 0
 var art_facing := Vector2.DOWN
 var art_strike: float = 0
@@ -57,20 +60,25 @@ func _ready() -> void:
 	if record.get("faction", "") == "village": hurtbox.collision_layer = 0
 	health_trail = float(record.hp)
 	shield = 20 if record.kind == "opera_boss" else 0
-	collision_layer = 4
-	collision_mask = 1 if record.kind == "wraith" else 7
-	var shape := CollisionShape2D.new()
-	var box := RectangleShape2D.new()
-	box.size = Vector2(14, 10)
-	shape.shape = box
-	shape.position.y = -4
-	add_child(shape)
+	collision_layer=4
+	collision_mask=7
+	motion_mode=CharacterBody2D.MOTION_MODE_FLOATING
+	body_shape=CollisionShape2D.new()
+	body_shape.name="PhysicalVolume"
+	body_shape.shape=YinBodyProfile.shape(record.kind)
+	body_shape.rotation=PI/2
+	body_shape.position=Vector2(0,-4)
+	add_child(body_shape)
+	model=YinMonsterRig.new()
+	model.actor=self
+	add_child(model)
 
 func _physics_process(delta: float) -> void:
 	if record.dead:
 		queue_free()
 		return
 	if game.modal != null or is_queued_for_deletion(): return
+	motion.update(self,delta)
 	if freeze_lock <= 0 and hit_stop <= 0: art_clock += delta*(0.62 if "leg" in record.get("severed",[]) else 1.0)
 	if velocity.length() > 2: art_facing = velocity.normalized()
 	material.set_shader_parameter("motion_clock", art_clock)
@@ -129,7 +137,7 @@ func _physics_process(delta: float) -> void:
 			panic_direction = Vector2.from_angle(float(record.id) + float(Time.get_ticks_msec()) * 0.007)
 			panic_turn = 0.55
 		velocity = panic_direction * spec.speed * 1.35
-		move_and_slide()
+		step_body(delta)
 		record.at = [position.x, position.y]
 		return
 	if record.has("war_id"):
@@ -182,9 +190,9 @@ func _physics_process(delta: float) -> void:
 		velocity = direction * spec.speed * (1.35 if record.kind == "brute" and record.hp < record.max_hp / 2 else 1.0)
 		if ranged:
 			velocity = -direction * spec.speed if distance < 125 else (Vector2.ZERO if distance < 300 else velocity)
-		if not has_sight:
+		if not has_sight or not game.world.clear_body_path(position,victim.position,YinBodyProfile.spec(record.kind).half):
 			if repath <= 0:
-				route = game.world.path_to(position, victim.position)
+				route = game.world.path_to(position, victim.position,YinBodyProfile.spec(record.kind).half)
 				repath = 0.5
 			while route.size() > 0 and position.distance_to(route[0]) < 8: route.remove_at(0)
 			velocity = position.direction_to(route[0]) * spec.speed if route.size() > 0 else velocity
@@ -193,7 +201,7 @@ func _physics_process(delta: float) -> void:
 			attack_center = victim.position
 	else: velocity = Vector2.ZERO
 	if game.world != active_world or not is_inside_tree(): return
-	move_and_slide()
+	step_body(delta)
 	record.at = [position.x, position.y]
 	queue_redraw()
 func fire_bullet(direction: Vector2, speed: float = 160) -> void:
@@ -264,7 +272,7 @@ func receive_hit(damage: int, method: String = "sword", source_gear_id: int = 0)
 		windup = 0
 		burst_remaining = 0
 	elif method == "bullet":
-		knockback = game.player.position.direction_to(position) * (18 if record.kind in YinAbilities.BOSSES else 42)
+		knockback = game.player.position.direction_to(position) * (18 if record.kind in YinAbilities.BOSSES else 42/float(YinBodyProfile.spec(record.kind).mass))
 		stun = maxf(stun, 0.045)
 	elif method in ["bleed", "burn", "curse", "lightning"] or record.kind in YinAbilities.BOSSES:
 		pass
@@ -292,14 +300,14 @@ func _draw() -> void:
 	if record.has("faction"):
 		draw_circle(Vector2(0, 1), 13, YinFactions.COLORS[record.faction])
 		draw_string(ThemeDB.fallback_font, Vector2(-18, -72), YinFactions.NAMES[record.faction], HORIZONTAL_ALIGNMENT_LEFT, -1, 10, YinFactions.COLORS[record.faction])
-	YinActorArt.contact_shadow(self,15 if record.kind in YinAbilities.BOSSES else 10,art_clock*11.0,clampf(velocity.length()/45.0,0,1))
+	YinActorArt.contact_shadow(self,15 if record.kind in YinAbilities.BOSSES else 10,float(motion.descriptor(record.kind).gait),clampf(velocity.length()/45.0,0,1))
 	var boss: bool = record.kind in YinAbilities.BOSSES
 	var tint := Color.WHITE if hit_flash > 0.065 else (Color("d79279") if hit_flash > 0 else (Color("8eafd0") if stun > 0.3 or chill_time > 0 else Color("e1e5ce")))
 	if record.kind == "wraith": tint.a = 0.55 if not record.suppressed else 1.0
 	if YinTempleCombat.phantom(self): tint = Color("c8a3e0aa")
 	var missing: Array = record.get("severed", [])
 	var pose: Dictionary = art_pose()
-	YinActorArt.draw_enemy(self, record.kind, pose, missing, art_clock, velocity.length() > 2 and freeze_lock <= 0, art_strike > 0, tint)
+	model.present(record.kind,pose,missing,art_clock,velocity.length()>2 and freeze_lock<=0,art_strike>0,tint)
 	draw_set_transform(Vector2.ZERO)
 	var art_height: float = -pose.destination.position.y + 7
 	var reveal: bool = record.hp < record.max_hp or record.kind in YinAbilities.BOSSES or record.get("elite", false) or position.distance_to(game.player.position) < 160
@@ -375,6 +383,7 @@ func update_dismemberment() -> void:
 func art_pose() -> Dictionary:
 	var pose: Dictionary = YinActorArt.enemy_pose(record.kind,art_facing,art_clock,velocity.length()>2,art_strike>0,record.kind in YinAbilities.BOSSES)
 	if hit_flash>0: pose.destination.position.x+=sin(hit_flash*80)*1.5
+	pose.motion=motion.descriptor(record.kind)
 	return pose
 
 func apply_element(element: String, power: int = 3, harmonious: bool = false) -> void:
@@ -444,12 +453,12 @@ func faction_tick(delta: float, spec: Dictionary) -> void:
 		else:
 			repath -= delta
 			if repath <= 0:
-				route = game.world.path_to(position, victim.position)
+				route = game.world.path_to(position, victim.position,YinBodyProfile.spec(record.kind).half)
 				repath = 0.5
 			while not route.is_empty() and position.distance_to(route[0]) < 8: route.remove_at(0)
 			if not route.is_empty(): velocity = position.direction_to(route[0]) * float(spec.speed)
 	if is_inside_tree() and get_parent() == game.world.actors:
-		move_and_slide()
+		step_body(delta)
 		record.at = [position.x, position.y]
 
 func receive_faction_hit(damage: int) -> void:
@@ -461,3 +470,18 @@ func receive_faction_hit(damage: int) -> void:
 	if record.hp <= 0:
 		record.dead = true
 		queue_free()
+
+func step_body(_delta: float) -> void:
+	var body: Dictionary=YinBodyProfile.spec(record.kind)
+	if velocity.length()>1 and stun<=0:
+		var separation:=Vector2.ZERO
+		for other in get_tree().get_nodes_in_group("enemies")+get_tree().get_nodes_in_group("faction_guards"):
+			if other==self or other.is_queued_for_deletion() or other.get_parent()!=get_parent():continue
+			var away: Vector2=position-other.position
+			var minimum: float=(body.size.x+YinBodyProfile.spec(other.record.kind).size.x)*0.55
+			if away.length_squared()<minimum*minimum:
+				if away.length_squared()<0.01:away=Vector2.from_angle(float(record.id)*2.399)
+				separation+=away.normalized()*(1-clampf(away.length()/minimum,0,1))
+		velocity+=separation*16/body.mass
+	move_and_slide()
+	if get_slide_collision_count()>0 and velocity.length()>1:repath=0

@@ -173,14 +173,14 @@ func run() -> void:
  for gear in game.state.equipment: gear.enchantment = ""
  game.build_zone("farm", Vector2(618, 180))
  await frames(4)
- var blocked := {"id": 900, "kind": "water", "zone": "farm", "at": [722,180], "hp": 100, "max_hp": 100, "integrity": 100, "suppressed": false, "dead": false}
+ var blocked := {"id": 900, "kind": "water", "zone": "farm", "at": [717,180], "hp": 100, "max_hp": 100, "integrity": 100, "suppressed": false, "dead": false}
  game.state.enemies.append(blocked)
  game.spawn_enemies()
  await frames(3)
  var stock: int = game.state.talismans
  await key(KEY_F)
  check(blocked.hp == 100 and game.state.talismans == stock, "wall blocks spell and preserves talisman")
- var enemy: YinEnemy = game.nearest_enemy(Vector2(722,180), 30)
+ var enemy: YinEnemy = game.nearest_enemy(Vector2(717,180), 30)
  enemy.attack_center = game.player.position
  enemy.windup = 0.01
  var life: int = game.state.health

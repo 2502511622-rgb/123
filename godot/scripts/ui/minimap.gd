@@ -51,23 +51,12 @@ func _draw() -> void:
 		if not villager.is_queued_for_deletion(): draw_rect(Rect2(point(villager.position) - Vector2.ONE, Vector2(2, 2)), Color("d5b784"))
 	draw_rect(Rect2(point(game.player.position) - Vector2(2, 2), Vector2(4, 4)), Color("fff1c1"))
 func gates() -> Array:
-	match game.state.zone:
-		"temple": return [YinTemple.EXIT]
-		"island": return [Vector2(180, 1440)]
-		"village": return [Vector2(155, 820), Vector2(1180, 820), YinTemple.VILLAGE_GATE]
-		"forest": return [Vector2(155, 1140), Vector2(1760, 250), Vector2(1760, 1050)]
-		"sunken", "theatre": return [Vector2(155, 820)]
-		"graveyard": return [Vector2(155, 547), Vector2(850, 530)]
-		"farm": return [Vector2(160, 209), Vector2(784, 225), Vector2(810, 538), Vector2(900, 350)]
-	return [Vector2(480, 461)]
-
+	var result: Array=[]
+	for point in YinWorldLayout.points(game.state.zone):
+		if point.to!="":result.append(point.at)
+	return result
 func gate_labels() -> Array:
-	match game.state.zone:
-		"temple":return ["返回青槐村"]
-		"island":return ["渡口·青槐村"]
-		"village":return ["义庄田园","码头·岛国","山道·大佛寺"]
-		"forest":return ["乱葬坡","沉水村","废戏台"]
-		"sunken","theatre":return ["返回后山"]
-		"graveyard":return ["返回义庄","后山铳林"]
-		"farm":return ["义庄·休息制作","杂货铺·装备","乱葬坡·战斗","青槐村·委托"]
-	return ["院落"]
+	var result: Array=[]
+	for point in YinWorldLayout.points(game.state.zone):
+		if point.to!="":result.append(point.name)
+	return result

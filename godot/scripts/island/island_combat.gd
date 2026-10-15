@@ -91,7 +91,7 @@ static func tick(e, delta: float, spec: Dictionary) -> bool:
 	else:
 		e.velocity = Vector2.ZERO
 	if e.game.world != active_world or not e.is_inside_tree(): return true
-	e.move_and_slide()
+	e.step_body(delta)
 	e.record.at = [e.position.x, e.position.y]
 	e.queue_redraw()
 	return true
@@ -99,11 +99,11 @@ static func advance(e, at: Vector2, speed: float) -> void:
 	if e.position.distance_to(at) < 12:
 		e.velocity = Vector2.ZERO
 		return
-	if visible(e, at):
+	if visible(e, at) and e.game.world.clear_body_path(e.position,at,YinBodyProfile.spec(e.record.kind).half):
 		e.velocity = e.position.direction_to(at) * speed
 	else:
 		if e.repath <= 0:
-			e.route = e.game.world.path_to(e.position, at)
+			e.route = e.game.world.path_to(e.position,at,YinBodyProfile.spec(e.record.kind).half)
 			e.repath = 0.5
 		while e.route.size() > 0 and e.position.distance_to(e.route[0]) < 8: e.route.remove_at(0)
 		e.velocity = e.position.direction_to(e.route[0]) * speed if e.route.size() > 0 else Vector2.ZERO

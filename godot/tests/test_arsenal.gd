@@ -172,11 +172,12 @@ func run() -> void:
  var count_shots := func(friendly: bool):
   if friendly: shots += 1
  game.world.projectiles.projectile_spawned.connect(count_shots)
+ game.combat.random.seed = 19007 # Repeatable projectile spread.
  Input.action_press("attack")
  await frames(12)
  Input.action_release("attack")
  await frames(4)
- check(smg.magazine <= 20 and target.record.hp < 970, "held attack makes SMG fire repeatedly")
+ check(smg.magazine <= 20 and target.record.hp < 970, "held attack makes SMG fire repeatedly (hp=%d magazine=%d shots=%d)" % [target.record.hp,smg.magazine,shots])
  check(smg.magazine + game.state.supplies.light_ammo == ammo_total - shots and shots >= 4, "automatic fire consumes exactly one round per spawned bullet")
  game.world.projectiles.projectile_spawned.disconnect(count_shots)
  var rifle: Dictionary = game.state.grant_gear("rifle")

@@ -112,7 +112,7 @@ static func tick(e, delta: float, spec: Dictionary) -> bool:
 			e.attack_center = e.victim.position
 	else: e.velocity = Vector2.ZERO
 	if e.game.world != old_world or not e.is_inside_tree(): return true
-	e.move_and_slide()
+	e.step_body(delta)
 	e.record.at = [e.position.x, e.position.y]
 	e.queue_redraw()
 	return true

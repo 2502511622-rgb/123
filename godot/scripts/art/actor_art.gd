@@ -122,7 +122,7 @@ static func enemy_pose(kind: String, direction: Vector2, clock: float, moving: b
 		reference = atlas().tengu[row][0]
 		texture_value = TENGU
 		flip = false
-	var scale_value: float = (70.0 if boss else 47.0) / float(reference.rect[3])
+	var scale_value: float = float(YinBodyProfile.spec(kind).height) / float(reference.rect[3])
 	if kind in ["chochin", "sogenbi"]: scale_value *= 0.78
 	var source: Rect2 = rect_from(frame.rect)
 	return {"part_key": key, "texture": texture_value, "source": source, "destination": Rect2(-Vector2(frame.anchor[0], frame.anchor[1]) * scale_value, source.size * scale_value), "flip": flip}
@@ -132,8 +132,11 @@ static func part_index() -> Dictionary:
 	return anatomy
 static func posed_parts(kind: String, pose: Dictionary, clock: float, moving: bool, attack: bool) -> Array:
 	var articulated: bool = moving and kind!="daitengu"
-	var step: float = sin(clock*11.0) if articulated else 0.0
-	var bob: float = sin(clock*2.5)*1.2 if kind in ["sogenbi","wraith","chochin"] else (-absf(sin(clock*11.0))*1.5 if articulated else sin(clock*2.0)*0.25)
+	var movement: Dictionary=pose.get("motion",{})
+	var gait: float=float(movement.get("gait",clock*11.0))
+	var action: float=float(movement.get("action",-0.14 if attack else 0.0))
+	var step: float = sin(gait) if articulated else 0.0
+	var bob: float = sin(clock*2.5)*1.2 if kind in ["sogenbi","wraith","chochin"] else (-absf(sin(gait))*1.5 if articulated else sin(clock*2.0)*0.25)
 	if articulated and kind=="ippon_datara":bob=-maxf(0,sin(clock*8.0))*5.0
 	if articulated and kind=="jorogumo":bob=-absf(step)*0.6
 	var result: Array = []
@@ -154,12 +157,15 @@ static func posed_parts(kind: String, pose: Dictionary, clock: float, moving: bo
 		var rotation_value: float=0
 		if articulated and piece.joint in ["leg","leg_left"]:
 			var side: float=-1.0 if piece.joint=="leg_left" else 1.0
-			offset.y-=maxf(0,step*side)*3.0
-			rotation_value=step*side*0.12
+			offset.y-=maxf(0,step*side)*1.2
+			rotation_value=step*side*0.075
 		if kind!="daitengu" and piece.joint in ["arm","arm_left"]:
 			var side: float=1.0 if piece.joint=="arm" else -1.0
-			offset.x+=side*2.0 if attack else 0.0
-			rotation_value=side*(-0.14 if attack else step*0.095)
+			offset.x+=side*0.2 if attack else 0.0
+			rotation_value=side*(action*0.24 if attack or absf(action)>0.01 else step*0.075)
+		if piece.joint=="head":rotation_value+=sin(clock*2.0)*0.006+action*0.012
+		if piece.joint=="body":rotation_value+=action*0.012
+		offset+=Vector2(action*1.4,-absf(action)*0.8)
 		cut.destination.position+=offset-Vector2(0,bob)
 		cut.rotation=rotation_value
 		cut.pivot=pose.destination.position+Vector2(piece.pivot[0],piece.pivot[1])*pose.destination.size+offset
