@@ -1,0 +1,76 @@
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+WARNING: Could not set V-Sync mode, as changing V-Sync mode is not supported by the graphics driver.
+     at: set_use_vsync (platform/linuxbsd/x11/gl_manager_x11.cpp:364)
+OpenGL API 4.5 (Core Profile) Mesa 25.0.7-2+deb13u1 - Compatibility - Using Device: Mesa - llvmpipe (LLVM 19.1.7, 256 bits)
+
+REGIONAL PASS desert storms are probabilistic, not permanent
+REGIONAL PASS island converts the wet weather front into heavy snow
+REGIONAL PASS mountain blood moons occur on some nights
+REGIONAL PASS village retains ordinary rain
+REGIONAL PASS renderer suppresses bright matte at the actual sprite edge
+REGIONAL PASS edge treatment preserves interior white hair and cloth
+REGIONAL PASS edge treatment does not add an exterior outline
+REGIONAL PASS strong hit flash remains visible after edge cleanup
+REGIONAL PASS continuous map installs local climate controller
+REGIONAL PASS desert_hall imports at normalized pixel dimensions
+REGIONAL PASS desert_buddha imports at normalized pixel dimensions
+REGIONAL PASS desert_stupa imports at normalized pixel dimensions
+REGIONAL PASS desert_columns imports at normalized pixel dimensions
+REGIONAL PASS edo_shop imports at normalized pixel dimensions
+REGIONAL PASS edo_house imports at normalized pixel dimensions
+REGIONAL PASS broken_torii imports at normalized pixel dimensions
+REGIONAL PASS street_lantern imports at normalized pixel dimensions
+REGIONAL PASS mountain_crag imports at normalized pixel dimensions
+REGIONAL PASS dead_pine imports at normalized pixel dimensions
+REGIONAL PASS burial_cairn imports at normalized pixel dimensions
+REGIONAL PASS mountain_hut imports at normalized pixel dimensions
+REGIONAL PASS desert has ruined temple hall and eroded Buddha
+REGIONAL PASS Edo town has two actual rows of ruined shopfronts
+REGIONAL PASS graveyard uses crags and irregular burial cairns
+REGIONAL PASS desert contains no lush village grass
+REGIONAL PASS Edo main street stays clear of floating grass blades
+REGIONAL PASS sunset mixes warm directional light with scene lighting
+REGIONAL PASS capture desert-temple-sunset
+REGIONAL PASS sandstorm adds gusts without rain
+REGIONAL PASS player clothes receive local sand accumulation
+REGIONAL PASS real movement leaves sand tracks and ground dust
+REGIONAL PASS capture desert-sandstorm
+REGIONAL PASS regional transition replaces sandstorm with snowfall
+REGIONAL PASS snow affects the ground material
+REGIONAL PASS snow settles on character clothing
+REGIONAL PASS snow walking leaves compressed dark tracks
+REGIONAL PASS capture edo-snow-street
+REGIONAL PASS hungry_ghost receives flash, hit animation and impact feedback
+REGIONAL PASS wraith receives flash, hit animation and impact feedback
+REGIONAL PASS rakshasa receives flash, hit animation and impact feedback
+REGIONAL PASS kumbhanda receives flash, hit animation and impact feedback
+REGIONAL PASS asura receives flash, hit animation and impact feedback
+REGIONAL PASS yaksha receives flash, hit animation and impact feedback
+REGIONAL PASS kappa receives flash, hit animation and impact feedback
+REGIONAL PASS chochin receives flash, hit animation and impact feedback
+REGIONAL PASS ippon_datara receives flash, hit animation and impact feedback
+REGIONAL PASS jorogumo receives flash, hit animation and impact feedback
+REGIONAL PASS sogenbi receives flash, hit animation and impact feedback
+REGIONAL PASS itsumade receives flash, hit animation and impact feedback
+REGIONAL PASS daitengu receives flash, hit animation and impact feedback
+REGIONAL PASS ryomen_sukuna receives flash, hit animation and impact feedback
+REGIONAL PASS water receives flash, hit animation and impact feedback
+REGIONAL PASS bone receives flash, hit animation and impact feedback
+REGIONAL PASS archer receives flash, hit animation and impact feedback
+REGIONAL PASS lantern receives flash, hit animation and impact feedback
+REGIONAL PASS gunner receives flash, hit animation and impact feedback
+REGIONAL PASS brute receives flash, hit animation and impact feedback
+REGIONAL PASS well_boss receives flash, hit animation and impact feedback
+REGIONAL PASS opera_boss receives flash, hit animation and impact feedback
+REGIONAL PASS boss receives flash, hit animation and impact feedback
+REGIONAL PASS rain darkens the ground after a weather change
+REGIONAL PASS NPC finds a real building awning in rain
+REGIONAL PASS NPC actually moves toward shelter
+REGIONAL PASS NPC movement produces wet ground interactions too
+REGIONAL PASS capture village-rain-interactions
+REGIONAL PASS blood moon actually changes scene illumination
+REGIONAL PASS capture mountain-bloodmoon
+REGIONAL PASS modal pause freezes regional weather and interactions
+REGIONAL PASS weather interaction populations stay bounded
+REGIONAL PASS regional effects preserve 60 Hz physics
+REGIONAL RESULT 70 checks, 0 failures

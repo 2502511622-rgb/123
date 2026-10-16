@@ -2,6 +2,9 @@ shader_type canvas_item;
 render_mode unshaded;
 uniform sampler2D screen_texture : hint_screen_texture, repeat_disable, filter_nearest;
 uniform sampler2D light_field : filter_linear,repeat_disable;
+uniform float sandstorm=0.0;
+uniform float snowfall=0.0;
+uniform float bloodmoon=0.0;
 uniform float night = 0.0;
 uniform int quality=2;
 uniform float mist = 0.0;
@@ -30,6 +33,9 @@ void fragment() {
 	ambient*=mix(vec3(1.0),vec3(0.82,0.90,0.96),rain);
 	ambient+=vec3(0.10,0.09,0.04)*(1.0-smoothstep(15.0,65.0,length(p-hero)))*night;
 	ambient+=vec3(0.12,0.035,-0.045)*warmth*(1.0-rain);
+	ambient=mix(ambient,vec3(0.70,0.72,0.80),snowfall*0.4);
+	ambient=mix(ambient,vec3(0.80,0.62,0.42),sandstorm*0.4);
+	ambient=mix(ambient,vec3(0.76,0.38,0.40),bloodmoon*0.65);
 	float glow=texture(light_field,SCREEN_UV).r;
 	float halo=glow;
 	if(quality>1){halo=(texture(light_field,SCREEN_UV+pixel*vec2(3,0)).r+texture(light_field,SCREEN_UV-pixel*vec2(3,0)).r+texture(light_field,SCREEN_UV+pixel*vec2(0,3)).r+texture(light_field,SCREEN_UV-pixel*vec2(0,3)).r)*0.25;}

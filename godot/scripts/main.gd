@@ -438,6 +438,7 @@ func spawn_new_boss() -> void:
 func update_labels() -> void:
 	update_quest_tracker()
 	date_label.text = "第 %02d 日  %02d:%02d  %s" % [state.day, (int(state.minutes) % 1440) / 60, int(state.minutes) % 60, "雨" if state.weather == "rain" else ("夜" if state.minutes >= 1080 else "昼")]
+	if seamless and world.environment.regional!=null:date_label.text="第 %02d 日 %02d:%02d %s"%[state.day,(int(state.minutes)%1440)/60,int(state.minutes)%60,YinRegionalClimate.LABELS[world.environment.regional.event]]
 	stats_label.text = "命%d · 气%d · %d文" % [state.health,state.energy,state.money]
 	health_bar.value = state.health
 	energy_bar.value = state.energy

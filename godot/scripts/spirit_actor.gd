@@ -23,6 +23,9 @@ var route: PackedVector2Array = []
 var repath: float = 0
 const TEXTURE = preload("res://assets/spirits.png")
 func _ready() -> void:
+	material=ShaderMaterial.new()
+	material.shader=preload("res://shaders/hit_flash.gdshader")
+	material.set_shader_parameter("environment_blend",0.28)
 	collision_layer = 0
 	collision_mask = 1
 	var shape := CollisionShape2D.new()

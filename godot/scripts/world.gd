@@ -29,6 +29,7 @@ var time: float = 0.0
 var redraw_timer: float = 0.0
 var selected_plot: int = -1
 var effects: Array = []
+var biome_material: ShaderMaterial
 var feedback: Node2D
 var canopy_material: ShaderMaterial
 func shared_canopy() -> ShaderMaterial:
@@ -192,12 +193,14 @@ func prop(name_text: String, at: Vector2, offset: Vector2, collision_rect: Rect2
 	body.position = at
 	body.set_meta("interaction_anchor",at)
 	actors.add_child(body)
-	var sprite: Sprite2D = YinWindSprite.new() if name_text.begins_with("tree") else Sprite2D.new()
+	var sprite: Sprite2D = YinWindSprite.new() if name_text.begins_with("tree") or name_text=="dead_pine" else Sprite2D.new()
 	if sprite is YinWindSprite:
 		sprite.world = self
 		body.add_to_group("wind_trees")
-	var detailed: bool=YinWorldArt.REGIONS.has(name_text) or name_text=="npc"
-	sprite.texture = YinArt.texture(name_text) if detailed or YinWorldArt.REGIONS.has(name_text) else load("res://assets/%s.png" % name_text)
+	var biome: bool=YinBiomeArt.SIZES.has(name_text)
+	if biome:body.set_meta("biome_prop",name_text)
+	var detailed: bool=biome or YinWorldArt.REGIONS.has(name_text) or name_text=="npc"
+	sprite.texture = YinBiomeArt.texture(name_text) if biome else (YinArt.texture(name_text) if detailed or YinWorldArt.REGIONS.has(name_text) else load("res://assets/%s.png" % name_text))
 	sprite.name = "ArtSprite"
 	if name_text == "tree":
 		sprite.texture = YinArt.texture(YinRegionStyle.tree(YinContinent.faction(at) if self is YinContinentWorld else state.zone,at))
@@ -205,8 +208,9 @@ func prop(name_text: String, at: Vector2, offset: Vector2, collision_rect: Rect2
 	sprite.position = Vector2(-48, -124) if name_text == "tree" else (Vector2(-16, -48) if name_text == "npc" else offset)
 	sprite.scale = Vector2.ONE if detailed else Vector2(2, 2)
 	body.add_child(sprite)
-	if name_text == "lantern": body.add_to_group("art_lights")
-	if name_text in ["cottage", "store"]:
+	if biome and name_text!="dead_pine":sprite.material=shared_biome_surface()
+	if name_text in ["lantern","street_lantern"]: body.add_to_group("art_lights")
+	if name_text in ["cottage", "store","edo_shop","edo_house"]:
 		var window_light := Marker2D.new()
 		window_light.position = Vector2(-32, -44)
 		window_light.add_to_group("art_lights")
@@ -694,3 +698,8 @@ func prajna_sweep(at: Vector2, facing: Vector2, reach: float, actor_level: int) 
 		tween.tween_property(slash, "modulate:a", 0.0, 0.28 + actor_level * 0.003)
 		tween.tween_callback(slash.queue_free)
 	shock_ring(at, 16 + actor_level, Color("e9cf83"))
+
+func shared_biome_surface() -> ShaderMaterial:
+	if biome_material==null:
+		biome_material=ShaderMaterial.new();biome_material.shader=preload("res://shaders/biome_surface.gdshader")
+	return biome_material

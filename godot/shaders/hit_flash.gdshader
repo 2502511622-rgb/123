@@ -4,10 +4,19 @@ uniform float environment_blend = 0.0;
 uniform float wetness : hint_range(0.0, 1.0) = 0.0;
 uniform float motion_clock = 0.0;
 uniform float motion_amount = 0.0;
+uniform vec4 environment_tint : source_color = vec4(0.72,0.78,0.69,1.0);
+uniform float snow_cover=0.0;
+uniform float dust_cover=0.0;
+uniform float wind_force=0.0;
+uniform float actor_ground_y=0.0;
+varying vec2 actor_world;
 void vertex() {
+ actor_world=(MODEL_MATRIX*vec4(VERTEX,0.0,1.0)).xy;
+
 	// Cloth follow-through at 60 Hz, tapering to zero at the foot anchor.
 	float hem = smoothstep(-45.0,-24.0,VERTEX.y)*(1.0-smoothstep(-15.0,-3.0,VERTEX.y));
 	VERTEX.x += sin(motion_clock*7.0+VERTEX.y*0.18)*hem*motion_amount*0.9;
+ VERTEX.x+=sin(motion_clock*2.2+VERTEX.y*0.12)*hem*wind_force*0.35;
 }
 uniform bool avatar_enabled = false;
 uniform vec2 avatar_texture_size = vec2(0.0);
@@ -40,11 +49,25 @@ void fragment() {
 		if(replace){COLOR.rgb=choice*clamp(light/reference,0.25,1.35)*(COLOR.rgb/max(original,vec3(0.01)));}
 	}
 
-	float above=texture(TEXTURE,UV-vec2(0.0,TEXTURE_PIXEL_SIZE.y)).a;
-	float left=texture(TEXTURE,UV-vec2(TEXTURE_PIXEL_SIZE.x,0.0)).a;
-	float edge=max(0.0,texture(TEXTURE,UV).a-min(above,left));
-	vec3 lit=COLOR.rgb*(1.0-wetness*0.06)+vec3(0.12,0.14,0.10)*edge*(0.35+wetness*0.35);
-	float luma=dot(lit,vec3(0.299,0.587,0.114));
-	lit=mix(lit,mix(lit,vec3(luma)*vec3(0.96,1.0,0.89),0.45),environment_blend);
-	COLOR.rgb=mix(lit,vec3(1.0),flash);
+
+ vec4 texel=texture(TEXTURE,UV);
+ if(texel.a<0.35){discard;}
+ float above=texture(TEXTURE,UV-vec2(0.0,TEXTURE_PIXEL_SIZE.y)).a;
+ float below=texture(TEXTURE,UV+vec2(0.0,TEXTURE_PIXEL_SIZE.y)).a;
+ float left=texture(TEXTURE,UV-vec2(TEXTURE_PIXEL_SIZE.x,0.0)).a;
+ float right=texture(TEXTURE,UV+vec2(TEXTURE_PIXEL_SIZE.x,0.0)).a;
+ float edge=1.0-min(min(above,below),min(left,right));
+ vec3 lit=COLOR.rgb;
+ float luma=dot(lit,vec3(0.299,0.587,0.114));
+ // Remove bright matte fringes without darkening interior hair, skin or cloth details.
+ float matte=edge*smoothstep(0.65,0.92,luma);
+ lit*=1.0-matte*0.42;
+ lit=mix(lit,lit*environment_tint.rgb*1.12,environment_blend);
+ float boots=1.0-smoothstep(2.0,23.0,actor_ground_y-actor_world.y);
+ lit*=1.0-wetness*(0.06+boots*0.16);
+ lit=mix(lit,vec3(0.50,0.39,0.27)*max(luma,0.25),dust_cover*boots*0.35);
+ float upper=max(0.0,texel.a-above)*(1.0-boots);
+ lit=mix(lit,vec3(0.67,0.73,0.76),snow_cover*upper*0.3);
+ COLOR.a*=smoothstep(0.35,0.8,texel.a);
+ COLOR.rgb=mix(lit,vec3(1.0),flash);
 }

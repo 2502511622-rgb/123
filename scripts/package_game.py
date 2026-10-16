@@ -12,4 +12,5 @@ with zipfile.ZipFile(output) as archive:
  assert 'yintian/godot/project.godot' in archive.namelist()
  assert all('yintian/artifacts/enemy-packs/'+pack+'.zip' in archive.namelist() for pack in ['drowned','skeleton','tengu','hungry','rakshasa'])
  assert not any('/.godot/' in n or 'farm-save.json' in n for n in archive.namelist())
+ assert output.stat().st_size < 100 * 1024 * 1024, 'Engineering ZIP exceeds GitHub single-file limit'
  print('Verified package:',len(archive.namelist()),'files,',output.stat().st_size,'bytes')

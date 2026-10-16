@@ -33,6 +33,7 @@ with tempfile.TemporaryDirectory(prefix='mossfield-checks-') as temp:
   ['--headless', '--script', 'res://tests/test_continent.gd'],
   ['--headless', '--script', 'res://tests/test_performance_corpses.gd'],
   ['--headless', '--script', 'res://tests/test_modular_enemies.gd'],
+  ['--headless', '--script', 'res://tests/test_regional_world.gd'],
   ['--headless', '--quit-after', '30']]
  for index,args in enumerate(commands):
   env['MOSSFIELD_RUNTIME_DIR']=str(Path(temp)/str(index))
@@ -47,4 +48,4 @@ with tempfile.TemporaryDirectory(prefix='mossfield-checks-') as temp:
   print(output)
   if run.returncode or 'SCRIPT ERROR' in output or 'ERROR:' in output:
    sys.exit(run.returncode or 1)
-print('PASS: import, twenty-four historical suites, seamless world, performance/corpses and modular enemies suites, main-scene startup')
+print(f'PASS: import, {len(commands)-2} Godot suites, main-scene startup')

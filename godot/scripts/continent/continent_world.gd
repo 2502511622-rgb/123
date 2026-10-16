@@ -30,6 +30,7 @@ func _ready() -> void:
  call_deferred("install_interactions")
 func build_settlements() -> void:
  for side in YinContinent.CAPITALS:
+  if side!="village":continue
   var center: Vector2=YinContinent.CAPITALS[side]
   add_sign(center+Vector2(-60,100),YinFactions.NAMES[side]+" · 领地主城")
   var building="shrine" if side=="temple" else "cottage" if side=="village" else "torii" if side=="island" else "grave"
@@ -39,13 +40,7 @@ func build_settlements() -> void:
    var size_value: Vector2=Vector2(YinWorldArt.SIZES[building])
    prop(building,center+offset,Vector2(-size_value.x/2,-size_value.y),Rect2(-20,-24,40,24))
   prop("lantern",center+Vector2(-64,-48),Vector2(-16,-48),Rect2(-4,-6,8,6))
- # Regional landmarks anchor the political map in the actual landscape.
- prop("buddha",Vector2(1504,832),Vector2(-104,-192),Rect2(-72,-40,144,40))
- for at in [Vector2(1248,864),Vector2(1760,864)]:prop("stupa",at,Vector2(-24,-96),Rect2(-14,-20,28,20))
- for wall in [Rect2(1120,640,288,24),Rect2(1600,640,288,24),Rect2(1120,1440,288,24),Rect2(1600,1440,288,24),Rect2(1120,640,24,320),Rect2(1120,1152,24,312),Rect2(1864,640,24,320),Rect2(1864,1152,24,312)]:
-  boundary(wall);YinWallFace.install(self,wall)
- prop("torii",Vector2(4896,864),Vector2(-64,-126),Rect2(-10,-16,20,16))
- prop("fallen_gate",Vector2(4896,3328),Vector2(-48,-80),Rect2(-28,-20,56,20))
+ build_biomes()
  prop("cottage",YinContinent.HOME+Vector2(0,-48),Vector2(-80,-132),Rect2(-60,-90,120,84))
  prop("chest",YinContinent.HOME+Vector2(-96,0),Vector2(-20,-30),Rect2(-15,-20,30,20))
  prop("store",Vector2(1680,3488),Vector2(-64,-116),Rect2(-48,-80,96,70))
@@ -59,11 +54,45 @@ func build_settlements() -> void:
   for npc in state.villagers:
    if at.distance_to(Vector2(npc.at[0],npc.at[1]))<90:clear=true
   if clear:continue
-  var kind=YinRegionStyle.tree(YinContinent.faction(at),at)
-  if i%6==0:kind="grave" if YinContinent.faction(at)=="graveyard" else "rock"
-  if kind.begins_with("tree"):trees.append(at)
-  prop(kind,at,Vector2(-32,-88),Rect2(-8,-16,16,16))
+  if not is_safe_position(at,Vector2(24,20)):continue
+  var side=YinContinent.faction(at)
+  var kind=YinRegionStyle.tree(side,at)
+  if side=="temple":
+   if i%3!=0:continue
+   kind="desert_columns" if i%2==0 else "rock"
+  elif side=="graveyard":kind=["dead_pine","mountain_crag","burial_cairn"][i%3]
+  elif i%6==0:kind="rock"
+  if kind.begins_with("tree") or kind=="dead_pine":trees.append(at)
+  if YinBiomeArt.SIZES.has(kind):
+   var size_value: Vector2i=YinBiomeArt.SIZES[kind]
+   prop(kind,at,Vector2(-size_value.x/2,-size_value.y),Rect2(-16,-12,32,12))
+  else:prop(kind,at,Vector2(-32,-88),Rect2(-8,-16,16,16))
  for b in YinContinent.BRIDGES:add_sign(b.get_center()+Vector2(-50,120),"界河桥 · 徒步通行")
+func biome_prop(kind: String,at: Vector2,width: float=40) -> void:
+ var size_value: Vector2i=YinBiomeArt.SIZES[kind]
+ prop(kind,at,Vector2(-size_value.x/2,-size_value.y),Rect2(-width/2,-24,width,24))
+func build_biomes() -> void:
+ # Main military corridors and all river crossings remain open.
+ biome_prop("desert_hall",Vector2(1312,864),132)
+ biome_prop("desert_buddha",Vector2(1744,864),60)
+ for at in [Vector2(1248,1344),Vector2(1760,1344)]:biome_prop("desert_stupa",at,34)
+ for at in [Vector2(1008,832),Vector2(1952,1408),Vector2(1728,624)]:biome_prop("desert_columns",at,56)
+ for wall in [Rect2(1088,608,288,20),Rect2(1632,608,288,20),Rect2(1088,1456,288,20),Rect2(1632,1456,288,20)]:
+  boundary(wall);YinWallFace.install(self,wall)
+ for y in [704,960,1312,1568]:
+  biome_prop("edo_shop",Vector2(4672,y),96)
+  biome_prop("edo_house",Vector2(5120,y+16),96)
+  biome_prop("street_lantern",Vector2(4800,y+20),10)
+  biome_prop("street_lantern",Vector2(4992,y+20),10)
+ biome_prop("broken_torii",Vector2(4656,1472),54)
+ for at in [Vector2(4544,3280),Vector2(5216,3296),Vector2(4544,3824),Vector2(5248,3856)]:
+  biome_prop("mountain_crag",at,64)
+  biome_prop("burial_cairn",at+Vector2(112,48),42)
+ for at in [Vector2(4672,3408),Vector2(5072,3728),Vector2(5344,3504)]:biome_prop("dead_pine",at,22)
+ biome_prop("mountain_hut",Vector2(4704,3840),68)
+ add_sign(Vector2(1280,1184),"大佛寺 · 沙海残殿")
+ add_sign(Vector2(4720,1136),"岛国 · 江户荒街")
+ add_sign(Vector2(4720,3640),"乱葬岗 · 荒岭孤坟")
 func _process(delta: float) -> void:
  time+=delta
 func _draw() -> void:

@@ -12,6 +12,12 @@ var attack_cooldown: float=0
 var attack_flash: float=0
 var combat_target: YinEnemy
 var attack_count: int=0
+var weather_route: PackedVector2Array=[]
+var shelter_target:=Vector2(INF,INF)
+var shelter_clock: float=0
+var combat_route: PackedVector2Array=[]
+var combat_repath: float=0
+var route_target: int=0
 func _ready() -> void:
 	material = ShaderMaterial.new()
 	material.shader = preload("res://shaders/hit_flash.gdshader")
@@ -26,13 +32,18 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	if game.modal != null: return
 	time += delta
+	invincible = maxf(0, invincible - delta)
+	material.set_shader_parameter("motion_clock",time)
 	attack_cooldown=maxf(0,attack_cooldown-delta);attack_flash=maxf(0,attack_flash-delta)
+	combat_repath=maxf(0,combat_repath-delta)
 	if game.state.continent_ready and defend(delta):
 		queue_redraw()
 		return
-	invincible = maxf(0, invincible - delta)
+	if game.state.continent_ready and weather_shelter(delta):
+		queue_redraw()
+		return
 	brain_state = "wounded" if record.hp <= 0 else ("shelter" if game.state.raid_status == "active" or record.hp < 30 else ("rest" if game.state.minutes >= 1200 else "work"))
-	var drift: float = 4 if brain_state in ["shelter", "rest"] else 12
+	var drift: float = 4 if brain_state in ["shelter", "rest","weather_shelter"] else 12
 	var target: Vector2 = home + Vector2(roundf(sin(time / 3 + int(record.id))) * drift, roundf(cos(time / 4)) * drift)
 	var previous: Vector2 = position
 	position = position.move_toward(target, delta * 12) if record.hp > 0 else position
@@ -41,6 +52,35 @@ func _physics_process(delta: float) -> void:
 	material.set_shader_parameter("motion_clock", time)
 	material.set_shader_parameter("motion_amount", 0.6 if walking else 0.12)
 	queue_redraw()
+func weather_shelter(delta: float) -> bool:
+	var climate=game.world.environment.regional
+	var local_event="clear"
+	if climate!=null:
+		var forced=climate.forced_event if game.world.screen_bounds().grow(80).has_point(position) else ""
+		local_event=YinRegionalClimate.forecast(position,game.state.day,game.state.minutes,game.state.weather,forced)
+	if record.hp<=0 or climate==null or local_event not in ["rain","snow","sandstorm"]:
+		shelter_target=Vector2(INF,INF);shelter_clock=0;return false
+	brain_state="weather_shelter";shelter_clock-=delta
+	if shelter_clock<=0:
+		shelter_clock=3;var best=700.0
+		for body in game.world.actors.get_children():
+			if not body is StaticBody2D:continue
+			var sprite=body.get_node_or_null("ArtSprite")
+			if sprite==null:continue
+			if body.get_meta("biome_prop","") not in ["edo_shop","edo_house","mountain_hut"] and sprite.texture not in [YinArt.texture("cottage"),YinArt.texture("store")]:continue
+			var at: Vector2=body.position+Vector2(0,20)
+			var distance=position.distance_to(at)
+			if distance<best and game.world.is_safe_position(at):best=distance;shelter_target=at
+		if is_finite(shelter_target.x):weather_route=game.world.path_to(position,shelter_target,Vector2(7,5))
+	if not is_finite(shelter_target.x):return false
+	walking=position.distance_to(shelter_target)>8
+	if walking:
+		while not weather_route.is_empty() and position.distance_to(weather_route[0])<8:weather_route.remove_at(0)
+		var next: Vector2=weather_route[0] if not weather_route.is_empty() else shelter_target
+		velocity=position.direction_to(next)*22;move_and_slide();walk_clock+=delta
+	else:velocity=Vector2.ZERO
+	record.at=[position.x,position.y]
+	return true
 func defend(delta: float) -> bool:
 	if record.hp<=0:return false
 	combat_target=null
@@ -55,10 +95,12 @@ func defend(delta: float) -> bool:
 	var ranged: bool=int(record.id)%2==0
 	var reach: float=144 if ranged else 42
 	if best>reach:
-		var path: PackedVector2Array=game.world.path_to(position,combat_target.position)
 		var next: Vector2=combat_target.position
-		for p in path:
-			if p.distance_to(position)>10:next=p;break
+		if not game.world.clear_body_path(position,combat_target.position,Vector2(7,5)):
+			if combat_repath<=0 or route_target!=combat_target.get_instance_id():
+				combat_route=game.world.path_to(position,combat_target.position);combat_repath=0.6;route_target=combat_target.get_instance_id()
+			while not combat_route.is_empty() and position.distance_to(combat_route[0])<10:combat_route.remove_at(0)
+			if not combat_route.is_empty():next=combat_route[0]
 		velocity=position.direction_to(next)*40;move_and_slide();walking=true;walk_clock+=delta
 	elif attack_cooldown<=0:
 		var ray=PhysicsRayQueryParameters2D.create(position+Vector2(0,-10),combat_target.position+Vector2(0,-10),1)

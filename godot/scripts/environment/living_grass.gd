@@ -23,6 +23,11 @@ func _ready() -> void:
 func grass_at(at: Vector2) -> bool:
 	if at.x < 20 or at.y < 20 or at.x > world.level_size.x-20 or at.y > world.level_size.y-20: return false
 	if world.state.zone in ["hall", "shop"]: return false
+	if world is YinContinentWorld:
+		var region=YinContinent.faction(at)
+		if region=="temple":return false
+		if region=="island" and absf(at.x-4896)<450 and at.y<1800:return false
+		if region=="graveyard" and posmod(hash(Vector2i(at/16)),4)!=0:return false
 	if world.state.zone == "farm" and Rect2(296, 230, 306, 258).has_point(at): return false
 	var tile: int = world.tile_farm.ground.get_cell_atlas_coords(Vector2i(at / 32)).x
 	return (tile < 8 or tile in [14, 15]) and world.is_safe_position(at)

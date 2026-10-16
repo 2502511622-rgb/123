@@ -23,9 +23,12 @@ var last_step := Vector2.ZERO
 var baked: bool = false
 var soil_material: ShaderMaterial
 var plot_flags := PackedByteArray()
+var regional: YinRegionalClimate
 var terrain_material: ShaderMaterial
 func _ready() -> void:
 	indoor = world.state.zone in ["hall", "shop"]
+	if world is YinContinentWorld:
+		regional=YinRegionalClimate.new();regional.environment=self
 	random.seed = world.state.zone.hash() + 15015
 	ground = YinEnvironmentLayer.new()
 	ground.name = "WetGroundAndShadows"
@@ -93,7 +96,7 @@ func refresh_reflections() -> void:
 		if not body is StaticBody2D or body.is_queued_for_deletion(): continue
 		for source in body.get_children():
 			if not source is Sprite2D: continue
-			if source.texture not in [YinArt.texture("cottage"), YinArt.texture("store"), YinArt.texture("lantern"), YinArt.texture("tree"), YinArt.texture("tree_autumn"), YinArt.texture("tree_pine")]: continue
+			if source.texture not in [YinArt.texture("cottage"), YinArt.texture("store"), YinArt.texture("lantern"), YinArt.texture("tree"), YinArt.texture("tree_autumn"), YinArt.texture("tree_pine")] and body.get_meta("biome_prop","") not in ["edo_shop","edo_house","street_lantern"]: continue
 			var reflection := Sprite2D.new()
 			reflection.texture = source.texture
 			reflection.centered = false
@@ -117,13 +120,22 @@ func _process(delta: float) -> void:
 	if game != null and game.modal != null: return
 	refresh_soil()
 	time += delta
-	rain = move_toward(rain, 1.0 if world.state.weather == "rain" and not indoor else 0.0, delta * 1.2)
+	if regional!=null:regional.update(delta)
+	var rain_target=regional.rain_target if regional!=null else (1.0 if world.state.weather=="rain" and not indoor else 0.0)
+	rain = move_toward(rain,rain_target,delta*1.2)
 	wetness = move_toward(wetness, 1.0 if rain > 0.1 else 0.0, delta * (0.14 if rain > 0.1 else 0.025))
 	wind = (0.65 + 0.35 * sin(time * 0.35) + 0.25 * sin(time * 0.91)) * (1.5 if rain > 0.2 else 1.0)
+	if regional!=null:wind+=regional.dust*1.6+regional.snow*0.35
 	terrain_material.set_shader_parameter("clock_time", time)
 	terrain_material.set_shader_parameter("wetness", wetness)
+	if regional!=null:
+		terrain_material.set_shader_parameter("snow",regional.snow);terrain_material.set_shader_parameter("dust",regional.dust)
 	if world.canopy_material!=null:
 		world.canopy_material.set_shader_parameter("clock_time",time);world.canopy_material.set_shader_parameter("wind",wind);world.canopy_material.set_shader_parameter("wetness",wetness)
+	if regional!=null:
+		if world.biome_material!=null:
+			world.biome_material.set_shader_parameter("snow",regional.snow);world.biome_material.set_shader_parameter("dust",regional.dust);world.biome_material.set_shader_parameter("wetness",wetness)
+		if world.canopy_material!=null:world.canopy_material.set_shader_parameter("snow",regional.snow)
 	light_field.update(time)
 	if reflected_prop_count != world.environment_revision: refresh_reflections()
 	var screen: Rect2 = visible_rect().grow(130)
@@ -185,6 +197,7 @@ func is_water(at: Vector2) -> bool:
 	return tile in [11, 12, 13]
 func draw_ground(canvas: Node2D) -> void:
 	if indoor or not baked: return
+	if regional!=null:regional.draw_ground(canvas)
 	var screen: Rect2 = visible_rect().grow(100)
 	# Directional canopy shadows share the same wind clock as the actual foliage.
 	var sun: float = clampf((world.state.minutes - 360) / 720.0, 0, 1)
@@ -207,7 +220,7 @@ func draw_ground(canvas: Node2D) -> void:
 		for y in range(cell_start.y, cell_start.y + 18):
 			for x in range(cell_start.x, cell_start.x + 28):
 				var tile: int = world.tile_farm.ground.get_cell_atlas_coords(Vector2i(x, y)).x
-				if tile < 16 or (x * 13 + y * 7) % 3 != 0: continue
+				if (tile < 16 and tile!=10) or (x * 13 + y * 7) % 3 != 0: continue
 				var at := Vector2(x * 32 + 7, y * 32 + 18)
 				if not exposed(at): continue
 				canvas.draw_set_transform(at, 0, Vector2(1, 0.28))
@@ -232,6 +245,7 @@ func draw_ground(canvas: Node2D) -> void:
 		canvas.draw_set_transform(Vector2.ZERO)
 func draw_front(canvas: Node2D) -> void:
 	if indoor or not baked: return
+	if regional!=null:regional.draw_front(canvas)
 	var screen: Rect2 = visible_rect()
 	if rain > 0.01:
 		for i in range(125):
@@ -244,7 +258,8 @@ func draw_front(canvas: Node2D) -> void:
 		for body in world.actors.get_children():
 			if not body is StaticBody2D or body.is_queued_for_deletion() or not screen.grow(100).has_point(body.position): continue
 			for source in body.get_children():
-				if not source is Sprite2D or source.texture not in [YinArt.texture("cottage"), YinArt.texture("store")]: continue
+				if not source is Sprite2D:continue
+				if source.texture not in [YinArt.texture("cottage"), YinArt.texture("store")] and body.get_meta("biome_prop","") not in ["edo_shop","edo_house"]:continue
 				for i in range(7):
 					var at: Vector2 = body.position + source.position + Vector2(12 + i * 19, 66 if source.texture == YinArt.texture("cottage") else 57)
 					var fall: float = fposmod(time * 38 + i * 11, 16)
