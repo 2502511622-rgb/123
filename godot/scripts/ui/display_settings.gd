@@ -1,5 +1,6 @@
 class_name YinDisplaySettings
 extends RefCounted
+static var corpse_lifetime: float=0
 const PATH = "user://display.cfg"
 const RESOLUTIONS = [Vector2i(1280, 720), Vector2i(1920, 1080), Vector2i(2560, 1440)]
 static func embedded_run() -> bool:
@@ -8,6 +9,7 @@ static func embedded_run() -> bool:
 static func load_settings() -> void:
 	var config := ConfigFile.new()
 	if config.load(PATH) == OK:
+		corpse_lifetime=clampf(float(config.get_value("display","corpse_lifetime",0)),0,86400)
 		apply(int(config.get_value("display", "resolution", 0)), bool(config.get_value("display", "fullscreen", false)), false)
 static func apply(index: int, fullscreen: bool, save: bool = true) -> String:
 	index = clampi(index, 0, RESOLUTIONS.size() - 1)
@@ -15,6 +17,7 @@ static func apply(index: int, fullscreen: bool, save: bool = true) -> String:
 		var config := ConfigFile.new()
 		config.set_value("display", "resolution", index)
 		config.set_value("display", "fullscreen", fullscreen)
+		config.set_value("display", "corpse_lifetime",corpse_lifetime)
 		if config.save(PATH) != OK: return "设置保存失败，请检查用户目录是否可写。"
 	if embedded_run(): return "设置已保存。编辑器嵌入窗口由编辑器控制大小，点击「独立窗口运行」应用。"
 	if DisplayServer.get_name() == "headless": return "设置已保存。"
@@ -62,6 +65,10 @@ static func panel() -> VBoxContainer:
 	fullscreen.button_pressed = bool(config.get_value("display", "fullscreen", false))
 	box.add_child(resolutions)
 	box.add_child(fullscreen)
+	var bodies=OptionButton.new();bodies.name="CorpseLifetimeChoice"
+	for label_value in ["尸体：永久保留","尸体：60秒后淡出","尸体：180秒后淡出"]:bodies.add_item(label_value)
+	bodies.select(1 if corpse_lifetime==60 else (2 if corpse_lifetime==180 else 0))
+	box.add_child(bodies)
 	var status := Label.new()
 	status.name = "DisplayStatus"
 	status.custom_minimum_size.x = 390
@@ -72,6 +79,7 @@ static func panel() -> VBoxContainer:
 	var apply_button := Button.new()
 	apply_button.text = "应用分辨率"
 	apply_button.pressed.connect(func():
+		corpse_lifetime=[0.0,60.0,180.0][bodies.selected]
 		status.text = apply(resolutions.selected, fullscreen.button_pressed)
 	)
 	box.add_child(apply_button)

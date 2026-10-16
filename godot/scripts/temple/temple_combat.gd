@@ -84,7 +84,7 @@ static func tick(e, delta: float, spec: Dictionary) -> bool:
 		e.knockback = e.knockback.move_toward(Vector2.ZERO, delta * 220)
 	elif e.charge_time > 0:
 		e.charge_time -= delta
-		e.velocity = e.charge_direction * (140 if "leg" in e.record.get("severed", []) else 260)
+		e.velocity = e.charge_direction * (140 if YinEnemyPack.injured_leg(e.record.get("severed", [])) else 260)
 		if not e.charge_hit and distance < 45:
 			melee(e, 45)
 			e.charge_hit = true

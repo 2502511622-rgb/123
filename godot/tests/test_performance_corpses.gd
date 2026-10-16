@@ -49,7 +49,7 @@ func run():
  await frames(35)
  check(corpse(record.id).get_instance_id()==first_id,"subsequent deaths preserve existing corpse nodes")
  check(not body.is_processing() and body.age>=0.45,"settled corpses finish falling and have no per-frame process callback")
- check(not body is CollisionObject2D and body.get_child_count()==0,"bodies do not retain enemy AI, hurtboxes or collisions")
+ check(body is StaticBody2D and body.footprint.shape is CapsuleShape2D and body.get_node_or_null("Hurtbox")==null and not body.is_physics_processing(),"static corpse retains collision but no enemy AI or hurtbox")
  var saved: Dictionary=JSON.parse_string(JSON.stringify(game.state.snapshot()));var restored=FarmState.new()
  check(restored.restore(saved) and restored.remains.back().has("death_pose"),"corpse pose and severed state survive saving")
  var rebuilt=YinCorpse.new();rebuilt.bind(restored.find_remains(record.id));game.world.actors.add_child(rebuilt)

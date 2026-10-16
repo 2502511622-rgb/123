@@ -426,7 +426,7 @@ func kill_enemy(id: int, at: Vector2, source_gear_id: int = 0) -> void:
 
 func leave_remains(e: Dictionary,at: Vector2) -> Dictionary:
 	var boss: bool=e.kind=="boss"
-	remains.append({"id": next_id, "kind": e.kind, "name": "棺将遗骸" if boss else ("担水尸骸" if e.kind == "water" else YinBalance.MONSTERS[e.kind].name + "遗骸"), "integrity": e.integrity, "regret": "守门" if boss else ("生前担水" if e.kind == "water" else {"bone": "替人掘墓", "archer": "守山残念", "lantern": "不肯熄灭的旧灯", "gunner": "未传到的军令", "brute": "山中猎食"}.get(e.kind, "未散残念")), "fierceness": 40 if e.kind in YinAbilities.BOSSES else (12 if e.suppressed else 30), "yin": "山煞" if boss else ("水阴" if e.kind == "water" else "土阴"), "at": [at.x, at.y], "zone": e.zone, "source_level": int(e.get("level", 1)), "severed": e.get("severed",[]).duplicate(), "death_pose": e.get("death_pose",{}).duplicate(true)})
+	remains.append({"id": next_id, "kind": e.kind, "name": "棺将遗骸" if boss else ("担水尸骸" if e.kind == "water" else YinBalance.MONSTERS[e.kind].name + "遗骸"), "integrity": e.integrity, "regret": "守门" if boss else ("生前担水" if e.kind == "water" else {"bone": "替人掘墓", "archer": "守山残念", "lantern": "不肯熄灭的旧灯", "gunner": "未传到的军令", "brute": "山中猎食"}.get(e.kind, "未散残念")), "fierceness": 40 if e.kind in YinAbilities.BOSSES else (12 if e.suppressed else 30), "yin": "山煞" if boss else ("水阴" if e.kind == "water" else "土阴"), "at": [at.x, at.y], "zone": e.zone, "source_level": int(e.get("level", 1)), "severed": e.get("severed",[]).duplicate(), "death_pose": e.get("death_pose",{}).duplicate(true), "corpse_lifetime": YinDisplaySettings.corpse_lifetime})
 	next_id += 1
 	return remains.back()
 
@@ -703,10 +703,11 @@ func restore(data: Dictionary) -> bool:
 		if not r is Dictionary or r.get("kind") not in YinBalance.MONSTERS.keys() or r.get("zone") not in ["farm", "graveyard", "forest", "sunken", "theatre", "village", "cargo", "island", "temple"] or not valid_point(r.get("at")): return false
 		for key in ["id", "integrity", "fierceness"]:
 			if not valid_int(r.get(key), 0, 100000): return false
+		if r.has("corpse_lifetime") and (not (r.corpse_lifetime is int or r.corpse_lifetime is float) or not is_finite(float(r.corpse_lifetime)) or r.corpse_lifetime<0 or r.corpse_lifetime>86400):return false
 		if r.has("severed"):
 			if not r.severed is Array:return false
 			for part in r.severed:
-				if part not in ["head","arm","leg"]:return false
+				if part not in YinEnemyPack.ALLOWED:return false
 		if r.has("death_pose") and not r.death_pose.is_empty() and not YinCorpse.valid(r.death_pose,r.kind):return false
 		for key in ["name", "regret", "yin"]:
 			if not r.get(key) is String: return false
@@ -723,10 +724,10 @@ func restore(data: Dictionary) -> bool:
 		if e.has("island_day") and not valid_int(e.island_day, 1): return false
 		if e.has("forest_extension") and not e.forest_extension is bool: return false
 		if e.has("severed"):
-			if not e.severed is Array or e.severed.size() > 3: return false
+			if not e.severed is Array or e.severed.size() > 7: return false
 			var limbs: Array = []
 			for part in e.severed:
-				if part not in ["arm", "leg", "head"] or part in limbs: return false
+				if part not in YinEnemyPack.ALLOWED or part in limbs: return false
 				limbs.append(part)
 		if e.max_hp < 1 or e.hp > e.max_hp or e.integrity > 100: return false
 	for id in data.cargo:

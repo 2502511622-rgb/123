@@ -1,0 +1,125 @@
+{
+	"animations": {
+		"hit": {
+			"file": "hit.png",
+			"fps": 18,
+			"frames": 3,
+			"index": 32
+		},
+		"idle": {
+			"file": "idle.png",
+			"fps": 12,
+			"frames": 4,
+			"index": 16
+		},
+		"walk": {
+			"file": "walk.png",
+			"fps": 12,
+			"frames": 8,
+			"index": 24
+		}
+	},
+	"cell_size": [
+		64,
+		64
+	],
+	"id": "rakshasa",
+	"palette": [
+		"171f2b",
+		"263344",
+		"3b4b56",
+		"56676a",
+		"829391",
+		"b6b5a1",
+		"e0d1ad",
+		"63534c",
+		"94705b",
+		"b39070",
+		"532f38",
+		"834348",
+		"b26256",
+		"c69576",
+		"334b50",
+		"4b6e69",
+		"789183",
+		"202b38",
+		"394259",
+		"65627b",
+		"25292b",
+		"55504b",
+		"8b8170",
+		"c6b79b"
+	],
+	"parts": {
+		"arm_left": {
+			"file": "parts/arm_left.png",
+			"index": 2,
+			"pivot": [
+				22.0,
+				25.0
+			]
+		},
+		"arm_right": {
+			"file": "parts/arm_right.png",
+			"index": 3,
+			"pivot": [
+				42.0,
+				25.0
+			]
+		},
+		"body": {
+			"file": "parts/body.png",
+			"index": 0,
+			"pivot": [
+				32.0,
+				40.0
+			]
+		},
+		"head": {
+			"file": "parts/head.png",
+			"index": 1,
+			"pivot": [
+				32.0,
+				22.0
+			]
+		},
+		"leg_left": {
+			"file": "parts/leg_left.png",
+			"index": 4,
+			"pivot": [
+				27.0,
+				42.0
+			]
+		},
+		"leg_right": {
+			"file": "parts/leg_right.png",
+			"index": 5,
+			"pivot": [
+				37.0,
+				42.0
+			]
+		}
+	},
+	"root": [
+		32,
+		61
+	],
+	"stumps": {
+		"arm_left": {
+			"file": "stumps/arm_left.png",
+			"index": 6
+		},
+		"arm_right": {
+			"file": "stumps/arm_right.png",
+			"index": 7
+		},
+		"leg_left": {
+			"file": "stumps/leg_left.png",
+			"index": 8
+		},
+		"leg_right": {
+			"file": "stumps/leg_right.png",
+			"index": 9
+		}
+	}
+}

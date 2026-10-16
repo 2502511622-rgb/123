@@ -5,7 +5,7 @@ static func visible(e, at: Vector2) -> bool:
 	return e.get_world_2d().direct_space_state.intersect_ray(ray).is_empty()
 static func damage(e) -> int:
 	var result: int = int(e.record.damage)
-	if "arm" in e.record.get("severed", []): result = maxi(1, roundi(result * 0.75))
+	if YinEnemyPack.injured_arm(e.record.get("severed", [])): result = maxi(1, roundi(result * 0.75))
 	if e.record.kind == "itsumade": result += unrest(e) * 2
 	return result
 static func unrest(e) -> int:

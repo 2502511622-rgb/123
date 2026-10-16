@@ -118,6 +118,11 @@ func _physics_process(delta: float) -> void:
 	material.set_shader_parameter("motion_amount", 0.9 if direction.length() > 0 else 0.15)
 	var previous_position: Vector2 = position
 	move_and_slide()
+	if direction.length()>0 and dodge_time<=0:
+		var query=PhysicsShapeQueryParameters2D.new();var circle=CircleShape2D.new();circle.radius=13
+		query.shape=circle;query.transform=Transform2D(0,global_position);query.collision_mask=8
+		for result in get_world_2d().direct_space_state.intersect_shape(query,4):
+			if result.collider is YinCorpse:result.collider.push_and_step(direction,delta)
 	# Gait advances with distance travelled: walls and slow spells cannot skate.
 	var travelled: float=position.distance_to(previous_position)
 	animation_time += travelled / SPEED

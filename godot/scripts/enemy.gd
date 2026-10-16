@@ -83,7 +83,7 @@ func _physics_process(delta: float) -> void:
 	if game.modal != null or is_queued_for_deletion(): return
 	if on_screen:
 		motion.update(self,delta)
-		if freeze_lock <= 0 and hit_stop <= 0: art_clock += delta*(0.62 if "leg" in record.get("severed",[]) else 1.0)
+		if freeze_lock <= 0 and hit_stop <= 0: art_clock += delta*(0.62 if YinEnemyPack.injured_leg(record.get("severed",[])) else 1.0)
 		if velocity.length() > 2: art_facing = velocity.normalized()
 		material.set_shader_parameter("motion_clock", art_clock)
 		material.set_shader_parameter("motion_amount", 0.0)
@@ -137,7 +137,7 @@ func _physics_process(delta: float) -> void:
 	cooldown = maxf(0, cooldown - delta)
 	var spec: Dictionary = YinBalance.MONSTERS[record.kind].duplicate()
 	spec.pattern = YinAbilities.meta(record.kind).pattern
-	if "leg" in record.get("severed", []): spec.speed *= 0.62
+	if YinEnemyPack.injured_leg(record.get("severed", [])): spec.speed *= 0.62
 	if chill_time > 0: spec.speed *= 0.45
 	if "head" in record.get("severed", []):
 		windup = 0
@@ -164,7 +164,7 @@ func _physics_process(delta: float) -> void:
 	repath -= delta
 	if charge_time > 0:
 		charge_time -= delta
-		velocity = charge_direction * (130 if "leg" in record.get("severed", []) else 210)
+		velocity = charge_direction * (130 if YinEnemyPack.injured_leg(record.get("severed", [])) else 210)
 		if not charge_hit and position.distance_to(victim.position) < 32:
 			hurt_victim(int(record.get("damage", spec.damage)))
 			charge_hit = true
@@ -269,6 +269,7 @@ func receive_hit(damage: int, method: String = "sword", source_gear_id: int = 0)
 		hit_flash = 0.13
 		material.set_shader_parameter("flash", 1.0)
 		if method not in ["bleed", "burn", "seal"]:
+			modular_hit_feedback(game.player.position.direction_to(position))
 			hit_stop = 0.035 if record.kind in YinAbilities.BOSSES else 0.045
 			if method == "sword": game.player.hit_pause = 0.045
 			game.world.impact(position + Vector2(0, -20), game.player.position.direction_to(position), "heavy" if method=="sword" and game.player.heavy_attack else method)
@@ -362,7 +363,7 @@ func _draw() -> void:
 
 func hurt_victim(damage: int) -> void:
 	if not is_instance_valid(victim) or "head" in record.get("severed", []) or record.dead: return
-	if "arm" in record.get("severed", []): damage = maxi(1, roundi(damage * 0.75))
+	if YinEnemyPack.injured_arm(record.get("severed", [])): damage = maxi(1, roundi(damage * 0.75))
 	if record.kind == "brute" and record.hp < record.max_hp / 2: damage = roundi(damage * 1.2)
 	if victim == game.player: game.take_damage(damage)
 	else: victim.receive_hit(damage)
@@ -371,6 +372,9 @@ func apply_bleed(duration: float, damage: int) -> void:
 	bleed_damage = maxi(bleed_damage, damage)
 
 func update_dismemberment() -> void:
+	if YinEnemyPack.enabled(self):
+		update_modular_dismemberment()
+		return
 	if not record.has("severed"): record.severed = []
 	var ratio: float = float(record.hp) / record.max_hp
 	for part in YinIsland.anatomy(record.kind):
@@ -402,6 +406,27 @@ func update_dismemberment() -> void:
 			game.world.effect(fragment.position, Color("a57465"))
 
 	queue_redraw()
+
+func update_modular_dismemberment() -> void:
+	if not record.has("severed"):record.severed=[]
+	model.present(record.kind,art_pose(),record.severed,art_clock,velocity.length()>2,art_strike>0,Color.WHITE)
+	var ratio: float=float(record.hp)/record.max_hp
+	var thresholds={"arm_left":0.65,"arm_right":0.48,"leg_left":0.32,"leg_right":0.22,"head":0.12}
+	for part in YinEnemyPack.anatomical(record.kind):
+		if YinEnemyPack.missing(part,record.severed) or ratio>thresholds[part]:continue
+		record.severed.append(part)
+		if part=="head":windup=0;burst_remaining=0;charge_time=0
+		var fragment=model.modular.detach(part,game.world.feedback,game.player.position.direction_to(position))
+		if fragment!=null and game.world.screen_bounds().grow(100).has_point(position):YinBloodFX.burst(game.world.feedback,fragment.global_position,game.player.position.direction_to(position),model.modular.pack)
+	model.modular.present(record.kind,record.severed,art_clock,velocity.length()>2,art_strike>0,art_pose().flip,Color.WHITE)
+	queue_redraw()
+func modular_hit_feedback(direction: Vector2) -> void:
+	if not YinEnemyPack.enabled(self):return
+	if not game.world.screen_bounds().grow(100).has_point(position):return
+	model.present(record.kind,art_pose(),record.get("severed",[]),art_clock,velocity.length()>2,art_strike>0,Color.WHITE)
+	model.modular.hit()
+	YinBloodFX.burst(game.world.feedback,global_position+Vector2(0,-25),direction,model.modular.pack)
+	YinImpactClock.pulse(get_tree())
 
 func art_pose() -> Dictionary:
 	var pose: Dictionary = YinActorArt.enemy_pose(record.kind,art_facing,art_clock,velocity.length()>2,art_strike>0,record.kind in YinAbilities.BOSSES)
@@ -491,6 +516,8 @@ func receive_faction_hit(damage: int) -> void:
 	if record.dead: return
 	health_receiver.apply(maxi(1, damage - int(record.get("armor", 0))), "war")
 	hit_flash = 0.13
+	modular_hit_feedback(Vector2.RIGHT)
+	if YinEnemyPack.enabled(self):update_dismemberment()
 	game.world.impact(position+Vector2(0,-20),Vector2.RIGHT,"sword")
 	game.world.damage_number(position, damage, Color("e5c792"))
 	if record.hp <= 0:

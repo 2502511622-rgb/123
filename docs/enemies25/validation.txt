@@ -1,0 +1,1310 @@
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+[   0% ] first_scan_filesystem | Started Project initialization (5 steps)
+[   0% ] first_scan_filesystem | Scanning file structure...
+[  16% ] first_scan_filesystem | Loading global class names...
+[  33% ] first_scan_filesystem | Verifying GDExtensions...
+[  50% ] first_scan_filesystem | Creating autoload scripts...
+[  66% ] first_scan_filesystem | Initializing plugins...
+[  83% ] first_scan_filesystem | Starting file scan...
+[ DONE ] first_scan_filesystem
+
+[   0% ] update_scripts_classes | Started Registering global classes... (4 steps)
+[   0% ] update_scripts_classes | YinSeveredLimb
+[  20% ] update_scripts_classes | YinBloodFX
+[  40% ] update_scripts_classes | YinCorpse
+[  60% ] update_scripts_classes |
+[ DONE ] update_scripts_classes
+
+[   0% ] loading_editor_layout | Started Loading editor (5 steps)
+[   0% ] loading_editor_layout | Loading editor layout...
+[  16% ] loading_editor_layout | Loading docks...
+[ DONE ] loading_editor_layout
+
+
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+Yintian rules: 65 checks, 0 failures
+
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+Yintian world: 26 checks, 0 failures
+
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+Reference architecture: 43 checks, 0 failures
+
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+PLAYER PASS new game opens readable letter
+PLAYER PASS letter dismiss by mouse
+PLAYER PASS letter releases player input
+PLAYER PASS walk from starting field to hall door
+PLAYER PASS E enters hall from starting door
+PLAYER PASS walk to warehouse without furniture snag
+PLAYER PASS E opens warehouse
+PLAYER PASS walk to indoor exit
+PLAYER PASS exit preserves farm spawn
+PLAYER PASS farm entrance is physically navigable
+PLAYER PASS keyboard till, sow and water same reachable plot
+PLAYER PASS bag freezes movement and world clock
+PLAYER PASS field exit and bridge route without teleport
+PLAYER PASS walk to cemetery gate
+PLAYER PASS E enters exploration zone
+PLAYER PASS keyboard seal suppresses live target
+PLAYER PASS keyboard melee leaves intact remains
+PLAYER PASS corpse UI no longer offers transport
+PLAYER PASS refine directly through actual corpse UI
+PLAYER PASS fight-refine loop no longer needs a return trip
+PLAYER PASS refinement returns to active play
+PLAYER PASS wall blocks spell and preserves talisman
+PLAYER PASS enemy attack cannot cross river wall
+PLAYER PASS sword cone excludes enemy behind player
+PLAYER PASS dodge invulnerability avoids telegraphed hit
+PLAYER PASS sword damage occurs on contact frame rather than key-down
+PLAYER PASS modal freezes pending strike
+PLAYER PASS one swing hits each target exactly once
+PLAYER PASS dodge cannot phase through river wall
+Player journey: 29 checks, 0 failures
+
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+Arsenal and barrage: 61 checks, 0 failures
+
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+Expansion: 31 checks, 0 failures
+
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+Display settings: 5 checks, 0 failures
+
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+Campaign rules: 72 checks, 0 failures
+
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+PLAYER PASS player opens and reads third-day rescue letter
+PLAYER PASS walks to village gate
+PLAYER PASS village gate enters living settlement with six villagers
+PLAYER PASS player navigates village streets without house collisions
+PLAYER PASS talks to blacksmith and opens actual shop
+PLAYER PASS buys rifle through shop GUI
+PLAYER PASS buys ammunition through shop GUI
+PLAYER PASS equips rifle into primary loadout through GUI
+PLAYER PASS wheel changes primary to secondary
+PLAYER PASS wheel changes secondary to melee
+PLAYER PASS wheel returns to primary without switching farm tools
+PLAYER PASS learns fire in skill tree by mouse
+PLAYER PASS learning consumes one real skill point
+PLAYER PASS reloads newly bought rifle from owned ammo
+PLAYER PASS walks back through village to farm exit
+PLAYER PASS waits for evening using normal in-game control
+PLAYER PASS rescue night starts a single actual monster wave
+PLAYER PASS answers rescue by re-entering village
+PLAYER PASS reaches attacked village plaza through physical movement
+PLAYER PASS real monsters damage real villager health
+PLAYER PASS aims, shoots, reloads and dodges to complete actual rescue
+PLAYER PASS combat skill uses no talisman materials
+PLAYER PASS physically walks onto slain monster corpse
+PLAYER PASS V refines corpse into follower with independent health
+PLAYER PASS opens follower manager and trains through GUI
+PLAYER PASS trained follower levels up and retains source abilities
+PLAYER PASS confirms dismissal through follower UI
+PLAYER PASS dismissed follower leaves roster and world
+PLAYER PASS full strengthened boss enters real farm scene
+PLAYER PASS player defeats full-strength boss through shooting, movement and dodging
+PLAYER PASS walks onto boss remains
+PLAYER PASS boss can be refined with inherited active and passive skills
+PLAYER PASS hostile projectile hits actual follower hurtbox
+PLAYER PASS refined boss actually uses inherited radial skill
+PLAYER PASS follower can be defeated and recalled instead of being immortal
+PLAYER PASS heals fallen follower in management panel
+PLAYER PASS redeploys recovered follower without duplicating actor
+PLAYER PASS rare rifle has innate affixes and no inscription action
+PLAYER PASS critical affix changes actual hit rolls at bounded probability
+PLAYER PASS heavy-wound affix rolls actual timed injury
+PLAYER PASS fired bullets apply real critical damage
+PLAYER PASS fired bullets apply real heavy-wound status
+PLAYER PASS injured enemy keeps losing health after player stops shooting
+PLAYER PASS equipment UI shows both rolled affixes clearly
+PLAYER PASS paper gunner inherits queued burst rather than unrelated fan shots
+PLAYER PASS inherited burst fires three separately timed bullets
+PLAYER PASS actual save restores loadout, skill tree, health and inherited boss
+Player campaign: 47 checks, 0 failures
+
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+REDESIGN PASS only four primary character destinations
+REDESIGN PASS navigation stays outside scrolling content
+REDESIGN PASS inventory has no horizontal overflow
+REDESIGN PASS default inventory fits without scrolling
+REDESIGN PASS irrelevant item actions are hidden
+REDESIGN PASS selected seeds offer dropping but no placement
+REDESIGN PASS equipment UI has no inscription
+REDESIGN PASS innate affixes generated at quality 0
+REDESIGN PASS innate affixes generated at quality 1
+REDESIGN PASS innate affixes generated at quality 2
+REDESIGN PASS innate affixes generated at quality 3
+REDESIGN PASS zero-material refinement: water
+REDESIGN PASS zero-material refinement: boss
+REDESIGN PASS failed refinement preserves damaged remains
+REDESIGN PASS melee severs arm at sixty percent health
+REDESIGN PASS hit has local pause, flash and directional knockback
+REDESIGN PASS health bar shows delayed damage trail
+REDESIGN PASS bullet severs leg at thirty percent health
+REDESIGN PASS dismemberment preserves refinement eligibility
+REDESIGN PASS detached sprite fragments spawn once per limb
+REDESIGN PASS repeat hits cannot duplicate severed limbs
+REDESIGN PASS arm loss reduces actual attack damage by twenty-five percent
+REDESIGN PASS leg loss slows actual movement
+REDESIGN PASS pause freezes fragment effects
+REDESIGN PASS dismembered enemy saves restore
+REDESIGN PASS limb loss persists across reload
+REDESIGN PASS invalid duplicate limb data is rejected
+REDESIGN PASS legacy weapons receive innate affixes on load
+REDESIGN PASS forest area expands by 2.25 times
+REDESIGN PASS terrain covers farthest expanded corner
+REDESIGN PASS new landmark has a navigable route: (2304.0, 384.0)
+REDESIGN PASS new landmark has a navigable route: (2432.0, 1024.0)
+REDESIGN PASS new landmark has a navigable route: (2304.0, 1632.0)
+REDESIGN PASS expanded territory contains twelve new enemies
+REDESIGN PASS old same-day saves populate expanded territory immediately
+REDESIGN PASS re-entering does not duplicate encounters or reset old enemies
+REDESIGN PASS chasing enemies across old map border cannot respawn their encounter
+REDESIGN PASS expanded enemies and coordinates serialize
+REDESIGN PASS real save file restores position beyond old map bounds
+Redesign: 39 checks, 0 failures
+
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+ADVENTURE PASS random generation produces all three enchantments
+ADVENTURE PASS new weapon generates, validates and equips: whip
+ADVENTURE PASS new weapon generates, validates and equips: silver_sword
+ADVENTURE PASS new weapon generates, validates and equips: revolver
+ADVENTURE PASS new weapon generates, validates and equips: gatling
+ADVENTURE PASS new weapon generates, validates and equips: spellbook
+ADVENTURE PASS new weapon generates, validates and equips: curse_doll
+ADVENTURE PASS new weapons use appropriate loadout slots
+ADVENTURE PASS random enchantments persist without rerolling
+ADVENTURE PASS version six saves migrate to exploration schema
+ADVENTURE PASS invalid enchantment rejected
+ADVENTURE PASS chest requires physical proximity
+ADVENTURE PASS nearby guards block chest without consuming reward
+ADVENTURE PASS full gear inventory leaves chest intact
+ADVENTURE PASS full material bag leaves chest intact
+ADVENTURE PASS cleared chest grants its landmark weapon
+ADVENTURE PASS opened chest cannot duplicate loot
+ADVENTURE PASS opened chest state survives reload
+ADVENTURE PASS wrong NPC cannot take delivery or grant reward
+ADVENTURE PASS full inventory rejects quest reward atomically
+ADVENTURE PASS delivery consumes exact materials and awards silver sword
+ADVENTURE PASS quest rewards cannot be claimed twice
+ADVENTURE PASS actual enemy kills advance accepted hunt
+ADVENTURE PASS NPC remembers completed commission
+ADVENTURE PASS offline dialogue remembers last topic
+ADVENTURE PASS chat text cannot mutate game or issue rewards
+ADVENTURE PASS NPC dialogue reflects live raid state
+ADVENTURE PASS whip starts real delayed strike
+ADVENTURE PASS whip hits beyond sword reach
+ADVENTURE PASS silver sword has distinct base damage
+ADVENTURE PASS revolver fires a real projectile
+ADVENTURE PASS revolver consumes one of six rounds and deals heavy damage
+ADVENTURE PASS gatling requires spin-up before consuming ammunition
+ADVENTURE PASS held attack spins up gatling and sustains rapid fire
+ADVENTURE PASS spellbook spends energy instead of ammunition
+ADVENTURE PASS curse doll directly curses a visible nearby target
+ADVENTURE PASS magic cannot fire without energy
+ADVENTURE PASS burn causes real periodic damage
+ADVENTURE PASS ice extinguishes burn and freezes target
+ADVENTURE PASS chill slows actual navigation
+ADVENTURE PASS lightning chains real damage to nearby enemy
+ADVENTURE PASS fire thaws ice
+ADVENTURE PASS nonlethal physical hit can sever head
+ADVENTURE PASS headless enemy cannot fire, queue volleys or attack
+ADVENTURE PASS headless enemy wanders in panic without attack windup
+ADVENTURE PASS decapitation persists across reload
+ADVENTURE PASS physical NPC interaction opens commission menu
+ADVENTURE PASS mouse accepts actual NPC commission
+ADVENTURE PASS O opens quest log and HUD tracks objective
+ADVENTURE PASS offline topic button produces visible contextual reply
+ADVENTURE PASS free text chat recognizes exploration intent
+ADVENTURE PASS offline NPC dialogue creates no network requests
+ADVENTURE PASS conversation automatically scrolls to newest reply
+ADVENTURE PASS chat composer remains visible outside message scrolling
+ADVENTURE PASS physical landmark visits advance survey commission
+ADVENTURE PASS treasure location reachable: temple_alms
+ADVENTURE PASS treasure location reachable: temple_sutra
+ADVENTURE PASS treasure location reachable: grave_cache
+ADVENTURE PASS treasure location reachable: forest_west
+ADVENTURE PASS treasure location reachable: camp_cache
+ADVENTURE PASS treasure location reachable: well_cache
+ADVENTURE PASS treasure location reachable: temple_cache
+ADVENTURE PASS treasure location reachable: sunken_cache
+ADVENTURE PASS treasure location reachable: theatre_cache
+ADVENTURE PASS real E interaction opens world chest and grants weapon
+ADVENTURE PASS real save file preserves quests, exploration and chest claims
+ADVENTURE PASS duplicate chest records rejected
+ADVENTURE PASS unknown quest data rejected
+Adventure: 68 checks, 0 failures
+
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+ISLAND PASS island has twenty themed minor enemies
+ISLAND PASS three persistent island bosses exist
+ISLAND PASS same-day preparation cannot duplicate island population
+ISLAND PASS later arenas remain sealed
+ISLAND PASS locked boss cannot be killed out of order
+ISLAND PASS artifact commission requires preceding chain
+ISLAND PASS arrival commission completes at scholar
+ISLAND PASS bestiary commission records five distinct species
+ISLAND PASS five-species report unlocks funeral commission
+ISLAND PASS arena available in story order: itsumade
+ISLAND PASS boss report links to next NPC: island_lament
+ISLAND PASS arena available in story order: daitengu
+ISLAND PASS boss report links to next NPC: island_gale
+ISLAND PASS arena available in story order: ryomen_sukuna
+ISLAND PASS boss report links to next NPC: island_dual
+ISLAND PASS full equipment keeps unique artifact reward unclaimed
+ISLAND PASS smith awards equippable Ipetam through final commission
+ISLAND PASS artifact equips in melee slot
+ISLAND PASS artifact cannot be duplicated by granting or repeat claim
+ISLAND PASS unique blade is protected from dismantling
+ISLAND PASS five personal kills raise artifact level and actual damage
+ISLAND PASS artifact growth and lifesteal have bounded caps
+ISLAND PASS lifesteal uses actual dealt damage and artifact level
+ISLAND PASS unattributed attacks cannot heal through owned artifact
+ISLAND PASS lifesteal cannot overheal
+ISLAND PASS artifact growth and island chain round-trip through save
+ISLAND PASS defeated bosses do not respawn next day
+ISLAND PASS minor enemies refresh once on new day
+ISLAND PASS version seven saves migrate with new island journal
+ISLAND PASS negative artifact growth rejected
+ISLAND PASS impossible boss sequence rejected
+ISLAND PASS scholar UI accepts first island commission
+ISLAND PASS physical ferry interaction enters island map
+ISLAND PASS island terrain covers full world bounds
+ISLAND PASS only first boss instantiates before unlocking
+ISLAND PASS arena is reachable over bridges: itsumade
+ISLAND PASS arena is reachable over bridges: daitengu
+ISLAND PASS arena is reachable over bridges: ryomen_sukuna
+ISLAND PASS actual island exploration records arrival
+ISLAND PASS new commission UI can pay currency-only reward without a weapon
+ISLAND PASS reporting unlocks next linked commission in same NPC UI
+ISLAND PASS kappa recovers beside water with filled head bowl
+ISLAND PASS seal spills kappa bowl and stops water regeneration
+ISLAND PASS paper lantern body takes increased fire damage
+ISLAND PASS disembodied priest flame resists fire
+ISLAND PASS bodiless Sogenbi does not shed fictional arms and legs
+ISLAND PASS spider web projectile deals damage and restricts real player movement
+ISLAND PASS one-legged smith hammer hits inside telegraphed slam
+ISLAND PASS moving out of locked hammer area avoids damage
+ISLAND PASS unburied remains strengthen Itsumade lament
+ISLAND PASS releasing remains weakens lament
+ISLAND PASS golden bird sends poison alongside feather fan
+ISLAND PASS real first boss death unlocks next arena
+ISLAND PASS tengu wind stance reduces incoming bullets
+ISLAND PASS seal interrupts tengu wind stance
+ISLAND PASS feather fan emits pushing mountain wind
+ISLAND PASS second boss death unlocks two-faced warrior
+ISLAND PASS two-faced sword stance threatens behind as well as in front
+ISLAND PASS next stance fires opposed bow fans
+ISLAND PASS all three real boss deaths persist in journal
+ISLAND PASS artifact windup waits before showing impact ribbons
+ISLAND PASS artifact active frame creates independent three-ribbon effect
+ISLAND PASS real delayed artifact hit damages and lifesteals
+ISLAND PASS artifact last hit gains exactly one growth kill
+ISLAND PASS dead targets cannot grant repeated growth
+ISLAND PASS gun or companion kills do not grow owned blade
+ISLAND PASS absorbed damage gives no lifesteal
+ISLAND PASS overkill heals from actual lost health, not raw damage
+ISLAND PASS equipment displays artifact growth and lifesteal
+ISLAND PASS actual save file restores island bosses and growing weapon
+ISLAND PASS return ferry restores village east dock
+ISLAND PASS offline dialogue links stitched world and blade origin
+ISLAND PASS fatal island attack safely transitions to home without updating removed world
+Island: 73 checks, 0 failures
+
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+FACTIONS PASS initial three factions valid
+FACTIONS PASS initial power hierarchy
+FACTIONS PASS greater attacking power increases invasion probability
+FACTIONS PASS weaker defenders attract more invasions
+FACTIONS PASS weak factions can counterattack
+FACTIONS PASS temple can attack island
+FACTIONS PASS temple can attack graveyard
+FACTIONS PASS temple can attack village
+FACTIONS PASS island can attack temple
+FACTIONS PASS island can attack graveyard
+FACTIONS PASS island can attack village
+FACTIONS PASS graveyard can attack temple
+FACTIONS PASS graveyard can attack island
+FACTIONS PASS graveyard can attack village
+FACTIONS PASS village can attack temple
+FACTIONS PASS village can attack island
+FACTIONS PASS village can attack graveyard
+FACTIONS PASS strong invaders deploy a larger army
+FACTIONS PASS morning warning does not spawn early
+FACTIONS PASS noon deploys both armies
+FACTIONS PASS repeated ticks do not duplicate armies
+FACTIONS PASS active war survives JSON roundtrip exactly
+FACTIONS PASS unknown factions rejected
+FACTIONS PASS negative army rejected
+FACTIONS PASS version eight migrates to factions
+FACTIONS PASS eliminated army settles immediately
+FACTIONS PASS successful defense protects village
+FACTIONS PASS settlement cannot repeat
+FACTIONS PASS unopposed stronger invasion damages village at night
+FACTIONS PASS funding changes actual village strength
+FACTIONS PASS funding limited to once per day
+FACTIONS PASS offline NPC reports actual faction state
+FACTIONS PASS sixty-day simulation produces bounded campaign history
+FACTIONS PASS long campaign resolves daily and keeps legal strengths
+FACTIONS PASS long campaign save remains restorable
+FACTIONS PASS distant battle does not respawn unrelated local enemies
+FACTIONS PASS both armies instantiate on actual defender map
+FACTIONS PASS militia protected from player targeting
+FACTIONS PASS invaders prioritize opposing army
+FACTIONS PASS telegraphed army attack damages opposing actor
+FACTIONS PASS NPC battle deaths do not award player loot
+FACTIONS PASS NPC battle deaths leave an identifiable corpse
+FACTIONS PASS faction screen accessible
+FACTIONS PASS modal pauses army combat
+FACTIONS PASS respawning does not duplicate surviving militia
+FACTIONS RESULT 45 checks, 0 failures
+
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+TEMPLE PASS temple journal and fourth faction initialize
+TEMPLE PASS six new enemies include two registered bosses
+TEMPLE PASS temple has sixteen native enemies
+TEMPLE PASS same-day preparation does not duplicate temple encounters
+TEMPLE PASS night guardian cannot be killed before asura
+TEMPLE PASS artifact quest is gated by complete chain
+TEMPLE PASS accept temple_arrival
+TEMPLE PASS completed objective temple_arrival
+TEMPLE PASS wrong NPC cannot claim temple_arrival
+TEMPLE PASS claim temple_arrival
+TEMPLE PASS accept temple_catalog
+TEMPLE PASS completed objective temple_catalog
+TEMPLE PASS wrong NPC cannot claim temple_catalog
+TEMPLE PASS claim temple_catalog
+TEMPLE PASS accept temple_wrath
+TEMPLE PASS completed objective temple_wrath
+TEMPLE PASS wrong NPC cannot claim temple_wrath
+TEMPLE PASS claim temple_wrath
+TEMPLE PASS accept temple_guardian
+TEMPLE PASS completed objective temple_guardian
+TEMPLE PASS wrong NPC cannot claim temple_guardian
+TEMPLE PASS claim temple_guardian
+TEMPLE PASS accept temple_wisdom
+TEMPLE PASS completed objective temple_wisdom
+TEMPLE PASS wrong NPC cannot claim temple_wisdom
+TEMPLE PASS claim temple_wisdom
+TEMPLE PASS chain awards exactly one wisdom blade
+TEMPLE PASS artifact cannot be duplicated
+TEMPLE PASS artifact carries all elements with valid innate affixes
+TEMPLE PASS wisdom sword equips in melee slot
+TEMPLE PASS actual damage scales with character cultivation level
+TEMPLE PASS equipment describes current character-linked growth
+TEMPLE PASS temple enemies quests relic and factions survive exact JSON roundtrip
+TEMPLE PASS v0.12 save migrates without resetting existing factions
+TEMPLE PASS legacy active war and customized old strength survive migration
+TEMPLE PASS impossible temple boss sequence rejected
+TEMPLE PASS all-elements enchantment restricted to wisdom relic
+TEMPLE PASS relic cannot lose innate confluence on load
+TEMPLE PASS temple bosses stay defeated across dawn
+TEMPLE PASS native minions refresh each day
+TEMPLE PASS temple expedition uses temple troops against island
+TEMPLE PASS temple expedition uses temple troops against graveyard
+TEMPLE PASS temple expedition uses temple troops against village
+TEMPLE PASS active invasion of temple restores
+TEMPLE PASS offline NPC links region and artifact rules
+TEMPLE PASS villager UI opens commission list
+TEMPLE PASS real UI accepts temple arrival commission
+TEMPLE PASS village mountain gate enters temple and records visit
+TEMPLE PASS large temple map enters armed
+TEMPLE PASS entrance and both arenas have navigable connected routes
+TEMPLE PASS native spawns avoid temple walls and statues
+TEMPLE PASS second boss stays sealed in actual map
+TEMPLE PASS temple exit returns to safe village gate
+TEMPLE PASS hungry ghost consumes nearby remains to heal
+TEMPLE PASS seal suppresses hunger passive
+TEMPLE PASS hunger bite drains energy on successful contact
+TEMPLE PASS dodge immunity also blocks hunger drain
+TEMPLE PASS seal exposes ghost to physical damage
+TEMPLE PASS elemental rites bypass ethereal body and ghost has no severable limbs
+TEMPLE PASS rakshasa starts with periodic deceptive form
+TEMPLE PASS seal dispels rakshasa illusion
+TEMPLE PASS dream demon fires slow energy-draining nightmare beads
+TEMPLE PASS six-arm sword formation leaves safe angular gaps
+TEMPLE PASS asura alternates six-arm attack with wrath barrage
+TEMPLE PASS actual asura death releases yaksha
+TEMPLE PASS yaksha regenerates guardian shield
+TEMPLE PASS seal breaks yaksha shield
+TEMPLE PASS yaksha telegraphed strike initiates guardian charge
+TEMPLE PASS wisdom sword windup precedes elemental ribbons
+TEMPLE PASS every relic swing carries all growing elemental powers
+TEMPLE PASS active strike creates four independent wisdom-element ribbons
+TEMPLE PASS actual melee contact applies burn and ice together
+TEMPLE PASS same strike also chains lightning to adjacent enemy
+TEMPLE PASS ordinary elemental weapons keep original fire-ice cancellation
+TEMPLE PASS new boss remains refine into corresponding temple spirit
+TEMPLE PASS refined asura actor uses inherited six-way formation
+TEMPLE PASS four-faction screen includes temple
+TEMPLE PASS played temple session remains a valid save
+TEMPLE RESULT 78 checks, 0 failures
+
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+ART16 PASS reference atlas covers all 23 enemy types
+ART16 PASS four-direction hero and six resident portraits remain available
+ART16 PASS higher density terrain retains existing crop coordinate scale
+ART16 PASS art changes preserve farming interaction coordinates
+ART16 PASS stone roads use connected edge atlas
+ART16 PASS new cottages use native-density assets at unchanged footprints
+ART16 PASS village paper lanterns register world-bound lights
+ART16 PASS visible lamps and nighttime reach actual lighting shader
+ART16 PASS daylight correctly clears night treatment
+ART16 PASS restyled inventory fits viewport without unwanted scrolling
+ART16 PASS temple art keeps actual traversal safe
+ART16 PASS detached body parts use matching reference atlas regions
+ART16 PASS visual refactor preserves valid persisted gameplay data
+ART16 RESULT 13 checks, 0 failures
+
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+WEATHER PASS light ray stops at nearest opaque wall
+WEATHER PASS parallel clear light ray keeps full radius
+WEATHER PASS rainy destination loads already wet rather than resetting weather
+WEATHER PASS light mask is isolated from gameplay physics and canvas
+WEATHER PASS actual scene light polygons include wall occlusion
+WEATHER PASS wet reflection mask matches actual map tile grid
+WEATHER PASS houses produce actual mirrored source-sprite reflections
+WEATHER PASS wind animates without rebuilding static occlusion every frame
+WEATHER PASS rain splashes spawn only on exposed navigable surfaces
+WEATHER PASS visible tree leaf population is bounded
+WEATHER PASS fresh leaves begin aloft above actual nearby trees
+WEATHER PASS leaves drift and fall instead of being screen-space decorations
+WEATHER PASS real tree sprite receives shared wind uniforms
+WEATHER PASS wind leaves the trunk collision anchor fixed
+WEATHER PASS pause freezes wind rain ripples and leaves
+WEATHER PASS wet footsteps create world-space ripples
+WEATHER PASS rain fades while damp ground dries gradually
+WEATHER PASS canopy fades when player walks underneath
+WEATHER PASS felling tree invalidates physics occlusion and visual caches
+WEATHER PASS removed trees leave no live reflection sources
+WEATHER PASS outdoor rain and leaves stop at interior boundary
+WEATHER PASS river shader receives real wet weather state
+WEATHER PASS dynamic visual systems preserve save compatibility
+WEATHER RESULT 23 checks, 0 failures
+
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+REFERENCE PASS 24 hero direction and action poses indexed
+REFERENCE PASS 16 bird enemy direction and wing poses indexed
+REFERENCE PASS hungry_ghost anatomical alpha layers trace to complete source pose
+REFERENCE PASS wraith anatomical alpha layers trace to complete source pose
+REFERENCE PASS rakshasa anatomical alpha layers trace to complete source pose
+REFERENCE PASS kumbhanda anatomical alpha layers trace to complete source pose
+REFERENCE PASS asura anatomical alpha layers trace to complete source pose
+REFERENCE PASS yaksha anatomical alpha layers trace to complete source pose
+REFERENCE PASS kappa anatomical alpha layers trace to complete source pose
+REFERENCE PASS chochin anatomical alpha layers trace to complete source pose
+REFERENCE PASS ippon_datara anatomical alpha layers trace to complete source pose
+REFERENCE PASS jorogumo anatomical alpha layers trace to complete source pose
+REFERENCE PASS sogenbi anatomical alpha layers trace to complete source pose
+REFERENCE PASS itsumade anatomical alpha layers trace to complete source pose
+REFERENCE PASS daitengu anatomical alpha layers trace to complete source pose
+REFERENCE PASS ryomen_sukuna anatomical alpha layers trace to complete source pose
+REFERENCE PASS water anatomical alpha layers trace to complete source pose
+REFERENCE PASS bone anatomical alpha layers trace to complete source pose
+REFERENCE PASS archer anatomical alpha layers trace to complete source pose
+REFERENCE PASS lantern anatomical alpha layers trace to complete source pose
+REFERENCE PASS gunner anatomical alpha layers trace to complete source pose
+REFERENCE PASS brute anatomical alpha layers trace to complete source pose
+REFERENCE PASS well_boss anatomical alpha layers trace to complete source pose
+REFERENCE PASS opera_boss anatomical alpha layers trace to complete source pose
+REFERENCE PASS boss anatomical alpha layers trace to complete source pose
+REFERENCE PASS hero feet stay anchored in direction (0.0, 1.0)
+REFERENCE PASS hero feet stay anchored in direction (0.0, -1.0)
+REFERENCE PASS hero feet stay anchored in direction (-1.0, 0.0)
+REFERENCE PASS hero feet stay anchored in direction (1.0, 0.0)
+REFERENCE PASS attack windup release and hit select real distinct poses
+REFERENCE PASS live daitengu selects new action atlas
+REFERENCE PASS live enemy detaches all three distinct parts at thresholds
+REFERENCE PASS fragments use current new pose regions and exact rendered scale
+REFERENCE PASS headless enemy cannot attack player
+REFERENCE PASS new art and severed state preserve save round trip
+REFERENCE PASS frozen enemy holds its animation frame
+REFERENCE PASS pause holds enemy animation frame
+REFERENCE RESULT 37 checks, 0 failures
+
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+LIVING PASS 32 individually drawn walking frames
+LIVING PASS 24 individually drawn combat frames
+LIVING PASS six NPC identities with 24 idle walk and talk poses
+LIVING PASS walk and combat selectors traverse every frame for (0.0, 1.0)
+LIVING PASS walk and combat selectors traverse every frame for (0.0, -1.0)
+LIVING PASS walk and combat selectors traverse every frame for (-1.0, 0.0)
+LIVING PASS walk and combat selectors traverse every frame for (1.0, 0.0)
+LIVING PASS farm builds actual instanced grass
+LIVING PASS grass avoids farm plots and river
+LIVING PASS farm soil uses matching material
+LIVING PASS tilled and watered plot state reaches material
+LIVING PASS village grass grouped in spatial batches
+LIVING PASS offscreen grass batches are culled
+LIVING PASS find actual traversable grass path
+LIVING PASS real movement in grass leaves bending trail
+LIVING PASS foot contact has a strong local reaction
+LIVING PASS reaction uploaded to both rooted grass passes
+LIVING PASS per-blade custom coordinates match actual map dimensions
+LIVING PASS pause freezes grass and bend recovery
+LIVING PASS bent grass recovers; trail population bounded
+LIVING PASS actual connected road types uploaded for material mapping
+LIVING PASS all six living NPCs use new art
+LIVING PASS interior does not create outdoor vegetation
+LIVING PASS visual upgrades preserve save round trip
+LIVING RESULT 24 checks, 0 failures
+
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+JRPG PASS default appearance valid
+JRPG PASS reject invalid appearance body
+JRPG PASS reject invalid appearance hair
+JRPG PASS reject invalid appearance coat
+JRPG PASS reject invalid appearance scarf
+JRPG PASS reject invalid appearance trousers
+JRPG PASS reject invalid appearance boots
+JRPG PASS reject invalid appearance skin
+JRPG PASS reject invalid appearance trim
+JRPG PASS reject empty and control-character names
+JRPG PASS JRPG neutral standing and combat source 0(0.0, 1.0)
+JRPG PASS JRPG neutral standing and combat source 0(0.0, -1.0)
+JRPG PASS JRPG neutral standing and combat source 0(-1.0, 0.0)
+JRPG PASS JRPG neutral standing and combat source 0(1.0, 0.0)
+JRPG PASS JRPG neutral standing and combat source 1(0.0, 1.0)
+JRPG PASS JRPG neutral standing and combat source 1(0.0, -1.0)
+JRPG PASS JRPG neutral standing and combat source 1(-1.0, 0.0)
+JRPG PASS JRPG neutral standing and combat source 1(1.0, 0.0)
+JRPG PASS version ten save gains safe default appearance
+JRPG PASS appearance panel exposes body and seven color selections
+JRPG PASS empty name gives feedback and preserves saved appearance
+JRPG PASS preview edits are draft until saved
+JRPG PASS actual UI click applies customized appearance
+JRPG PASS selected colors reach live player shader
+JRPG PASS customization persists without changing gear
+JRPG PASS appearance follows scene travel
+JRPG PASS kappa detached fragments match moving attacking pose, flip, pivot and scale (-1.0, 0.0)
+JRPG PASS kappa detached fragments match moving attacking pose, flip, pivot and scale (1.0, 0.0)
+JRPG PASS kappa detached fragments match moving attacking pose, flip, pivot and scale (0.0, -1.0)
+JRPG PASS ippon_datara detached fragments match moving attacking pose, flip, pivot and scale (-1.0, 0.0)
+JRPG PASS ippon_datara detached fragments match moving attacking pose, flip, pivot and scale (1.0, 0.0)
+JRPG PASS ippon_datara detached fragments match moving attacking pose, flip, pivot and scale (0.0, -1.0)
+JRPG PASS daitengu detached fragments match moving attacking pose, flip, pivot and scale (-1.0, 0.0)
+JRPG PASS daitengu detached fragments match moving attacking pose, flip, pivot and scale (1.0, 0.0)
+JRPG PASS daitengu detached fragments match moving attacking pose, flip, pivot and scale (0.0, -1.0)
+JRPG PASS injured gait advances more slowly over the same physics interval
+JRPG PASS JRPG art, appearance and severed state round trip
+JRPG RESULT 37 checks, 0 failures
+
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+PLAYTEST PASS walking responds promptly to held movement
+PLAYTEST PASS releasing movement stops without drifting or pixel snapping
+PLAYTEST PASS keyboard attack starts animation
+PLAYTEST PASS player can reposition during sword swing
+PLAYTEST PASS dodge cancels attack immediately
+PLAYTEST PASS cancelled windup cannot hit after dodge
+PLAYTEST PASS early repeated attack is buffered
+PLAYTEST PASS buffered attack follows without an extra key press
+PLAYTEST PASS number-key weapon swap cancels old swing consistently with wheel
+PLAYTEST PASS mouse wheel shows actual current weapon and ammunition status
+PLAYTEST PASS reload starts with actual key input
+PLAYTEST PASS dodging cancels reload without granting ammunition
+PLAYTEST PASS I opens inventory
+PLAYTEST PASS visible action exists
+PLAYTEST PASS clicking an item exposes its description without a tooltip wait
+PLAYTEST PASS task panel makes equipment and faction goals accessible
+PLAYTEST PASS map exit labels match real routes farm
+PLAYTEST PASS map exit labels match real routes village
+PLAYTEST PASS map exit labels match real routes graveyard
+PLAYTEST PASS map exit labels match real routes forest
+PLAYTEST PASS map exit labels match real routes island
+PLAYTEST PASS map exit labels match real routes temple
+PLAYTEST PASS windup has no premature damage
+PLAYTEST PASS visible strike lands with impact freeze
+PLAYTEST PASS monster joints have distinct movement poses
+PLAYTEST PASS old cart saves recover bodies in accessible courtyard
+PLAYTEST PASS optional crops grow while player explores
+PLAYTEST PASS equipment milestone pays exactly once without farming
+PLAYTEST PASS balancing assistance targets actual weakest faction
+PLAYTEST PASS daily support limit prevents repeated spending
+PLAYTEST PASS balanced peaceful world satisfies main goal
+PLAYTEST PASS active war prevents claiming peaceful balance
+PLAYTEST PASS milestone claims survive JSON save roundtrip
+Player polish: 33 checks, 0 failures
+
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+ACTION PASS actual right mouse starts distinct heavy windup
+ACTION PASS heavy consumes exactly fourteen energy
+ACTION PASS heavy cannot damage early or end its action during windup
+ACTION PASS heavy release applies damage stagger and weighty contact freeze
+ACTION PASS impact creates layered animated VFX
+ACTION PASS dodge cancel prevents delayed heavy damage
+ACTION PASS insufficient energy rejects heavy without partial spending
+ACTION PASS real weapon sprite source sword
+ACTION PASS real weapon sprite source silver_sword
+ACTION PASS real weapon sprite source ipetam
+ACTION PASS real weapon sprite source prajna
+ACTION PASS real weapon sprite source whip
+ACTION PASS real weapon sprite source pistol
+ACTION PASS real weapon sprite source smg
+ACTION PASS real weapon sprite source rifle
+ACTION PASS real weapon sprite source revolver
+ACTION PASS real weapon sprite source gatling
+ACTION PASS real weapon sprite source spellbook
+ACTION PASS real weapon sprite source curse_doll
+ACTION PASS high-resolution weapon art cannot expand equipment cards beyond viewport
+ACTION PASS held weapon has independent material and cannot inherit avatar hair or coat colors
+ACTION PASS north-facing weapon sits behind its actor without escaping world depth sorting
+ACTION PASS seven owned followers deploy together without point cap
+ACTION PASS unlimited deployed roster survives actual save validation
+ACTION PASS all seven appear as live companion actors
+ACTION PASS available UI action
+ACTION PASS smart command assigns healthy followers to vulnerable villagers
+ACTION PASS village guards remain stationed when player travels
+ACTION PASS recall from village produces only the selected follower
+ACTION PASS stationed followers fight a village raid while player is elsewhere
+ACTION PASS same-time guard updates cannot multiply damage
+ACTION PASS offscreen opposing armies exchange actual damage before settlement
+ACTION PASS player can choose a side in a live conflict
+ACTION PASS chosen army becomes friendly
+ACTION PASS cannot repeatedly switch sides to exploit immunity
+ACTION PASS ongoing attrition and alliance survive save roundtrip
+ACTION PASS light and heavy impact audio produce distinct non-clipping PCM streams
+ACTION PASS version twelve followers migrate with proportional health and safe default orders
+Action and command: 38 checks, 0 failures
+
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+MODEL PASS hungry_ghost solid physical volume includes all actors
+MODEL PASS hungry_ghost independent articulated nodes
+MODEL PASS hungry_ghost real joint transforms animate
+MODEL PASS hungry_ghost mirrored joint and detached source positions agree
+MODEL PASS hungry_ghost gait follows actual displacement
+MODEL PASS hungry_ghost attack anticipation
+MODEL PASS hungry_ghost attack release
+MODEL PASS hungry_ghost attack recovery
+MODEL PASS hungry_ghost contact pause freezes articulated clock
+MODEL PASS hungry_ghost amputated head hidden on same rig
+MODEL PASS hungry_ghost amputated leg hidden on same rig
+MODEL PASS hungry_ghost blocks on player volume
+MODEL PASS hungry_ghost blocks on another monster volume
+MODEL PASS hungry_ghost physical wall blocks movement
+MODEL PASS wraith solid physical volume includes all actors
+MODEL PASS wraith independent articulated nodes
+MODEL PASS wraith real joint transforms animate
+MODEL PASS wraith mirrored joint and detached source positions agree
+MODEL PASS wraith gait follows actual displacement
+MODEL PASS wraith attack anticipation
+MODEL PASS wraith attack release
+MODEL PASS wraith attack recovery
+MODEL PASS wraith contact pause freezes articulated clock
+MODEL PASS wraith amputated head hidden on same rig
+MODEL PASS wraith amputated leg hidden on same rig
+MODEL PASS wraith blocks on player volume
+MODEL PASS wraith blocks on another monster volume
+MODEL PASS wraith physical wall blocks movement
+MODEL PASS rakshasa solid physical volume includes all actors
+MODEL PASS rakshasa independent articulated nodes
+MODEL PASS rakshasa real joint transforms animate
+MODEL PASS rakshasa mirrored joint and detached source positions agree
+MODEL PASS rakshasa gait follows actual displacement
+MODEL PASS rakshasa attack anticipation
+MODEL PASS rakshasa attack release
+MODEL PASS rakshasa attack recovery
+MODEL PASS rakshasa contact pause freezes articulated clock
+MODEL PASS rakshasa amputated head hidden on same rig
+MODEL PASS rakshasa amputated leg hidden on same rig
+MODEL PASS rakshasa blocks on player volume
+MODEL PASS rakshasa blocks on another monster volume
+MODEL PASS rakshasa physical wall blocks movement
+MODEL PASS kumbhanda solid physical volume includes all actors
+MODEL PASS kumbhanda independent articulated nodes
+MODEL PASS kumbhanda real joint transforms animate
+MODEL PASS kumbhanda mirrored joint and detached source positions agree
+MODEL PASS kumbhanda gait follows actual displacement
+MODEL PASS kumbhanda attack anticipation
+MODEL PASS kumbhanda attack release
+MODEL PASS kumbhanda attack recovery
+MODEL PASS kumbhanda contact pause freezes articulated clock
+MODEL PASS kumbhanda amputated head hidden on same rig
+MODEL PASS kumbhanda amputated leg hidden on same rig
+MODEL PASS kumbhanda blocks on player volume
+MODEL PASS kumbhanda blocks on another monster volume
+MODEL PASS kumbhanda physical wall blocks movement
+MODEL PASS asura solid physical volume includes all actors
+MODEL PASS asura independent articulated nodes
+MODEL PASS asura real joint transforms animate
+MODEL PASS asura mirrored joint and detached source positions agree
+MODEL PASS asura gait follows actual displacement
+MODEL PASS asura attack anticipation
+MODEL PASS asura attack release
+MODEL PASS asura attack recovery
+MODEL PASS asura contact pause freezes articulated clock
+MODEL PASS asura amputated head hidden on same rig
+MODEL PASS asura amputated leg hidden on same rig
+MODEL PASS asura blocks on player volume
+MODEL PASS asura blocks on another monster volume
+MODEL PASS asura physical wall blocks movement
+MODEL PASS yaksha solid physical volume includes all actors
+MODEL PASS yaksha independent articulated nodes
+MODEL PASS yaksha real joint transforms animate
+MODEL PASS yaksha mirrored joint and detached source positions agree
+MODEL PASS yaksha gait follows actual displacement
+MODEL PASS yaksha attack anticipation
+MODEL PASS yaksha attack release
+MODEL PASS yaksha attack recovery
+MODEL PASS yaksha contact pause freezes articulated clock
+MODEL PASS yaksha amputated head hidden on same rig
+MODEL PASS yaksha amputated leg hidden on same rig
+MODEL PASS yaksha blocks on player volume
+MODEL PASS yaksha blocks on another monster volume
+MODEL PASS yaksha physical wall blocks movement
+MODEL PASS kappa solid physical volume includes all actors
+MODEL PASS kappa independent articulated nodes
+MODEL PASS kappa real joint transforms animate
+MODEL PASS kappa mirrored joint and detached source positions agree
+MODEL PASS kappa gait follows actual displacement
+MODEL PASS kappa attack anticipation
+MODEL PASS kappa attack release
+MODEL PASS kappa attack recovery
+MODEL PASS kappa contact pause freezes articulated clock
+MODEL PASS kappa amputated head hidden on same rig
+MODEL PASS kappa amputated leg hidden on same rig
+MODEL PASS kappa blocks on player volume
+MODEL PASS kappa blocks on another monster volume
+MODEL PASS kappa physical wall blocks movement
+MODEL PASS chochin solid physical volume includes all actors
+MODEL PASS chochin independent articulated nodes
+MODEL PASS chochin real joint transforms animate
+MODEL PASS chochin mirrored joint and detached source positions agree
+MODEL PASS chochin gait follows actual displacement
+MODEL PASS chochin attack anticipation
+MODEL PASS chochin attack release
+MODEL PASS chochin attack recovery
+MODEL PASS chochin contact pause freezes articulated clock
+MODEL PASS chochin amputated head hidden on same rig
+MODEL PASS chochin blocks on player volume
+MODEL PASS chochin blocks on another monster volume
+MODEL PASS chochin physical wall blocks movement
+MODEL PASS ippon_datara solid physical volume includes all actors
+MODEL PASS ippon_datara independent articulated nodes
+MODEL PASS ippon_datara real joint transforms animate
+MODEL PASS ippon_datara mirrored joint and detached source positions agree
+MODEL PASS ippon_datara gait follows actual displacement
+MODEL PASS ippon_datara attack anticipation
+MODEL PASS ippon_datara attack release
+MODEL PASS ippon_datara attack recovery
+MODEL PASS ippon_datara contact pause freezes articulated clock
+MODEL PASS ippon_datara amputated head hidden on same rig
+MODEL PASS ippon_datara amputated leg hidden on same rig
+MODEL PASS ippon_datara blocks on player volume
+MODEL PASS ippon_datara blocks on another monster volume
+MODEL PASS ippon_datara physical wall blocks movement
+MODEL PASS jorogumo solid physical volume includes all actors
+MODEL PASS jorogumo independent articulated nodes
+MODEL PASS jorogumo real joint transforms animate
+MODEL PASS jorogumo mirrored joint and detached source positions agree
+MODEL PASS jorogumo gait follows actual displacement
+MODEL PASS jorogumo attack anticipation
+MODEL PASS jorogumo attack release
+MODEL PASS jorogumo attack recovery
+MODEL PASS jorogumo contact pause freezes articulated clock
+MODEL PASS jorogumo amputated head hidden on same rig
+MODEL PASS jorogumo amputated leg hidden on same rig
+MODEL PASS jorogumo blocks on player volume
+MODEL PASS jorogumo blocks on another monster volume
+MODEL PASS jorogumo physical wall blocks movement
+MODEL PASS sogenbi solid physical volume includes all actors
+MODEL PASS sogenbi independent articulated nodes
+MODEL PASS sogenbi real joint transforms animate
+MODEL PASS sogenbi mirrored joint and detached source positions agree
+MODEL PASS sogenbi gait follows actual displacement
+MODEL PASS sogenbi attack anticipation
+MODEL PASS sogenbi attack release
+MODEL PASS sogenbi attack recovery
+MODEL PASS sogenbi contact pause freezes articulated clock
+MODEL PASS sogenbi amputated head hidden on same rig
+MODEL PASS sogenbi blocks on player volume
+MODEL PASS sogenbi blocks on another monster volume
+MODEL PASS sogenbi physical wall blocks movement
+MODEL PASS itsumade solid physical volume includes all actors
+MODEL PASS itsumade independent articulated nodes
+MODEL PASS itsumade real joint transforms animate
+MODEL PASS itsumade mirrored joint and detached source positions agree
+MODEL PASS itsumade gait follows actual displacement
+MODEL PASS itsumade attack anticipation
+MODEL PASS itsumade attack release
+MODEL PASS itsumade attack recovery
+MODEL PASS itsumade contact pause freezes articulated clock
+MODEL PASS itsumade amputated head hidden on same rig
+MODEL PASS itsumade amputated leg hidden on same rig
+MODEL PASS itsumade blocks on player volume
+MODEL PASS itsumade blocks on another monster volume
+MODEL PASS itsumade physical wall blocks movement
+MODEL PASS daitengu solid physical volume includes all actors
+MODEL PASS daitengu independent articulated nodes
+MODEL PASS daitengu real joint transforms animate
+MODEL PASS daitengu mirrored joint and detached source positions agree
+MODEL PASS daitengu gait follows actual displacement
+MODEL PASS daitengu attack anticipation
+MODEL PASS daitengu attack release
+MODEL PASS daitengu attack recovery
+MODEL PASS daitengu contact pause freezes articulated clock
+MODEL PASS daitengu amputated head hidden on same rig
+MODEL PASS daitengu amputated leg hidden on same rig
+MODEL PASS daitengu blocks on player volume
+MODEL PASS daitengu blocks on another monster volume
+MODEL PASS daitengu physical wall blocks movement
+MODEL PASS ryomen_sukuna solid physical volume includes all actors
+MODEL PASS ryomen_sukuna independent articulated nodes
+MODEL PASS ryomen_sukuna real joint transforms animate
+MODEL PASS ryomen_sukuna mirrored joint and detached source positions agree
+MODEL PASS ryomen_sukuna gait follows actual displacement
+MODEL PASS ryomen_sukuna attack anticipation
+MODEL PASS ryomen_sukuna attack release
+MODEL PASS ryomen_sukuna attack recovery
+MODEL PASS ryomen_sukuna contact pause freezes articulated clock
+MODEL PASS ryomen_sukuna amputated head hidden on same rig
+MODEL PASS ryomen_sukuna amputated leg hidden on same rig
+MODEL PASS ryomen_sukuna blocks on player volume
+MODEL PASS ryomen_sukuna blocks on another monster volume
+MODEL PASS ryomen_sukuna physical wall blocks movement
+MODEL PASS water solid physical volume includes all actors
+MODEL PASS water independent articulated nodes
+MODEL PASS water real joint transforms animate
+MODEL PASS water mirrored joint and detached source positions agree
+MODEL PASS water gait follows actual displacement
+MODEL PASS water attack anticipation
+MODEL PASS water attack release
+MODEL PASS water attack recovery
+MODEL PASS water contact pause freezes articulated clock
+MODEL PASS water amputated head hidden on same rig
+MODEL PASS water amputated leg hidden on same rig
+MODEL PASS water blocks on player volume
+MODEL PASS water blocks on another monster volume
+MODEL PASS water physical wall blocks movement
+MODEL PASS bone solid physical volume includes all actors
+MODEL PASS bone independent articulated nodes
+MODEL PASS bone real joint transforms animate
+MODEL PASS bone mirrored joint and detached source positions agree
+MODEL PASS bone gait follows actual displacement
+MODEL PASS bone attack anticipation
+MODEL PASS bone attack release
+MODEL PASS bone attack recovery
+MODEL PASS bone contact pause freezes articulated clock
+MODEL PASS bone amputated head hidden on same rig
+MODEL PASS bone amputated leg hidden on same rig
+MODEL PASS bone blocks on player volume
+MODEL PASS bone blocks on another monster volume
+MODEL PASS bone physical wall blocks movement
+MODEL PASS archer solid physical volume includes all actors
+MODEL PASS archer independent articulated nodes
+MODEL PASS archer real joint transforms animate
+MODEL PASS archer mirrored joint and detached source positions agree
+MODEL PASS archer gait follows actual displacement
+MODEL PASS archer attack anticipation
+MODEL PASS archer attack release
+MODEL PASS archer attack recovery
+MODEL PASS archer contact pause freezes articulated clock
+MODEL PASS archer amputated head hidden on same rig
+MODEL PASS archer amputated leg hidden on same rig
+MODEL PASS archer blocks on player volume
+MODEL PASS archer blocks on another monster volume
+MODEL PASS archer physical wall blocks movement
+MODEL PASS lantern solid physical volume includes all actors
+MODEL PASS lantern independent articulated nodes
+MODEL PASS lantern real joint transforms animate
+MODEL PASS lantern mirrored joint and detached source positions agree
+MODEL PASS lantern gait follows actual displacement
+MODEL PASS lantern attack anticipation
+MODEL PASS lantern attack release
+MODEL PASS lantern attack recovery
+MODEL PASS lantern contact pause freezes articulated clock
+MODEL PASS lantern amputated head hidden on same rig
+MODEL PASS lantern amputated leg hidden on same rig
+MODEL PASS lantern blocks on player volume
+MODEL PASS lantern blocks on another monster volume
+MODEL PASS lantern physical wall blocks movement
+MODEL PASS gunner solid physical volume includes all actors
+MODEL PASS gunner independent articulated nodes
+MODEL PASS gunner real joint transforms animate
+MODEL PASS gunner mirrored joint and detached source positions agree
+MODEL PASS gunner gait follows actual displacement
+MODEL PASS gunner attack anticipation
+MODEL PASS gunner attack release
+MODEL PASS gunner attack recovery
+MODEL PASS gunner contact pause freezes articulated clock
+MODEL PASS gunner amputated head hidden on same rig
+MODEL PASS gunner amputated leg hidden on same rig
+MODEL PASS gunner blocks on player volume
+MODEL PASS gunner blocks on another monster volume
+MODEL PASS gunner physical wall blocks movement
+MODEL PASS brute solid physical volume includes all actors
+MODEL PASS brute independent articulated nodes
+MODEL PASS brute real joint transforms animate
+MODEL PASS brute mirrored joint and detached source positions agree
+MODEL PASS brute gait follows actual displacement
+MODEL PASS brute attack anticipation
+MODEL PASS brute attack release
+MODEL PASS brute attack recovery
+MODEL PASS brute contact pause freezes articulated clock
+MODEL PASS brute amputated head hidden on same rig
+MODEL PASS brute amputated leg hidden on same rig
+MODEL PASS brute blocks on player volume
+MODEL PASS brute blocks on another monster volume
+MODEL PASS brute physical wall blocks movement
+MODEL PASS well_boss solid physical volume includes all actors
+MODEL PASS well_boss independent articulated nodes
+MODEL PASS well_boss real joint transforms animate
+MODEL PASS well_boss mirrored joint and detached source positions agree
+MODEL PASS well_boss gait follows actual displacement
+MODEL PASS well_boss attack anticipation
+MODEL PASS well_boss attack release
+MODEL PASS well_boss attack recovery
+MODEL PASS well_boss contact pause freezes articulated clock
+MODEL PASS well_boss amputated head hidden on same rig
+MODEL PASS well_boss amputated leg hidden on same rig
+MODEL PASS well_boss blocks on player volume
+MODEL PASS well_boss blocks on another monster volume
+MODEL PASS well_boss physical wall blocks movement
+MODEL PASS opera_boss solid physical volume includes all actors
+MODEL PASS opera_boss independent articulated nodes
+MODEL PASS opera_boss real joint transforms animate
+MODEL PASS opera_boss mirrored joint and detached source positions agree
+MODEL PASS opera_boss gait follows actual displacement
+MODEL PASS opera_boss attack anticipation
+MODEL PASS opera_boss attack release
+MODEL PASS opera_boss attack recovery
+MODEL PASS opera_boss contact pause freezes articulated clock
+MODEL PASS opera_boss amputated head hidden on same rig
+MODEL PASS opera_boss amputated leg hidden on same rig
+MODEL PASS opera_boss blocks on player volume
+MODEL PASS opera_boss blocks on another monster volume
+MODEL PASS opera_boss physical wall blocks movement
+MODEL PASS boss solid physical volume includes all actors
+MODEL PASS boss independent articulated nodes
+MODEL PASS boss real joint transforms animate
+MODEL PASS boss mirrored joint and detached source positions agree
+MODEL PASS boss gait follows actual displacement
+MODEL PASS boss attack anticipation
+MODEL PASS boss attack release
+MODEL PASS boss attack recovery
+MODEL PASS boss contact pause freezes articulated clock
+MODEL PASS boss amputated head hidden on same rig
+MODEL PASS boss amputated leg hidden on same rig
+MODEL PASS boss blocks on player volume
+MODEL PASS boss blocks on another monster volume
+MODEL PASS boss physical wall blocks movement
+MODEL PASS farm approachable interaction home
+MODEL PASS farm complete path to home
+MODEL PASS farm approachable interaction shop
+MODEL PASS farm complete path to shop
+MODEL PASS farm approachable interaction gate
+MODEL PASS farm complete path to gate
+MODEL PASS farm approachable interaction village_gate
+MODEL PASS farm complete path to village_gate
+MODEL PASS farm approachable interaction shipping
+MODEL PASS farm approachable interaction npc
+MODEL PASS farm approachable interaction altar
+MODEL PASS farm large body navigation has independent clearance
+MODEL PASS farm optimized navigation agrees with physical obstacle clearance
+MODEL PASS graveyard approachable interaction return
+MODEL PASS graveyard complete path to return
+MODEL PASS graveyard approachable interaction forest_gate
+MODEL PASS graveyard complete path to forest_gate
+MODEL PASS graveyard large body navigation has independent clearance
+MODEL PASS graveyard optimized navigation agrees with physical obstacle clearance
+MODEL PASS forest approachable interaction forest_return
+MODEL PASS forest complete path to forest_return
+MODEL PASS forest approachable interaction sunken_gate
+MODEL PASS forest complete path to sunken_gate
+MODEL PASS forest approachable interaction theatre_gate
+MODEL PASS forest complete path to theatre_gate
+MODEL PASS forest approachable interaction inspect_camp
+MODEL PASS forest approachable interaction inspect_well
+MODEL PASS forest approachable interaction inspect_temple
+MODEL PASS forest large body navigation has independent clearance
+MODEL PASS forest optimized navigation agrees with physical obstacle clearance
+MODEL PASS village approachable interaction village_return
+MODEL PASS village complete path to village_return
+MODEL PASS village approachable interaction island_ferry
+MODEL PASS village complete path to island_ferry
+MODEL PASS village approachable interaction temple_gate
+MODEL PASS village complete path to temple_gate
+MODEL PASS village large body navigation has independent clearance
+MODEL PASS village optimized navigation agrees with physical obstacle clearance
+MODEL PASS island approachable interaction island_return
+MODEL PASS island complete path to island_return
+MODEL PASS island large body navigation has independent clearance
+MODEL PASS island optimized navigation agrees with physical obstacle clearance
+MODEL PASS temple approachable interaction temple_return
+MODEL PASS temple complete path to temple_return
+MODEL PASS temple large body navigation has independent clearance
+MODEL PASS temple optimized navigation agrees with physical obstacle clearance
+MODEL PASS sunken approachable interaction branch_return
+MODEL PASS sunken complete path to branch_return
+MODEL PASS sunken large body navigation has independent clearance
+MODEL PASS sunken optimized navigation agrees with physical obstacle clearance
+MODEL PASS theatre approachable interaction branch_return
+MODEL PASS theatre complete path to branch_return
+MODEL PASS theatre large body navigation has independent clearance
+MODEL PASS theatre optimized navigation agrees with physical obstacle clearance
+MODEL PASS hall approachable interaction exit_interior
+MODEL PASS hall complete path to exit_interior
+MODEL PASS hall approachable interaction workbench
+MODEL PASS hall approachable interaction storage
+MODEL PASS hall approachable interaction bed
+MODEL PASS hall large body navigation has independent clearance
+MODEL PASS hall optimized navigation agrees with physical obstacle clearance
+MODEL PASS shop approachable interaction exit_interior
+MODEL PASS shop complete path to exit_interior
+MODEL PASS shop approachable interaction counter
+MODEL PASS shop large body navigation has independent clearance
+MODEL PASS shop optimized navigation agrees with physical obstacle clearance
+MODEL PASS E opens closest visible NPC rather than first spawned NPC
+MODEL PASS NPC dialogue dispatch also rejects a wall
+MODEL PASS nearby chest cannot steal closer camp interaction
+MODEL PASS camp consumes money and time and restores player
+MODEL PASS insufficient camp money cannot grant free restoration
+MODEL PASS well removes actual combat statuses with energy cost
+MODEL PASS clean player cannot waste purification cost
+MODEL PASS ruined shrine restores real follower health
+MODEL PASS interaction ray rejects an intervening wall
+MODEL RESULT 395 checks, 0 failures
+
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+FIRST PASS available button
+FIRST PASS intro starts a concrete commission
+FIRST PASS starting again preserves progress
+FIRST PASS tutorial exit has a complete route
+FIRST PASS empty follower page provides one useful action
+FIRST PASS first-day cemetery contains melee and ranged encounters
+FIRST PASS real keyboard sword attacks kill tutorial guard 0
+FIRST PASS real keyboard sword attacks kill tutorial guard 1
+FIRST PASS actual deaths complete commission
+FIRST PASS completion changes objective to return route
+FIRST PASS cannot claim remotely from battlefield
+FIRST PASS partial journey persists through existing save format
+FIRST PASS opening instructions cannot create horizontal scrolling
+FIRST PASS available button
+FIRST PASS UI turn-in grants exact money
+FIRST PASS reward is unique tier-two silver sword with equip objective
+FIRST PASS reward cannot be duplicated
+FIRST PASS equipment compares reward with current melee
+FIRST PASS new reward is visible on first equipment screen
+FIRST PASS available button
+FIRST PASS actual equip click completes the opening loop
+FIRST PASS later weapon swaps do not restart completed onboarding
+FIRST PASS completed onboarding remains complete after save and reload
+FIRST PASS existing players are not forced into tutorial
+FIRST PASS existing players may opt in
+FIRST PASS explicitly tracking another commission hides tutorial guidance
+FIRST PASS full equipment rejects reward without losing commission
+FIRST RESULT 27 checks, 0 failures
+
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+HD PASS unmodified credited CC0 source interaction.png
+HD PASS unmodified credited CC0 source impact_light.ogg
+HD PASS unmodified credited CC0 source impact_heavy.ogg
+HD PASS unmodified credited CC0 source confirm.ogg
+HD PASS data-driven distinct heavy timing prajna
+HD PASS all six weighted authored attack poses remain reachable prajna
+HD PASS data-driven distinct heavy timing ipetam
+HD PASS all six weighted authored attack poses remain reachable ipetam
+HD PASS data-driven distinct heavy timing sword
+HD PASS all six weighted authored attack poses remain reachable sword
+HD PASS data-driven distinct heavy timing whip
+HD PASS all six weighted authored attack poses remain reachable whip
+HD PASS data-driven distinct heavy timing silver_sword
+HD PASS all six weighted authored attack poses remain reachable silver_sword
+HD PASS attack contact divides extension from follow-through
+HD PASS legacy gallery and current actor share new source (0.0, 1.0)
+HD PASS current four-direction walk source (0.0, 1.0)
+HD PASS legacy gallery and current actor share new source (0.0, -1.0)
+HD PASS current four-direction walk source (0.0, -1.0)
+HD PASS legacy gallery and current actor share new source (-1.0, 0.0)
+HD PASS current four-direction walk source (-1.0, 0.0)
+HD PASS legacy gallery and current actor share new source (1.0, 0.0)
+HD PASS current four-direction walk source (1.0, 0.0)
+HD PASS mouse conversion is inverse of actual camera canvas transform
+HD PASS aim direction survives camera offset
+HD PASS farm uploads distinct regional terrain palette
+HD PASS farm vegetation uses current atlas
+HD PASS village uploads distinct regional terrain palette
+HD PASS village vegetation uses current atlas
+HD PASS graveyard uploads distinct regional terrain palette
+HD PASS graveyard vegetation uses current atlas
+HD PASS forest uploads distinct regional terrain palette
+HD PASS forest vegetation uses current atlas
+HD PASS island uploads distinct regional terrain palette
+HD PASS island vegetation uses current atlas
+HD PASS temple uploads distinct regional terrain palette
+HD PASS temple vegetation uses current atlas
+HD PASS raised courtyard walls share the actual actor depth-sort layer
+HD PASS sunken uploads distinct regional terrain palette
+HD PASS sunken vegetation uses current atlas
+HD PASS theatre uploads distinct regional terrain palette
+HD PASS theatre vegetation uses current atlas
+HD PASS hall uploads distinct regional terrain palette
+HD PASS hall vegetation uses current atlas
+HD PASS shop uploads distinct regional terrain palette
+HD PASS shop vegetation uses current atlas
+HD PASS combat dims objective and releases its mouse capture
+HD PASS clicking through faded objective starts a world attack
+HD PASS followers render through the same independently animated rig as enemies
+HD PASS followers reuse one world navigation cache instead of rebuilding grids per follower
+HD PASS reworked equipment navigation stays inside viewport
+HD RESULT 51 checks, 0 failures
+
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+CONTINENT PASS version 13 save remains importable
+CONTINENT PASS boss home anchors migrate with their bodies
+CONTINENT PASS migration preserves existing equipment
+CONTINENT PASS retired farming stock refunded once
+CONTINENT PASS global coordinates and world flag round trip
+CONTINENT PASS migration is idempotent
+CONTINENT PASS rest has no crop growth or farming jobs
+CONTINENT PASS shipping game installs one 6400 by 4800 world
+CONTINENT PASS Esc intro starts the same first mission
+CONTINENT PASS new game has weapon and no farmland interaction
+CONTINENT PASS inventory exposes no farming controls
+CONTINENT PASS merchant has no seed trade
+CONTINENT PASS banks block water while approach is walkable
+CONTINENT PASS actual input walks completely across northern bridge
+CONTINENT PASS crossing changes territory without loading or replacing actors
+CONTINENT PASS capital occupies matching territory temple
+CONTINENT PASS capital accessible across actual bridges temple
+CONTINENT PASS capital occupies matching territory island
+CONTINENT PASS capital accessible across actual bridges island
+CONTINENT PASS capital occupies matching territory village
+CONTINENT PASS capital accessible across actual bridges village
+CONTINENT PASS capital occupies matching territory graveyard
+CONTINENT PASS capital accessible across actual bridges graveyard
+CONTINENT PASS every declared soldier exists as a physical actor
+CONTINENT PASS armies have persistent identities and collision bodies
+CONTINENT PASS attacking army musters in its own homeland
+CONTINENT PASS army really advances before entering the battlefield fixture
+CONTINENT PASS nightfall and offscreen tick cannot deduct health or decide victory
+CONTINENT PASS battlefield fixture fits actual bridge and soldier volumes without overlaps
+CONTINENT PASS armies exchange actual attacks while player is across the world
+CONTINENT PASS distant war runs in the same persistent scene
+CONTINENT PASS active real war and soldier positions can be saved
+CONTINENT PASS actual army deaths settle the battle without scheduled auto victory
+CONTINENT PASS civilian independently attacks nearby hostile without player assistance
+CONTINENT RESULT 34 checks, 0 failures
+
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+PERF PASS shipping runtime uses 60 Hz physics and 60 FPS target
+PERF PASS continuous-world navigation has one quarter the previous grid cells
+PERF PASS grass updates only local active chunks
+PERF PASS all tree types share one wind material
+PERF PASS offscreen enemy models are not redrawn
+PERF PASS real enemy available for death transition
+PERF PASS actual player kill leaves a body record
+PERF PASS body begins an animated fall instead of a generic pile
+PERF PASS missing limbs remain missing on the corpse
+PERF PASS death pose stores finite bounded anatomy and frame metadata
+PERF PASS subsequent deaths preserve existing corpse nodes
+PERF PASS settled corpses finish falling and have no per-frame process callback
+PERF PASS static corpse retains collision but no enemy AI or hurtbox
+PERF PASS corpse pose and severed state survive saving
+PERF PASS loaded body is already settled with the same limb count
+PERF PASS old save bodies reconstruct from their monster type
+PERF PASS invalid corpse geometry is rejected safely
+PERF PASS low-budget mode reduces visual effects without changing simulation
+PERF PASS visual adaptation preserves 60 Hz gameplay
+PERF PASS full art density can be restored
+PERF PASS refining removes exactly its body across logical territory boundaries
+PERF PASS coalesced combat save persists processed and remaining bodies to disk
+PERF RESULT 22 checks, 0 failures
+
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+MODULAR PASS drowned exact shared palette and transparent background
+MODULAR PASS drowned unified 64px cells and four independent whole limbs
+MODULAR PASS drowned complete idle / walk / hit sequences
+MODULAR PASS drowned residual has no baked feet
+MODULAR PASS skeleton exact shared palette and transparent background
+MODULAR PASS skeleton unified 64px cells and four independent whole limbs
+MODULAR PASS skeleton complete idle / walk / hit sequences
+MODULAR PASS skeleton residual has no baked feet
+MODULAR PASS tengu exact shared palette and transparent background
+MODULAR PASS tengu unified 64px cells and four independent whole limbs
+MODULAR PASS tengu complete idle / walk / hit sequences
+MODULAR PASS tengu residual has no baked feet
+MODULAR PASS hungry exact shared palette and transparent background
+MODULAR PASS hungry unified 64px cells and four independent whole limbs
+MODULAR PASS hungry complete idle / walk / hit sequences
+MODULAR PASS hungry residual has no baked feet
+MODULAR PASS rakshasa exact shared palette and transparent background
+MODULAR PASS rakshasa unified 64px cells and four independent whole limbs
+MODULAR PASS rakshasa complete idle / walk / hit sequences
+MODULAR PASS rakshasa residual has no baked feet
+MODULAR PASS water live enemy uses actual child sprites
+MODULAR PASS water selects its independent pack
+MODULAR PASS bone live enemy uses actual child sprites
+MODULAR PASS bone selects its independent pack
+MODULAR PASS daitengu live enemy uses actual child sprites
+MODULAR PASS daitengu selects its independent pack
+MODULAR PASS hungry_ghost live enemy uses actual child sprites
+MODULAR PASS hungry_ghost selects its independent pack
+MODULAR PASS rakshasa live enemy uses actual child sprites
+MODULAR PASS rakshasa selects its independent pack
+MODULAR PASS offscreen faction combat cannot slow down the player
+MODULAR PASS one arm threshold does not remove its opposite arm
+MODULAR PASS detached limb has independent rigid body and terrain collision
+MODULAR PASS mirrored animated joint and detached sprite share the exact transform
+MODULAR PASS only severed child is removed and its own stump is enabled
+MODULAR PASS severed limb child Sprite is actually freed
+MODULAR PASS hit-feedback fixture is inside the real camera view
+MODULAR PASS AnimationPlayer runs the authored three hit poses
+MODULAR PASS impact triggers time dilation and one-shot blood burst
+MODULAR PASS hit animation advances through the second hit frame
+MODULAR PASS real-time hit clock always restores normal speed
+MODULAR PASS rigid limb moves and lands with a vertical bounce
+MODULAR PASS detached RigidBody actually collides with a physical wall
+MODULAR PASS stump slowly emits separate drops that reach the ground
+MODULAR PASS all four limbs and head sever independently
+MODULAR PASS death creates one static corpse entity
+MODULAR PASS corpse retains residual torso without resurrecting limbs
+MODULAR PASS corpse retains shoulder and thigh stump layers
+MODULAR PASS enemy CharacterBody is destroyed while detached rigid limb survives
+MODULAR PASS settled corpse has a physical volume and no movement AI
+MODULAR PASS static corpse responds to scripted pushing and stepping
+MODULAR PASS pushed corpse coordinates are written back to the save record
+MODULAR PASS real player movement pushes and steps across corpse volume
+MODULAR PASS four-limb corpse state round trips through actual JSON numbers
+MODULAR PASS loaded corpse restores residual sprite and stump layers
+MODULAR PASS non-finite saved joint transforms are rejected
+MODULAR PASS zero lifetime keeps corpse permanently
+MODULAR PASS fade removes both physical corpse and save record
+MODULAR PASS actual settings control selects timed corpse retention
+MODULAR PASS retention preference persists through settings reload
+MODULAR PASS new torso and detached rigid limb share selected lifetime
+MODULAR RESULT 61 checks, 0 failures
+
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+
+PASS: import, twenty-four historical suites, seamless world, performance/corpses and modular enemies suites, main-scene startup
