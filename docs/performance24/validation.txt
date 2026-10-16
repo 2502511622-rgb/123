@@ -1,0 +1,29 @@
+Validated suites (historical rule/compatibility suites plus shipping continuous-world and corpse suites):
+Yintian rules: 65 checks, 0 failures
+Yintian world: 26 checks, 0 failures
+Reference architecture: 43 checks, 0 failures
+Player journey: 29 checks, 0 failures
+Arsenal and barrage: 61 checks, 0 failures
+Expansion: 31 checks, 0 failures
+Display settings: 5 checks, 0 failures
+Campaign rules: 72 checks, 0 failures
+Player campaign: 47 checks, 0 failures
+Redesign: 39 checks, 0 failures
+Adventure: 68 checks, 0 failures
+Island: 73 checks, 0 failures
+FACTIONS RESULT 45 checks, 0 failures
+TEMPLE RESULT 78 checks, 0 failures
+ART16 RESULT 13 checks, 0 failures
+WEATHER RESULT 23 checks, 0 failures
+REFERENCE RESULT 37 checks, 0 failures
+LIVING RESULT 24 checks, 0 failures
+JRPG RESULT 37 checks, 0 failures
+Player polish: 33 checks, 0 failures
+Action and command: 38 checks, 0 failures
+MODEL RESULT 395 checks, 0 failures
+FIRST RESULT 27 checks, 0 failures
+HD RESULT 51 checks, 0 failures
+CONTINENT RESULT 34 checks, 0 failures
+PERF RESULT 22 checks, 0 failures
+39 original anatomical poses verified; 225 packed regions compared pixel-for-pixel.
+Graphical corpse suite: 24 checks, 0 failures.

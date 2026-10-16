@@ -62,7 +62,7 @@ func _physics_process(delta: float) -> void:
 				target.knockback=strike.facing*(125 if target.record.kind not in YinAbilities.BOSSES else 35)
 				game.player.hit_pause=0.075
 				game.player.impact_shake=0.16
-	game.persist()
+	game.queue_save()
 func visible(target: YinEnemy) -> bool:
 	var ray := PhysicsRayQueryParameters2D.create(game.player.global_position + Vector2(0, -4), target.global_position + Vector2(0, -4), 1)
 	return game.player.get_world_2d().direct_space_state.intersect_ray(ray).is_empty()
@@ -144,7 +144,7 @@ func trigger(method: String) -> bool:
 		game.world.spell_trace(game.player.position + Vector2(0, -20), target.position + Vector2(0, -20), method)
 		target.receive_hit(spec.damage + 5 * (int(game.state.skill_ranks[method]) - 1), method)
 		game.refresh("符火伤骸：完整度下降 35。" if method == "fire" else "镇符压制 3 秒，完整度保留。")
-	game.persist()
+	game.queue_save()
 	return true
 
 func shoot() -> bool:
@@ -169,7 +169,7 @@ func shoot() -> bool:
 	game.player.facing = aim
 	game.player.aim_direction = aim
 	game.world.effect(start + aim * 18 - Vector2(0, 14), Color("f2d08e"))
-	game.persist()
+	game.queue_save()
 	return true
 func reload() -> bool:
 	if game.modal != null or not reload_job.is_empty(): return false
@@ -253,7 +253,7 @@ func cast_weapon() -> bool:
 	game.state.energy -= spec.energy
 	game.action_cooldown = spec.interval
 	game.player.attack_time = 0.22
-	game.persist()
+	game.queue_save()
 	return true
 
 func heavy() -> bool:
@@ -265,5 +265,5 @@ func heavy() -> bool:
 	heavy_requested=false
 	if started:
 		game.state.energy-=14
-		game.persist()
+		game.queue_save()
 	return started

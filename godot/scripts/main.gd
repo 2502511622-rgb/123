@@ -3,6 +3,10 @@ const SaveStore = preload("res://scripts/save_store.gd")
 const TOOL_NAMES = ["铁锹", "阴种", "浇灌", "收割", "斧头", "铁镐"]
 const CROP_IDS = ["candle", "vine", "gourd", "rice"]
 var state := FarmState.new()
+var frame_budget: YinFrameBudget
+var save_requested: bool=false
+var save_clock: float=0
+var hud_clock: float=0
 var seamless: bool = OS.get_environment("YINTIAN_LEGACY_MAPS") != "1"
 var world: FarmWorld
 var player: FarmPlayer
@@ -53,6 +57,7 @@ func _ready() -> void:
 	add_to_group("yintian_game")
 	ThemeDB.fallback_font = preload("res://assets/mossfield-font.ttf")
 	setup_inputs()
+	YinActorArt.prepare_parts()
 	router = get_node("Systems/SceneRouter")
 	router.bind(get_node("Levels"))
 	clock = get_node("Systems/GameClock")
@@ -76,6 +81,7 @@ func _ready() -> void:
 	atmosphere.set("game", self)
 	weather_layer.add_child(atmosphere)
 	build_hud()
+	frame_budget=YinFrameBudget.new();frame_budget.game=self;add_child(frame_budget)
 	clock.minute_changed.connect(func(_day, _hour, _minute): update_labels())
 	refresh("存档损坏，新建义庄；原文件在首次保存前保留。" if not loaded else "槐阴村的风，带着纸灰的味道。")
 	if not state.intro_seen:
@@ -227,18 +233,20 @@ func spawn_spirits() -> void:
 		actor.add_to_group("companions")
 		world.actors.add_child(actor)
 
-func spawn_remains_visuals() -> void:
+func spawn_remains_visuals(falling_id: int=-1) -> void:
+	var existing: Dictionary={}
 	for node in get_tree().get_nodes_in_group("remains"):
-		node.queue_free()
+		if node is YinCorpse and not node.is_queued_for_deletion() and node.get_parent()==world.actors:
+			existing[node.record.id]=node
+		else:node.queue_free()
+	var wanted: Dictionary={}
 	for r in state.remains:
-		if not seamless and r.zone != state.zone: continue
-		var sprite := Sprite2D.new()
-		sprite.texture = preload("res://assets/remains.png")
-		sprite.position = Vector2(r.at[0], r.at[1])
-		sprite.scale = Vector2(2, 2)
-		sprite.modulate = Color("bdaf96") if r.integrity < 60 else Color.WHITE
-		sprite.add_to_group("remains")
-		world.actors.add_child(sprite)
+		if r.zone=="cargo" or (not seamless and r.zone!=state.zone):continue
+		wanted[r.id]=true
+		if existing.has(r.id):continue
+		var corpse:=YinCorpse.new();corpse.bind(r,r.id==falling_id);world.actors.add_child(corpse)
+	for id in existing:
+		if not wanted.has(id):existing[id].queue_free()
 
 func setup_inputs() -> void:
 	var keys: Dictionary = {"move_left": [KEY_A, KEY_LEFT], "move_right": [KEY_D, KEY_RIGHT], "move_up": [KEY_W, KEY_UP], "move_down": [KEY_S, KEY_DOWN], "use_tool": [KEY_SPACE], "interact": [KEY_E], "cycle_seed": [KEY_Q], "inventory": [KEY_I], "pause_game": [KEY_ESCAPE], "attack": [KEY_J], "dodge": [KEY_SHIFT], "seal": [KEY_F], "fire": [KEY_G], "rollcall": [KEY_R], "order": [KEY_C], "journal": [KEY_L], "wait_night": [KEY_T], "mute": [KEY_M], "reload": [KEY_U], "equipment": [KEY_B], "smart_farming": [KEY_Z], "instant_refine": [KEY_V], "quests": [KEY_O], "map": [KEY_TAB], "companions": [KEY_H], "mail": [KEY_K]}
@@ -369,6 +377,9 @@ func _physics_process(delta: float) -> void:
 	if player.held_item in YinBalance.GUNS and (Input.is_action_pressed("attack") or shooting_mouse): combat.shoot()
 
 func _process(delta: float) -> void:
+	save_clock=maxf(0,save_clock-delta)
+	if save_requested and save_clock<=0:
+		save_requested=false;persist();save_clock=0.75
 	if modal == null:
 		var previous_day: int = state.day
 		clock.advance(delta, false)
@@ -406,7 +417,9 @@ func _process(delta: float) -> void:
 	state.player_position = player.position
 	state.saved_facing = player.facing
 	player.burden = false
-	update_labels()
+	hud_clock+=delta
+	if hud_clock>=0.1:
+		hud_clock=0;update_labels()
 	audio_manager.set_night(state.minutes >= 1080)
 
 func has_live_boss() -> bool:
@@ -448,6 +461,8 @@ func update_labels() -> void:
 	for point in YinWorldLayout.points(state.zone):
 		if point.id.begins_with("inspect_"):hints[point.id]="E 调查"+point.name
 	var remains_hint: Dictionary = nearest_remains()
+	for body in get_tree().get_nodes_in_group("remains"):
+		if body is YinCorpse:body.highlight(not remains_hint.is_empty() and body.record.id==remains_hint.id)
 	context_label.text = "V 免费炼化 · E 处理 · " + remains_hint.name if not remains_hint.is_empty() else hints.get(kind, "")
 	if seamless:
 		context_label.text={"workbench":"E 义庄整备与休息","counter":"E 商队交易","storage":"E 仓箱","villager":"E 交谈与委托","treasure":"E 开启宝箱","altar":"E 祈愿祭坛"}.get(kind,context_label.text)
@@ -457,7 +472,12 @@ func update_labels() -> void:
 		if world.reachable(index): context_label.text = "空格 " + suggested_action(index)
 		context_label.get_parent().visible = world.reachable(index)
 
+func queue_save() -> void:
+	if not seamless:persist()
+	else:save_requested=true
+
 func persist() -> void:
+	save_requested=false
 	state.player_position = player.position
 	state.saved_facing = player.facing
 	save_failed = not save_component.save_game()
@@ -473,7 +493,7 @@ func refresh(message: String = "") -> void:
 
 func notify_action(message: String) -> void:
 	refresh(message)
-	persist()
+	queue_save()
 
 func cycle_seed() -> void:
 	state.selected_crop = CROP_IDS[(CROP_IDS.find(state.selected_crop) + 1) % 4]
@@ -501,15 +521,12 @@ func use_plot(index: int) -> void:
 	notify_action(state.use_tool(index, tool))
 	world.effect(world.plot_center(index), Color("91b4a8"))
 
-func nearest_enemy(at: Vector2, max_distance: float) -> YinEnemy:
-	var found: YinEnemy = null
-	for node in get_tree().get_nodes_in_group("enemies"):
-		if not is_instance_valid(node) or node.is_queued_for_deletion() or node.record.dead or node.get_parent() != world.actors: continue
-		var distance: float = at.distance_to(node.position)
-		if distance < max_distance:
-			found = node
-			max_distance = distance
-	return found
+func nearest_enemy(at: Vector2,max_distance: float) -> YinEnemy:
+	var result: YinEnemy=null
+	for actor in world.combat_index().nearby(at,max_distance,true):
+		var distance: float=at.distance_to(actor.position)
+		if distance<max_distance:result=actor;max_distance=distance
+	return result
 
 func attack(method: String) -> void:
 	combat.trigger(method)
@@ -1123,7 +1140,7 @@ func choose_tool(index: int) -> void:
 
 func instant_refine() -> void:
 	for remains in state.remains:
-		if remains.zone == state.zone and player.position.distance_to(Vector2(remains.at[0], remains.at[1])) <= 28:
+		if (seamless or remains.zone == state.zone) and player.position.distance_to(Vector2(remains.at[0], remains.at[1])) <= 28:
 			var message: String = state.process_remains(remains.id, "refine")
 			spawn_remains_visuals()
 			spawn_spirits()
@@ -1516,6 +1533,9 @@ func show_chat(record: Dictionary) -> void:
 	var box := open_modal(record.name + " · 交谈", "离线交谈 · 可输入问题，也可选择话题")
 	var layout: VBoxContainer = modal.get_node("ModalCard/Layout")
 	var chat_scroll: ScrollContainer = layout.get_node("Scroll")
+	chat_scroll.get_v_scroll_bar().changed.connect(func():
+		if is_instance_valid(chat_scroll):chat_scroll.set_deferred("scroll_vertical",int(chat_scroll.get_v_scroll_bar().max_value))
+	)
 	chat_scroll.custom_minimum_size.y = 142
 	var topics := HBoxContainer.new()
 	layout.add_child(topics)

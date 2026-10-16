@@ -115,8 +115,10 @@ func run() -> void:
 	first.faction_tick(0.02, {"speed": 40})
 	check(guard.record.hp < old_hp, "telegraphed army attack damages opposing actor")
 	var old_remains: int = game.state.remains.size()
+	var old_rewards: Array=[game.state.money,game.state.cultivation,game.state.drops.size(),game.state.gear_drops.size()]
 	guard.receive_faction_hit(10000)
-	check(guard.record.dead and game.state.remains.size() == old_remains, "NPC battle deaths do not award player loot")
+	check(guard.record.dead and old_rewards==[game.state.money,game.state.cultivation,game.state.drops.size(),game.state.gear_drops.size()], "NPC battle deaths do not award player loot")
+	check(game.state.remains.size()==old_remains+1 and game.state.remains.back().has("death_pose"),"NPC battle deaths leave an identifiable corpse")
 	for down in [true, false]:
 		var event := InputEventKey.new()
 		event.physical_keycode = KEY_P

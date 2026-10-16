@@ -30,6 +30,19 @@ var redraw_timer: float = 0.0
 var selected_plot: int = -1
 var effects: Array = []
 var feedback: Node2D
+var canopy_material: ShaderMaterial
+func shared_canopy() -> ShaderMaterial:
+	if canopy_material==null:
+		canopy_material=ShaderMaterial.new();canopy_material.shader=preload("res://shaders/canopy.gdshader");canopy_material.set_shader_parameter("world_phase",true)
+	return canopy_material
+var actor_index: YinActorIndex
+func combat_index() -> YinActorIndex:
+	if actor_index==null:
+		actor_index=YinActorIndex.new();actor_index.world=self;add_child(actor_index)
+	return actor_index
+func screen_bounds() -> Rect2:
+	return get_global_transform_with_canvas().affine_inverse()*Rect2(Vector2.ZERO,get_viewport_rect().size)
+
 
 func _ready() -> void:
 	tile_farm = YinTileFarm.new()
@@ -516,32 +529,34 @@ func clear_body_path(start: Vector2,end: Vector2,half_size: Vector2) -> bool:
 	return fraction.size()==2 and fraction[0]>0.999
 
 func path_to(start: Vector2,end: Vector2,half_size: Vector2=Vector2(7,5)) -> PackedVector2Array:
+	var step: int=32 if self is YinContinentWorld else 16
+	var offset: Vector2=Vector2.ONE*step*0.5
 	if navigation_revision!=environment_revision:
 		navigation_cache.clear();navigation_revision=environment_revision
 	var key:=Vector2i(half_size.ceil())
 	if not navigation_cache.has(key):
 		var grid:=AStarGrid2D.new()
-		grid.region=Rect2i(Vector2i.ZERO,Vector2i(level_size/16))
-		grid.cell_size=Vector2(16,16);grid.offset=Vector2(8,8)
+		grid.region=Rect2i(Vector2i.ZERO,Vector2i(level_size/step))
+		grid.cell_size=Vector2(step,step);grid.offset=offset
 		grid.diagonal_mode=AStarGrid2D.DIAGONAL_MODE_ONLY_IF_NO_OBSTACLES
 		grid.update()
 		for y in range(grid.region.size.y):
 			for x in range(grid.region.size.x):
-				if not inside_level(Vector2(x*16+8,y*16+8)):grid.set_point_solid(Vector2i(x,y))
+				if not inside_level(Vector2(x*step+offset.x,y*step+offset.y)):grid.set_point_solid(Vector2i(x,y))
 		# Rasterize each expanded obstacle locally rather than scan every obstacle per cell.
 		for obstacle in obstacles:
 			var bounds:=Rect2(obstacle.position-half_size+Vector2(0,4),obstacle.size+half_size*2)
-			var low:=Vector2i(((bounds.position-Vector2(8,8))/16).floor()).max(Vector2i.ZERO)
-			var high:=Vector2i(((bounds.end-Vector2(8,8))/16).ceil()).min(grid.region.size-Vector2i.ONE)
+			var low:=Vector2i(((bounds.position-offset)/step).floor()).max(Vector2i.ZERO)
+			var high:=Vector2i(((bounds.end-offset)/step).ceil()).min(grid.region.size-Vector2i.ONE)
 			for y in range(low.y,high.y+1):
 				for x in range(low.x,high.x+1):
-					var body:=Rect2(Vector2(x*16+8,y*16+4)-half_size,half_size*2)
+					var body:=Rect2(Vector2(x*step+offset.x,y*step+offset.y-4)-half_size,half_size*2)
 					if obstacle.intersects(body):grid.set_point_solid(Vector2i(x,y))
 		navigation_cache[key]=grid
 	combat_navigation=navigation_cache[key]
 	navigation_obstacles=obstacles.size()
-	var from_cell: Vector2i=nearest_nav_cell(combat_navigation,Vector2i(start/16))
-	var to_cell: Vector2i=nearest_nav_cell(combat_navigation,Vector2i(end/16))
+	var from_cell: Vector2i=nearest_nav_cell(combat_navigation,Vector2i(start/step))
+	var to_cell: Vector2i=nearest_nav_cell(combat_navigation,Vector2i(end/step))
 	if from_cell.x<0 or to_cell.x<0:return PackedVector2Array()
 	return combat_navigation.get_point_path(from_cell,to_cell,false)
 func nearest_nav_cell(grid: AStarGrid2D,cell: Vector2i) -> Vector2i:

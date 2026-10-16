@@ -1,0 +1,1352 @@
+{
+	"res://assets/jrpg/parts/archer_arm.png": [
+		2,
+		2,
+		78,
+		107
+	],
+	"res://assets/jrpg/parts/archer_arm_left.png": [
+		84,
+		2,
+		76,
+		107
+	],
+	"res://assets/jrpg/parts/archer_body.png": [
+		164,
+		2,
+		223,
+		233
+	],
+	"res://assets/jrpg/parts/archer_head.png": [
+		391,
+		2,
+		134,
+		77
+	],
+	"res://assets/jrpg/parts/archer_leg.png": [
+		529,
+		2,
+		65,
+		63
+	],
+	"res://assets/jrpg/parts/archer_leg_left.png": [
+		598,
+		2,
+		64,
+		63
+	],
+	"res://assets/jrpg/parts/asura_arm.png": [
+		666,
+		2,
+		82,
+		117
+	],
+	"res://assets/jrpg/parts/asura_arm_left.png": [
+		752,
+		2,
+		83,
+		117
+	],
+	"res://assets/jrpg/parts/asura_body.png": [
+		839,
+		2,
+		238,
+		249
+	],
+	"res://assets/jrpg/parts/asura_head.png": [
+		1081,
+		2,
+		136,
+		92
+	],
+	"res://assets/jrpg/parts/asura_leg.png": [
+		1221,
+		2,
+		70,
+		69
+	],
+	"res://assets/jrpg/parts/asura_leg_left.png": [
+		1295,
+		2,
+		70,
+		69
+	],
+	"res://assets/jrpg/parts/bone_arm.png": [
+		1369,
+		2,
+		71,
+		102
+	],
+	"res://assets/jrpg/parts/bone_arm_left.png": [
+		1444,
+		2,
+		58,
+		103
+	],
+	"res://assets/jrpg/parts/bone_body.png": [
+		1506,
+		2,
+		203,
+		225
+	],
+	"res://assets/jrpg/parts/bone_head.png": [
+		1713,
+		2,
+		118,
+		74
+	],
+	"res://assets/jrpg/parts/bone_leg.png": [
+		1835,
+		2,
+		59,
+		61
+	],
+	"res://assets/jrpg/parts/bone_leg_left.png": [
+		1898,
+		2,
+		58,
+		61
+	],
+	"res://assets/jrpg/parts/boss_arm.png": [
+		1960,
+		2,
+		81,
+		112
+	],
+	"res://assets/jrpg/parts/boss_arm_left.png": [
+		2045,
+		2,
+		80,
+		112
+	],
+	"res://assets/jrpg/parts/boss_body.png": [
+		2129,
+		2,
+		232,
+		245
+	],
+	"res://assets/jrpg/parts/boss_head.png": [
+		2365,
+		2,
+		140,
+		81
+	],
+	"res://assets/jrpg/parts/boss_leg.png": [
+		2509,
+		2,
+		67,
+		66
+	],
+	"res://assets/jrpg/parts/boss_leg_left.png": [
+		2580,
+		2,
+		67,
+		66
+	],
+	"res://assets/jrpg/parts/brute_arm.png": [
+		2651,
+		2,
+		87,
+		111
+	],
+	"res://assets/jrpg/parts/brute_arm_left.png": [
+		2742,
+		2,
+		88,
+		111
+	],
+	"res://assets/jrpg/parts/brute_body.png": [
+		2834,
+		2,
+		263,
+		241
+	],
+	"res://assets/jrpg/parts/brute_head.png": [
+		3101,
+		2,
+		182,
+		94
+	],
+	"res://assets/jrpg/parts/brute_leg.png": [
+		3287,
+		2,
+		76,
+		65
+	],
+	"res://assets/jrpg/parts/brute_leg_left.png": [
+		3367,
+		2,
+		75,
+		65
+	],
+	"res://assets/jrpg/parts/chochin_body.png": [
+		3446,
+		2,
+		168,
+		76
+	],
+	"res://assets/jrpg/parts/chochin_head.png": [
+		3618,
+		2,
+		170,
+		140
+	],
+	"res://assets/jrpg/parts/daitengu_0_0_arm.png": [
+		3792,
+		2,
+		80,
+		130
+	],
+	"res://assets/jrpg/parts/daitengu_0_0_arm_left.png": [
+		3876,
+		2,
+		77,
+		130
+	],
+	"res://assets/jrpg/parts/daitengu_0_0_body.png": [
+		2,
+		255,
+		225,
+		243
+	],
+	"res://assets/jrpg/parts/daitengu_0_0_head.png": [
+		231,
+		255,
+		135,
+		96
+	],
+	"res://assets/jrpg/parts/daitengu_0_0_leg.png": [
+		370,
+		255,
+		66,
+		76
+	],
+	"res://assets/jrpg/parts/daitengu_0_0_leg_left.png": [
+		440,
+		255,
+		64,
+		76
+	],
+	"res://assets/jrpg/parts/daitengu_0_1_arm.png": [
+		508,
+		255,
+		81,
+		128
+	],
+	"res://assets/jrpg/parts/daitengu_0_1_arm_left.png": [
+		593,
+		255,
+		78,
+		128
+	],
+	"res://assets/jrpg/parts/daitengu_0_1_body.png": [
+		675,
+		255,
+		232,
+		274
+	],
+	"res://assets/jrpg/parts/daitengu_0_1_head.png": [
+		911,
+		255,
+		148,
+		95
+	],
+	"res://assets/jrpg/parts/daitengu_0_1_leg.png": [
+		1063,
+		255,
+		66,
+		75
+	],
+	"res://assets/jrpg/parts/daitengu_0_1_leg_left.png": [
+		1133,
+		255,
+		54,
+		75
+	],
+	"res://assets/jrpg/parts/daitengu_0_2_arm.png": [
+		1191,
+		255,
+		75,
+		129
+	],
+	"res://assets/jrpg/parts/daitengu_0_2_arm_left.png": [
+		1270,
+		255,
+		77,
+		129
+	],
+	"res://assets/jrpg/parts/daitengu_0_2_body.png": [
+		1351,
+		255,
+		224,
+		280
+	],
+	"res://assets/jrpg/parts/daitengu_0_2_head.png": [
+		1579,
+		255,
+		107,
+		85
+	],
+	"res://assets/jrpg/parts/daitengu_0_2_leg.png": [
+		1690,
+		255,
+		61,
+		76
+	],
+	"res://assets/jrpg/parts/daitengu_0_2_leg_left.png": [
+		1755,
+		255,
+		55,
+		76
+	],
+	"res://assets/jrpg/parts/daitengu_0_3_arm.png": [
+		1814,
+		255,
+		117,
+		103
+	],
+	"res://assets/jrpg/parts/daitengu_0_3_arm_left.png": [
+		1935,
+		255,
+		117,
+		103
+	],
+	"res://assets/jrpg/parts/daitengu_0_3_body.png": [
+		2056,
+		255,
+		333,
+		225
+	],
+	"res://assets/jrpg/parts/daitengu_0_3_head.png": [
+		2393,
+		255,
+		153,
+		63
+	],
+	"res://assets/jrpg/parts/daitengu_0_3_leg.png": [
+		2550,
+		255,
+		96,
+		61
+	],
+	"res://assets/jrpg/parts/daitengu_0_3_leg_left.png": [
+		2650,
+		255,
+		95,
+		61
+	],
+	"res://assets/jrpg/parts/daitengu_1_0_arm.png": [
+		2749,
+		255,
+		71,
+		130
+	],
+	"res://assets/jrpg/parts/daitengu_1_0_arm_left.png": [
+		2824,
+		255,
+		73,
+		130
+	],
+	"res://assets/jrpg/parts/daitengu_1_0_body.png": [
+		2901,
+		255,
+		210,
+		274
+	],
+	"res://assets/jrpg/parts/daitengu_1_0_head.png": [
+		3115,
+		255,
+		143,
+		96
+	],
+	"res://assets/jrpg/parts/daitengu_1_0_leg.png": [
+		3262,
+		255,
+		61,
+		76
+	],
+	"res://assets/jrpg/parts/daitengu_1_0_leg_left.png": [
+		3327,
+		255,
+		61,
+		76
+	],
+	"res://assets/jrpg/parts/daitengu_1_1_arm.png": [
+		3392,
+		255,
+		80,
+		126
+	],
+	"res://assets/jrpg/parts/daitengu_1_1_arm_left.png": [
+		3476,
+		255,
+		84,
+		126
+	],
+	"res://assets/jrpg/parts/daitengu_1_1_body.png": [
+		3564,
+		255,
+		240,
+		273
+	],
+	"res://assets/jrpg/parts/daitengu_1_1_head.png": [
+		3808,
+		255,
+		160,
+		93
+	],
+	"res://assets/jrpg/parts/daitengu_1_1_leg.png": [
+		3972,
+		255,
+		49,
+		74
+	],
+	"res://assets/jrpg/parts/daitengu_1_1_leg_left.png": [
+		4025,
+		255,
+		54,
+		74
+	],
+	"res://assets/jrpg/parts/daitengu_1_2_arm.png": [
+		2,
+		539,
+		76,
+		125
+	],
+	"res://assets/jrpg/parts/daitengu_1_2_arm_left.png": [
+		82,
+		539,
+		79,
+		125
+	],
+	"res://assets/jrpg/parts/daitengu_1_2_body.png": [
+		165,
+		539,
+		225,
+		272
+	],
+	"res://assets/jrpg/parts/daitengu_1_2_head.png": [
+		394,
+		539,
+		150,
+		92
+	],
+	"res://assets/jrpg/parts/daitengu_1_2_leg.png": [
+		548,
+		539,
+		51,
+		73
+	],
+	"res://assets/jrpg/parts/daitengu_1_2_leg_left.png": [
+		603,
+		539,
+		63,
+		73
+	],
+	"res://assets/jrpg/parts/daitengu_1_3_arm.png": [
+		670,
+		539,
+		125,
+		103
+	],
+	"res://assets/jrpg/parts/daitengu_1_3_arm_left.png": [
+		799,
+		539,
+		125,
+		103
+	],
+	"res://assets/jrpg/parts/daitengu_1_3_body.png": [
+		928,
+		539,
+		359,
+		224
+	],
+	"res://assets/jrpg/parts/daitengu_1_3_head.png": [
+		1291,
+		539,
+		163,
+		63
+	],
+	"res://assets/jrpg/parts/daitengu_1_3_leg.png": [
+		1458,
+		539,
+		104,
+		60
+	],
+	"res://assets/jrpg/parts/daitengu_1_3_leg_left.png": [
+		1566,
+		539,
+		104,
+		60
+	],
+	"res://assets/jrpg/parts/daitengu_2_0_arm.png": [
+		1674,
+		539,
+		69,
+		123
+	],
+	"res://assets/jrpg/parts/daitengu_2_0_arm_left.png": [
+		1747,
+		539,
+		66,
+		123
+	],
+	"res://assets/jrpg/parts/daitengu_2_0_body.png": [
+		1817,
+		539,
+		196,
+		266
+	],
+	"res://assets/jrpg/parts/daitengu_2_0_head.png": [
+		2017,
+		539,
+		133,
+		90
+	],
+	"res://assets/jrpg/parts/daitengu_2_0_leg.png": [
+		2154,
+		539,
+		57,
+		72
+	],
+	"res://assets/jrpg/parts/daitengu_2_0_leg_left.png": [
+		2215,
+		539,
+		56,
+		72
+	],
+	"res://assets/jrpg/parts/daitengu_2_1_arm.png": [
+		2275,
+		539,
+		80,
+		117
+	],
+	"res://assets/jrpg/parts/daitengu_2_1_arm_left.png": [
+		2359,
+		539,
+		77,
+		117
+	],
+	"res://assets/jrpg/parts/daitengu_2_1_body.png": [
+		2440,
+		539,
+		230,
+		232
+	],
+	"res://assets/jrpg/parts/daitengu_2_1_head.png": [
+		2674,
+		539,
+		156,
+		86
+	],
+	"res://assets/jrpg/parts/daitengu_2_1_leg.png": [
+		2834,
+		539,
+		66,
+		69
+	],
+	"res://assets/jrpg/parts/daitengu_2_1_leg_left.png": [
+		2904,
+		539,
+		66,
+		69
+	],
+	"res://assets/jrpg/parts/daitengu_2_2_arm.png": [
+		2974,
+		539,
+		70,
+		116
+	],
+	"res://assets/jrpg/parts/daitengu_2_2_arm_left.png": [
+		3048,
+		539,
+		70,
+		116
+	],
+	"res://assets/jrpg/parts/daitengu_2_2_body.png": [
+		3122,
+		539,
+		203,
+		253
+	],
+	"res://assets/jrpg/parts/daitengu_2_2_head.png": [
+		3329,
+		539,
+		138,
+		86
+	],
+	"res://assets/jrpg/parts/daitengu_2_2_leg.png": [
+		3471,
+		539,
+		59,
+		68
+	],
+	"res://assets/jrpg/parts/daitengu_2_2_leg_left.png": [
+		3534,
+		539,
+		59,
+		68
+	],
+	"res://assets/jrpg/parts/daitengu_2_3_arm.png": [
+		3597,
+		539,
+		127,
+		104
+	],
+	"res://assets/jrpg/parts/daitengu_2_3_arm_left.png": [
+		3728,
+		539,
+		127,
+		104
+	],
+	"res://assets/jrpg/parts/daitengu_2_3_body.png": [
+		2,
+		815,
+		365,
+		227
+	],
+	"res://assets/jrpg/parts/daitengu_2_3_head.png": [
+		371,
+		815,
+		164,
+		64
+	],
+	"res://assets/jrpg/parts/daitengu_2_3_leg.png": [
+		539,
+		815,
+		106,
+		61
+	],
+	"res://assets/jrpg/parts/daitengu_2_3_leg_left.png": [
+		649,
+		815,
+		105,
+		61
+	],
+	"res://assets/jrpg/parts/daitengu_3_0_arm.png": [
+		758,
+		815,
+		65,
+		121
+	],
+	"res://assets/jrpg/parts/daitengu_3_0_arm_left.png": [
+		827,
+		815,
+		68,
+		121
+	],
+	"res://assets/jrpg/parts/daitengu_3_0_body.png": [
+		899,
+		815,
+		194,
+		248
+	],
+	"res://assets/jrpg/parts/daitengu_3_0_head.png": [
+		1097,
+		815,
+		136,
+		89
+	],
+	"res://assets/jrpg/parts/daitengu_3_0_leg.png": [
+		1237,
+		815,
+		56,
+		71
+	],
+	"res://assets/jrpg/parts/daitengu_3_0_leg_left.png": [
+		1297,
+		815,
+		56,
+		71
+	],
+	"res://assets/jrpg/parts/daitengu_3_1_arm.png": [
+		1357,
+		815,
+		78,
+		119
+	],
+	"res://assets/jrpg/parts/daitengu_3_1_arm_left.png": [
+		1439,
+		815,
+		81,
+		119
+	],
+	"res://assets/jrpg/parts/daitengu_3_1_body.png": [
+		1524,
+		815,
+		228,
+		259
+	],
+	"res://assets/jrpg/parts/daitengu_3_1_head.png": [
+		1756,
+		815,
+		162,
+		88
+	],
+	"res://assets/jrpg/parts/daitengu_3_1_leg.png": [
+		1922,
+		815,
+		66,
+		70
+	],
+	"res://assets/jrpg/parts/daitengu_3_1_leg_left.png": [
+		1992,
+		815,
+		67,
+		70
+	],
+	"res://assets/jrpg/parts/daitengu_3_2_arm.png": [
+		2063,
+		815,
+		73,
+		116
+	],
+	"res://assets/jrpg/parts/daitengu_3_2_arm_left.png": [
+		2140,
+		815,
+		76,
+		116
+	],
+	"res://assets/jrpg/parts/daitengu_3_2_body.png": [
+		2220,
+		815,
+		218,
+		248
+	],
+	"res://assets/jrpg/parts/daitengu_3_2_head.png": [
+		2442,
+		815,
+		153,
+		86
+	],
+	"res://assets/jrpg/parts/daitengu_3_2_leg.png": [
+		2599,
+		815,
+		62,
+		68
+	],
+	"res://assets/jrpg/parts/daitengu_3_2_leg_left.png": [
+		2665,
+		815,
+		63,
+		68
+	],
+	"res://assets/jrpg/parts/daitengu_3_3_arm.png": [
+		2732,
+		815,
+		127,
+		77
+	],
+	"res://assets/jrpg/parts/daitengu_3_3_arm_left.png": [
+		2863,
+		815,
+		127,
+		110
+	],
+	"res://assets/jrpg/parts/daitengu_3_3_body.png": [
+		2994,
+		815,
+		364,
+		239
+	],
+	"res://assets/jrpg/parts/daitengu_3_3_head.png": [
+		3362,
+		815,
+		167,
+		67
+	],
+	"res://assets/jrpg/parts/daitengu_3_3_leg.png": [
+		3533,
+		815,
+		105,
+		65
+	],
+	"res://assets/jrpg/parts/daitengu_3_3_leg_left.png": [
+		3642,
+		815,
+		106,
+		65
+	],
+	"res://assets/jrpg/parts/daitengu_arm.png": [
+		3752,
+		815,
+		83,
+		105
+	],
+	"res://assets/jrpg/parts/daitengu_arm_left.png": [
+		3839,
+		815,
+		85,
+		105
+	],
+	"res://assets/jrpg/parts/daitengu_body.png": [
+		2,
+		1078,
+		243,
+		228
+	],
+	"res://assets/jrpg/parts/daitengu_head.png": [
+		249,
+		1078,
+		145,
+		75
+	],
+	"res://assets/jrpg/parts/daitengu_leg.png": [
+		398,
+		1078,
+		70,
+		62
+	],
+	"res://assets/jrpg/parts/daitengu_leg_left.png": [
+		472,
+		1078,
+		70,
+		62
+	],
+	"res://assets/jrpg/parts/gunner_arm.png": [
+		546,
+		1078,
+		83,
+		113
+	],
+	"res://assets/jrpg/parts/gunner_arm_left.png": [
+		633,
+		1078,
+		81,
+		113
+	],
+	"res://assets/jrpg/parts/gunner_body.png": [
+		718,
+		1078,
+		237,
+		244
+	],
+	"res://assets/jrpg/parts/gunner_head.png": [
+		959,
+		1078,
+		143,
+		81
+	],
+	"res://assets/jrpg/parts/gunner_leg.png": [
+		1106,
+		1078,
+		68,
+		66
+	],
+	"res://assets/jrpg/parts/gunner_leg_left.png": [
+		1178,
+		1078,
+		69,
+		66
+	],
+	"res://assets/jrpg/parts/hungry_ghost_arm.png": [
+		1251,
+		1078,
+		58,
+		103
+	],
+	"res://assets/jrpg/parts/hungry_ghost_arm_left.png": [
+		1313,
+		1078,
+		59,
+		103
+	],
+	"res://assets/jrpg/parts/hungry_ghost_body.png": [
+		1376,
+		1078,
+		137,
+		213
+	],
+	"res://assets/jrpg/parts/hungry_ghost_head.png": [
+		1517,
+		1078,
+		101,
+		74
+	],
+	"res://assets/jrpg/parts/hungry_ghost_leg.png": [
+		1622,
+		1078,
+		49,
+		61
+	],
+	"res://assets/jrpg/parts/hungry_ghost_leg_left.png": [
+		1675,
+		1078,
+		49,
+		61
+	],
+	"res://assets/jrpg/parts/ippon_datara_arm.png": [
+		1728,
+		1078,
+		80,
+		112
+	],
+	"res://assets/jrpg/parts/ippon_datara_arm_left.png": [
+		1812,
+		1078,
+		83,
+		112
+	],
+	"res://assets/jrpg/parts/ippon_datara_body.png": [
+		1899,
+		1078,
+		231,
+		243
+	],
+	"res://assets/jrpg/parts/ippon_datara_head.png": [
+		2134,
+		1078,
+		143,
+		80
+	],
+	"res://assets/jrpg/parts/ippon_datara_leg.png": [
+		2281,
+		1078,
+		143,
+		66
+	],
+	"res://assets/jrpg/parts/itsumade_arm.png": [
+		2428,
+		1078,
+		81,
+		105
+	],
+	"res://assets/jrpg/parts/itsumade_arm_left.png": [
+		2513,
+		1078,
+		83,
+		105
+	],
+	"res://assets/jrpg/parts/itsumade_body.png": [
+		2600,
+		1078,
+		238,
+		228
+	],
+	"res://assets/jrpg/parts/itsumade_head.png": [
+		2842,
+		1078,
+		143,
+		75
+	],
+	"res://assets/jrpg/parts/itsumade_leg.png": [
+		2989,
+		1078,
+		69,
+		62
+	],
+	"res://assets/jrpg/parts/itsumade_leg_left.png": [
+		3062,
+		1078,
+		67,
+		62
+	],
+	"res://assets/jrpg/parts/jorogumo_arm.png": [
+		3133,
+		1078,
+		90,
+		106
+	],
+	"res://assets/jrpg/parts/jorogumo_arm_left.png": [
+		3227,
+		1078,
+		92,
+		106
+	],
+	"res://assets/jrpg/parts/jorogumo_body.png": [
+		3323,
+		1078,
+		264,
+		220
+	],
+	"res://assets/jrpg/parts/jorogumo_head.png": [
+		3591,
+		1078,
+		137,
+		76
+	],
+	"res://assets/jrpg/parts/jorogumo_leg.png": [
+		3732,
+		1078,
+		76,
+		62
+	],
+	"res://assets/jrpg/parts/jorogumo_leg_left.png": [
+		3812,
+		1078,
+		77,
+		62
+	],
+	"res://assets/jrpg/parts/kappa_arm.png": [
+		3893,
+		1078,
+		60,
+		97
+	],
+	"res://assets/jrpg/parts/kappa_arm_left.png": [
+		3957,
+		1078,
+		58,
+		97
+	],
+	"res://assets/jrpg/parts/kappa_body.png": [
+		2,
+		1326,
+		173,
+		211
+	],
+	"res://assets/jrpg/parts/kappa_head.png": [
+		179,
+		1326,
+		110,
+		72
+	],
+	"res://assets/jrpg/parts/kappa_leg.png": [
+		293,
+		1326,
+		50,
+		57
+	],
+	"res://assets/jrpg/parts/kappa_leg_left.png": [
+		347,
+		1326,
+		50,
+		57
+	],
+	"res://assets/jrpg/parts/kumbhanda_arm.png": [
+		401,
+		1326,
+		76,
+		111
+	],
+	"res://assets/jrpg/parts/kumbhanda_arm_left.png": [
+		481,
+		1326,
+		76,
+		111
+	],
+	"res://assets/jrpg/parts/kumbhanda_body.png": [
+		561,
+		1326,
+		218,
+		213
+	],
+	"res://assets/jrpg/parts/kumbhanda_head.png": [
+		783,
+		1326,
+		124,
+		80
+	],
+	"res://assets/jrpg/parts/kumbhanda_leg.png": [
+		911,
+		1326,
+		63,
+		65
+	],
+	"res://assets/jrpg/parts/kumbhanda_leg_left.png": [
+		978,
+		1326,
+		62,
+		65
+	],
+	"res://assets/jrpg/parts/lantern_arm.png": [
+		1044,
+		1326,
+		62,
+		105
+	],
+	"res://assets/jrpg/parts/lantern_arm_left.png": [
+		1110,
+		1326,
+		61,
+		105
+	],
+	"res://assets/jrpg/parts/lantern_body.png": [
+		1175,
+		1326,
+		177,
+		229
+	],
+	"res://assets/jrpg/parts/lantern_head.png": [
+		1356,
+		1326,
+		103,
+		76
+	],
+	"res://assets/jrpg/parts/lantern_leg.png": [
+		1463,
+		1326,
+		44,
+		62
+	],
+	"res://assets/jrpg/parts/lantern_leg_left.png": [
+		1511,
+		1326,
+		51,
+		62
+	],
+	"res://assets/jrpg/parts/opera_boss_arm.png": [
+		1566,
+		1326,
+		71,
+		111
+	],
+	"res://assets/jrpg/parts/opera_boss_arm_left.png": [
+		1641,
+		1326,
+		74,
+		111
+	],
+	"res://assets/jrpg/parts/opera_boss_body.png": [
+		1719,
+		1326,
+		212,
+		212
+	],
+	"res://assets/jrpg/parts/opera_boss_head.png": [
+		1935,
+		1326,
+		124,
+		80
+	],
+	"res://assets/jrpg/parts/opera_boss_leg.png": [
+		2063,
+		1326,
+		60,
+		65
+	],
+	"res://assets/jrpg/parts/opera_boss_leg_left.png": [
+		2127,
+		1326,
+		61,
+		65
+	],
+	"res://assets/jrpg/parts/rakshasa_arm.png": [
+		2192,
+		1326,
+		69,
+		118
+	],
+	"res://assets/jrpg/parts/rakshasa_arm_left.png": [
+		2265,
+		1326,
+		69,
+		118
+	],
+	"res://assets/jrpg/parts/rakshasa_body.png": [
+		2338,
+		1326,
+		193,
+		255
+	],
+	"res://assets/jrpg/parts/rakshasa_head.png": [
+		2535,
+		1326,
+		114,
+		93
+	],
+	"res://assets/jrpg/parts/rakshasa_leg.png": [
+		2653,
+		1326,
+		58,
+		69
+	],
+	"res://assets/jrpg/parts/rakshasa_leg_left.png": [
+		2715,
+		1326,
+		59,
+		69
+	],
+	"res://assets/jrpg/parts/ryomen_sukuna_arm.png": [
+		2778,
+		1326,
+		82,
+		106
+	],
+	"res://assets/jrpg/parts/ryomen_sukuna_arm_left.png": [
+		2864,
+		1326,
+		81,
+		106
+	],
+	"res://assets/jrpg/parts/ryomen_sukuna_body.png": [
+		2949,
+		1326,
+		235,
+		231
+	],
+	"res://assets/jrpg/parts/ryomen_sukuna_head.png": [
+		3188,
+		1326,
+		141,
+		76
+	],
+	"res://assets/jrpg/parts/ryomen_sukuna_leg.png": [
+		3333,
+		1326,
+		68,
+		62
+	],
+	"res://assets/jrpg/parts/ryomen_sukuna_leg_left.png": [
+		3405,
+		1326,
+		67,
+		62
+	],
+	"res://assets/jrpg/parts/sogenbi_body.png": [
+		3476,
+		1326,
+		172,
+		83
+	],
+	"res://assets/jrpg/parts/sogenbi_head.png": [
+		3652,
+		1326,
+		179,
+		154
+	],
+	"res://assets/jrpg/parts/water_arm.png": [
+		3835,
+		1326,
+		82,
+		104
+	],
+	"res://assets/jrpg/parts/water_arm_left.png": [
+		3921,
+		1326,
+		82,
+		104
+	],
+	"res://assets/jrpg/parts/water_body.png": [
+		2,
+		1585,
+		236,
+		193
+	],
+	"res://assets/jrpg/parts/water_head.png": [
+		242,
+		1585,
+		142,
+		75
+	],
+	"res://assets/jrpg/parts/water_leg.png": [
+		388,
+		1585,
+		64,
+		61
+	],
+	"res://assets/jrpg/parts/water_leg_left.png": [
+		456,
+		1585,
+		63,
+		61
+	],
+	"res://assets/jrpg/parts/well_boss_arm.png": [
+		523,
+		1585,
+		81,
+		109
+	],
+	"res://assets/jrpg/parts/well_boss_arm_left.png": [
+		608,
+		1585,
+		82,
+		111
+	],
+	"res://assets/jrpg/parts/well_boss_body.png": [
+		694,
+		1585,
+		236,
+		230
+	],
+	"res://assets/jrpg/parts/well_boss_head.png": [
+		934,
+		1585,
+		142,
+		80
+	],
+	"res://assets/jrpg/parts/well_boss_leg.png": [
+		1080,
+		1585,
+		67,
+		65
+	],
+	"res://assets/jrpg/parts/well_boss_leg_left.png": [
+		1151,
+		1585,
+		69,
+		65
+	],
+	"res://assets/jrpg/parts/wraith_arm.png": [
+		1224,
+		1585,
+		67,
+		106
+	],
+	"res://assets/jrpg/parts/wraith_arm_left.png": [
+		1295,
+		1585,
+		69,
+		106
+	],
+	"res://assets/jrpg/parts/wraith_body.png": [
+		1368,
+		1585,
+		197,
+		219
+	],
+	"res://assets/jrpg/parts/wraith_head.png": [
+		1569,
+		1585,
+		118,
+		76
+	],
+	"res://assets/jrpg/parts/wraith_leg.png": [
+		1691,
+		1585,
+		56,
+		62
+	],
+	"res://assets/jrpg/parts/wraith_leg_left.png": [
+		1751,
+		1585,
+		57,
+		62
+	],
+	"res://assets/jrpg/parts/yaksha_arm.png": [
+		1812,
+		1585,
+		64,
+		118
+	],
+	"res://assets/jrpg/parts/yaksha_arm_left.png": [
+		1880,
+		1585,
+		62,
+		118
+	],
+	"res://assets/jrpg/parts/yaksha_body.png": [
+		1946,
+		1585,
+		186,
+		257
+	],
+	"res://assets/jrpg/parts/yaksha_head.png": [
+		2136,
+		1585,
+		104,
+		93
+	],
+	"res://assets/jrpg/parts/yaksha_leg.png": [
+		2244,
+		1585,
+		54,
+		69
+	],
+	"res://assets/jrpg/parts/yaksha_leg_left.png": [
+		2302,
+		1585,
+		53,
+		69
+	]
+}

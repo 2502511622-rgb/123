@@ -45,6 +45,7 @@ var health_receiver: YinHealthReceiver
 var hurtbox: YinHurtbox
 
 func _ready() -> void:
+	game.world.combat_index().invalidate()
 	var flash_material := ShaderMaterial.new()
 	flash_material.shader = preload("res://shaders/hit_flash.gdshader")
 	material = flash_material
@@ -77,18 +78,21 @@ func _physics_process(delta: float) -> void:
 	if record.dead:
 		queue_free()
 		return
+	var on_screen: bool=not game.state.continent_ready or game.world.screen_bounds().grow(100).has_point(position)
+	visible=on_screen
 	if game.modal != null or is_queued_for_deletion(): return
-	motion.update(self,delta)
-	if freeze_lock <= 0 and hit_stop <= 0: art_clock += delta*(0.62 if "leg" in record.get("severed",[]) else 1.0)
-	if velocity.length() > 2: art_facing = velocity.normalized()
-	material.set_shader_parameter("motion_clock", art_clock)
-	material.set_shader_parameter("motion_amount", 0.0)
-	art_strike = 0.18 if windup > 0 else maxf(0, art_strike - delta)
-	hit_flash = maxf(0, hit_flash - delta)
-	material.set_shader_parameter("flash", 1.0 if hit_flash > 0.065 else 0.0)
-	trail_delay = maxf(0, trail_delay - delta)
-	if trail_delay <= 0: health_trail = move_toward(health_trail, float(record.hp), delta * record.max_hp)
-	queue_redraw()
+	if on_screen:
+		motion.update(self,delta)
+		if freeze_lock <= 0 and hit_stop <= 0: art_clock += delta*(0.62 if "leg" in record.get("severed",[]) else 1.0)
+		if velocity.length() > 2: art_facing = velocity.normalized()
+		material.set_shader_parameter("motion_clock", art_clock)
+		material.set_shader_parameter("motion_amount", 0.0)
+		art_strike = 0.18 if windup > 0 else maxf(0, art_strike - delta)
+		hit_flash = maxf(0, hit_flash - delta)
+		material.set_shader_parameter("flash", 1.0 if hit_flash > 0.065 else 0.0)
+		trail_delay = maxf(0, trail_delay - delta)
+		if trail_delay <= 0: health_trail = move_toward(health_trail, float(record.hp), delta * record.max_hp)
+		queue_redraw()
 	if hit_stop > 0:
 		hit_stop -= delta
 		return
@@ -289,11 +293,12 @@ func receive_hit(damage: int, method: String = "sword", source_gear_id: int = 0)
 		knockback = (victim.position if is_instance_valid(victim) else game.player.position).direction_to(position) * 75
 	if record.hp == 0:
 		var first_before: int=YinAdventure.progress(game.state,YinFirstJourney.ID)
+		record.death_pose=YinCorpse.snapshot(self)
 		game.state.kill_enemy(record.id, position, source_gear_id if method == "sword" else 0)
 		var first_after: int=YinAdventure.progress(game.state,YinFirstJourney.ID)
 		if first_after>first_before:game.notify_action("守夜完成：沿西南灯门回义庄，按O领取银剑。" if first_after==2 else "初次守夜 1/2 · 清理另一只异怪即可复命。")
 		game.world.effect(position, Color("97b5a1"))
-		game.spawn_remains_visuals()
+		game.spawn_remains_visuals(int(game.state.remains.back().id))
 		game.spawn_pickups()
 		game.spawn_gear_pickups()
 		if record.kind in YinTemple.BOSSES:
@@ -302,7 +307,7 @@ func receive_hit(damage: int, method: String = "sword", source_gear_id: int = 0)
 		if record.kind in YinIsland.BOSSES:
 			game.spawn_enemies()
 			game.refresh("岛国封印已松动，前往下一处祭场，或回村复命。")
-		game.persist()
+		game.queue_save()
 		queue_free()
 
 func _draw() -> void:
@@ -489,6 +494,9 @@ func receive_faction_hit(damage: int) -> void:
 	game.world.impact(position+Vector2(0,-20),Vector2.RIGHT,"sword")
 	game.world.damage_number(position, damage, Color("e5c792"))
 	if record.hp <= 0:
+		record.death_pose=YinCorpse.snapshot(self)
+		var remains: Dictionary=game.state.leave_remains(record,position)
+		game.spawn_remains_visuals(int(remains.id))
 		record.dead = true
 		queue_free()
 
@@ -496,7 +504,7 @@ func step_body(_delta: float) -> void:
 	var body: Dictionary=YinBodyProfile.spec(record.kind)
 	if velocity.length()>1 and stun<=0:
 		var separation:=Vector2.ZERO
-		for other in get_tree().get_nodes_in_group("enemies")+get_tree().get_nodes_in_group("faction_guards"):
+		for other in game.world.combat_index().nearby(position,70):
 			if other==self or other.is_queued_for_deletion() or other.get_parent()!=get_parent():continue
 			var away: Vector2=position-other.position
 			var minimum: float=(body.size.x+YinBodyProfile.spec(other.record.kind).size.x)*0.55

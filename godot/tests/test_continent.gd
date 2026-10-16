@@ -80,9 +80,20 @@ func run():
  YinFactions.simulate_offscreen(game.state,war);YinFactions.tick(game.state)
  check(game.state.enemies==before and war.status=="active","nightfall and offscreen tick cannot deduct health or decide victory")
  # Stage both already-created armies near a bridge, then let their real AI fight.
+ var ranks={"attacker":0,"defender":0}
+ for foe in soldiers:
+  var side: String=foe.record.war_side;var rank: int=ranks[side];ranks[side]+=1
+  var attacker: bool=side=="attacker"
+  foe.position=Vector2((3152 if attacker else 3248)+int(rank/5)*(-34 if attacker else 34),984+(rank%5)*32)
+  foe.record.at=[foe.position.x,foe.position.y];foe.route.clear();foe.repath=0
+ var valid_formation: bool=true
  for i in range(soldiers.size()):
-  var foe=soldiers[i];var attacker=foe.record.war_side=="attacker"
-  foe.position=Vector2(3160 if attacker else 3240,1000+(i%3)*32);foe.record.at=[foe.position.x,foe.position.y]
+  var half: Vector2=YinBodyProfile.spec(soldiers[i].record.kind).half
+  valid_formation=valid_formation and game.world.is_safe_position(soldiers[i].position,half)
+  for j in range(i):
+   var other_half: Vector2=YinBodyProfile.spec(soldiers[j].record.kind).half
+   valid_formation=valid_formation and not Rect2(soldiers[i].position-half,half*2).intersects(Rect2(soldiers[j].position-other_half,other_half*2))
+ check(valid_formation,"battlefield fixture fits actual bridge and soldier volumes without overlaps")
  game.player.position=YinContinent.HOME+Vector2(0,96);await frames(420)
  check(soldiers.any(func(e):return not is_instance_valid(e) or e.record.hp<e.record.max_hp),"armies exchange actual attacks while player is across the world")
  check(game.world.get_instance_id()==original,"distant war runs in the same persistent scene")

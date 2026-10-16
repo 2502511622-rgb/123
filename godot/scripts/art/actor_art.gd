@@ -1,5 +1,6 @@
 class_name YinActorArt
 extends RefCounted
+static var animation_bands: int=8
 # Reference-based source sheets remain intact. Metadata measures alpha bounds and feet.
 const HERO = preload("res://assets/jrpg/hero_attack.png")
 const ROSTER = preload("res://assets/jrpg/roster.png")
@@ -12,6 +13,12 @@ static var npc_cache: Dictionary = {}
 static var data: Dictionary = {}
 static var anatomy: Dictionary = {}
 static var part_textures: Dictionary = {}
+static var packed_regions: Dictionary={}
+static var packed_texture: Texture2D
+static func prepare_parts() -> void:
+	if packed_texture!=null:return
+	packed_regions=JSON.parse_string(FileAccess.get_file_as_string("res://assets/jrpg/parts/packed.json"))
+	packed_texture=load("res://assets/jrpg/parts/packed.png")
 static func atlas() -> Dictionary:
 	if data.is_empty(): data = JSON.parse_string(FileAccess.get_file_as_string("res://assets/jrpg/atlas.json"))
 	return data
@@ -102,7 +109,7 @@ static func draw_pose(canvas: CanvasItem, pose: Dictionary, color: Color = Color
 					uvs.append((pose.source.position+pose.source.size*f)/tex_size)
 				canvas.draw_primitive(vertices,PackedColorArray([color,color,color,color]),uvs,pose.texture)
 		return
-	var bands: int = 8 if pose.texture in [HERO, HERO_WALK, HERO_WALK_ALT, HERO_ATTACK, NPC] else 1
+	var bands: int = animation_bands if not pose.get("rigid",false) and pose.texture in [HERO, HERO_WALK, HERO_WALK_ALT, HERO_ATTACK, NPC] else 1
 	for band in range(bands):
 		var fraction: float = float(band)/bands
 		var target := Rect2(destination.position+Vector2(0,destination.size.y*fraction),Vector2(destination.size.x,destination.size.y/bands))
@@ -143,14 +150,14 @@ static func posed_parts(kind: String, pose: Dictionary, clock: float, moving: bo
 	var result: Array = []
 	var entry: Dictionary=part_index()[pose.part_key]
 	for piece in entry.parts:
-		if not part_textures.has(piece.path): part_textures[piece.path]=load(piece.path)
+		prepare_parts()
 		var cut: Dictionary=pose.duplicate()
 		var crop: Rect2=rect_from(piece.crop)
 		var scale_value: Vector2=pose.destination.size/pose.source.size
 		cut.origin_texture=pose.texture
 		cut.origin_region=Rect2(pose.source.position+crop.position,crop.size)
-		cut.texture=part_textures[piece.path]
-		cut.source=Rect2(Vector2.ZERO,cut.texture.get_size())
+		cut.texture=packed_texture
+		cut.source=rect_from(packed_regions[piece.path])
 		cut.destination=Rect2(pose.destination.position+crop.position*scale_value,crop.size*scale_value)
 		cut.destination.position.y+=bob
 		cut.joint=piece.joint

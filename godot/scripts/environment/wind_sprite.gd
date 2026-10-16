@@ -7,13 +7,15 @@ func _ready() -> void:
 	var wind_material := ShaderMaterial.new()
 	wind_material.shader = preload("res://shaders/canopy.gdshader")
 	wind_material.set_shader_parameter("phase", phase)
-	material = wind_material
+	material = world.shared_canopy() if world is YinContinentWorld else wind_material
 func _process(delta: float) -> void:
 	if not is_instance_valid(world) or world.environment == null: return
+	if is_instance_valid(world.player) and get_parent().position.distance_squared_to(world.player.position)>640000:return
 	var environment: YinEnvironment = world.environment
-	material.set_shader_parameter("clock_time", environment.time)
-	material.set_shader_parameter("wind", environment.wind)
-	material.set_shader_parameter("wetness", environment.wetness)
+	if not world is YinContinentWorld:
+		material.set_shader_parameter("clock_time", environment.time)
+		material.set_shader_parameter("wind", environment.wind)
+		material.set_shader_parameter("wetness", environment.wetness)
 	if not is_instance_valid(world.player): return
 	var relative: Vector2 = world.player.position - get_parent().position
 	var under_canopy: bool = absf(relative.x) < 43 and relative.y < -8 and relative.y > -110

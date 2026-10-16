@@ -4,6 +4,8 @@ const CHUNK: int = 128
 const MAX_TRAILS: int = 12
 var world: FarmWorld
 var chunks: Array = []
+var active_chunks: Array=[]
+var last_view:=Rect2()
 var material_back := ShaderMaterial.new()
 var material_front := ShaderMaterial.new()
 var trails: Array = []
@@ -92,7 +94,7 @@ func _process(delta: float) -> void:
 	while trails.size() > MAX_TRAILS: trails.pop_front()
 	var actors := PackedVector2Array([at])
 	var nearby: Array = []
-	for actor in world.actors.get_children():
+	for actor in world.combat_index().nearby(at,320)+get_tree().get_nodes_in_group("villagers")+get_tree().get_nodes_in_group("companions"):
 		if actor == world.player or not actor is CharacterBody2D or actor.is_queued_for_deletion(): continue
 		if actor.position.distance_squared_to(at) < 320*320: nearby.append(actor)
 	nearby.sort_custom(func(a, b): return a.position.distance_squared_to(at) < b.position.distance_squared_to(at))
@@ -111,9 +113,12 @@ func _process(delta: float) -> void:
 		mat.set_shader_parameter("actor_at", actors)
 		mat.set_shader_parameter("trail_count", trails.size())
 		mat.set_shader_parameter("trails", trail_data)
-	var view: Rect2 = world.environment.visible_rect().grow(8)
-	visible_chunks = 0
-	for chunk in chunks:
-		chunk.back.visible = chunk.bounds.intersects(view)
-		chunk.front.visible = chunk.back.visible and chunk.bounds.has_point(at)
-		if chunk.back.visible: visible_chunks += 1
+	var view: Rect2 = world.environment.visible_rect().grow(48)
+	if active_chunks.is_empty() or last_view.position.distance_to(view.position)>32 or last_view.size!=view.size:
+		last_view=view;active_chunks.clear()
+		for chunk in chunks:
+			var shown: bool=chunk.bounds.intersects(view)
+			chunk.back.visible=shown;chunk.front.visible=false
+			if shown:active_chunks.append(chunk)
+	visible_chunks=active_chunks.size()
+	for chunk in active_chunks:chunk.front.visible=chunk.bounds.has_point(at)

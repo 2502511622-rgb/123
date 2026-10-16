@@ -6,6 +6,7 @@ uniform sampler2D terrain_types : filter_nearest, repeat_disable;
 uniform vec2 map_size;
 uniform bool indoor = false;
 uniform bool continent = false;
+uniform int quality=2;
 uniform vec4 turf_tint : source_color = vec4(0.35,0.44,0.29,1.0);
 uniform vec4 stone_tint : source_color = vec4(0.65,0.61,0.51,1.0);
 uniform vec4 water_tint : source_color = vec4(0.25,0.44,0.48,1.0);
@@ -72,7 +73,7 @@ void fragment(){
 		float seed=fract(sin(dot(rain_cell,vec2(12.9898,78.233)))*43758.5453);
 		float age=fract(clock_time*0.7+seed);
 		float ring=1.0-smoothstep(0.3,0.85,abs(length(mod(world_at,18.0)-9.0)-age*8.0));
-		surface+=vec3(0.07,0.1,0.1)*ring*(1.0-age)*wetness;
+		if(quality>0){surface+=vec3(0.07,0.1,0.1)*ring*(1.0-age)*wetness;}
 
 	}
 	if(indoor){surface=texture(material_atlas,local_uv+vec2(0.5,0.5)).rgb*1.32;}

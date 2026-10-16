@@ -46,7 +46,7 @@ static func launch_standalone() -> String:
 static func panel() -> VBoxContainer:
 	var box := VBoxContainer.new()
 	var info := Label.new()
-	info.text = "最近邻采样与整数像素缩放。\n窗口分辨率改变窗口大小；全屏使用桌面分辨率。"
+	info.text = "最近邻采样与整数像素缩放。\n窗口分辨率改变窗口大小；全屏使用桌面分辨率。\n目标60 FPS，负载高时自动降低特效。F3查看帧率。"
 	info.add_theme_font_size_override("font_size", 11)
 	info.add_theme_color_override("font_color", YinPixelTheme.TEXT)
 	box.add_child(info)

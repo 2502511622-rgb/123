@@ -412,8 +412,7 @@ func kill_enemy(id: int, at: Vector2, source_gear_id: int = 0) -> void:
 		for gear in equipment:
 			if gear.id == source_gear_id and gear.weapon == "ipetam": gear.artifact_kills = mini(100000, gear.artifact_kills + 1)
 		var boss: bool = e.kind == "boss"
-		remains.append({"id": next_id, "kind": e.kind, "name": "棺将遗骸" if boss else ("担水尸骸" if e.kind == "water" else YinBalance.MONSTERS[e.kind].name + "遗骸"), "integrity": e.integrity, "regret": "守门" if boss else ("生前担水" if e.kind == "water" else {"bone": "替人掘墓", "archer": "守山残念", "lantern": "不肯熄灭的旧灯", "gunner": "未传到的军令", "brute": "山中猎食"}.get(e.kind, "未散残念")), "fierceness": 40 if e.kind in YinAbilities.BOSSES else (12 if e.suppressed else 30), "yin": "山煞" if boss else ("水阴" if e.kind == "water" else "土阴"), "at": [at.x, at.y], "zone": e.zone, "source_level": int(e.get("level", 1))})
-		next_id += 1
+		leave_remains(e,at)
 		cultivation += (8 * int(e.get("level", 1))) if not boss else 30
 		for spirit in spirits:
 			if spirit.active and spirit.hp > 0: gain_spirit_xp(spirit, 8 + int(e.get("level", 1)) * 2)
@@ -424,6 +423,12 @@ func kill_enemy(id: int, at: Vector2, source_gear_id: int = 0) -> void:
 			boss_defeated = true
 			add_log("棺中客倒下。它的棺盖内刻着与你师父相同的名字。")
 		return
+
+func leave_remains(e: Dictionary,at: Vector2) -> Dictionary:
+	var boss: bool=e.kind=="boss"
+	remains.append({"id": next_id, "kind": e.kind, "name": "棺将遗骸" if boss else ("担水尸骸" if e.kind == "water" else YinBalance.MONSTERS[e.kind].name + "遗骸"), "integrity": e.integrity, "regret": "守门" if boss else ("生前担水" if e.kind == "water" else {"bone": "替人掘墓", "archer": "守山残念", "lantern": "不肯熄灭的旧灯", "gunner": "未传到的军令", "brute": "山中猎食"}.get(e.kind, "未散残念")), "fierceness": 40 if e.kind in YinAbilities.BOSSES else (12 if e.suppressed else 30), "yin": "山煞" if boss else ("水阴" if e.kind == "water" else "土阴"), "at": [at.x, at.y], "zone": e.zone, "source_level": int(e.get("level", 1)), "severed": e.get("severed",[]).duplicate(), "death_pose": e.get("death_pose",{}).duplicate(true)})
+	next_id += 1
+	return remains.back()
 
 func find_remains(id: int) -> Dictionary:
 	for r in remains:
@@ -698,6 +703,11 @@ func restore(data: Dictionary) -> bool:
 		if not r is Dictionary or r.get("kind") not in YinBalance.MONSTERS.keys() or r.get("zone") not in ["farm", "graveyard", "forest", "sunken", "theatre", "village", "cargo", "island", "temple"] or not valid_point(r.get("at")): return false
 		for key in ["id", "integrity", "fierceness"]:
 			if not valid_int(r.get(key), 0, 100000): return false
+		if r.has("severed"):
+			if not r.severed is Array:return false
+			for part in r.severed:
+				if part not in ["head","arm","leg"]:return false
+		if r.has("death_pose") and not r.death_pose.is_empty() and not YinCorpse.valid(r.death_pose,r.kind):return false
 		for key in ["name", "regret", "yin"]:
 			if not r.get(key) is String: return false
 	for e in data.enemies:

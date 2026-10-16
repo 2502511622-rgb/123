@@ -3,7 +3,10 @@ extends Control
 var game: Node2D
 var expanded: bool = false
 const NAMES = {"temple": "大佛寺 · 护法异境", "island": "岛国 · 缝合海域","village": "青槐村", "farm": "义庄营地", "graveyard": "乱葬坡", "forest": "后山铳林", "sunken": "沉水村", "theatre": "废戏台", "hall": "义庄", "shop": "杂货铺"}
-func _process(_delta: float) -> void: queue_redraw()
+var redraw_clock: float=0
+func _process(delta: float) -> void:
+	redraw_clock+=delta
+	if redraw_clock>=0.1:redraw_clock=0;queue_redraw()
 func point(at: Vector2) -> Vector2: return Vector2(5, 17) + at / game.world.level_size * (size - Vector2(10, 23))
 func _draw() -> void:
 	if not is_instance_valid(game.world): return

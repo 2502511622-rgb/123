@@ -2,6 +2,7 @@ class_name YinScenery
 extends Node2D
 var world: FarmWorld
 var details: Array = []
+var detail_chunks: Dictionary={}
 var animation_clock: float = 0
 func _process(delta: float) -> void:
 	if world.environment == null: return
@@ -24,13 +25,21 @@ func bake() -> void:
 		var tile: int = world.tile_farm.ground.get_cell_atlas_coords(Vector2i(at / 32)).x
 		if tile >= 8 and tile != 14 and tile != 15: continue
 		details.append({"at": at, "icon": 0 if random.randf() < 0.75 else 2})
+	for detail in details:
+		var key=Vector2i((detail.at/128).floor())
+		if not detail_chunks.has(key):detail_chunks[key]=[]
+		detail_chunks[key].append(detail)
 	queue_redraw()
 func _draw() -> void:
 	if not is_instance_valid(world): return
-	for detail in details: stamp(detail.at, detail.icon)
+	var screen: Rect2=world.screen_bounds().grow(160)
+	var lo=Vector2i((screen.position/128).floor());var hi=Vector2i((screen.end/128).floor())
+	for y in range(lo.y,hi.y+1):
+		for x in range(lo.x,hi.x+1):
+			for detail in detail_chunks.get(Vector2i(x,y),[]):stamp(detail.at,detail.icon)
 	# Contact shadows sit under the actual prop, respecting tree harvesting.
 	for prop_node in world.actors.get_children():
-		if not prop_node is StaticBody2D or prop_node.is_queued_for_deletion(): continue
+		if not prop_node is StaticBody2D or prop_node.is_queued_for_deletion() or not screen.has_point(prop_node.position): continue
 		var width: float = 24
 		for child in prop_node.get_children():
 			if child is Sprite2D:

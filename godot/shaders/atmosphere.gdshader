@@ -3,6 +3,7 @@ render_mode unshaded;
 uniform sampler2D screen_texture : hint_screen_texture, repeat_disable, filter_nearest;
 uniform sampler2D light_field : filter_linear,repeat_disable;
 uniform float night = 0.0;
+uniform int quality=2;
 uniform float mist = 0.0;
 uniform float clock_time = 0.0;
 uniform float rain = 0.0;
@@ -22,14 +23,16 @@ void fragment() {
 	vec3 scene=texture(screen_texture,SCREEN_UV).rgb;
 	// A small tilt-shift falloff at the extreme frame; never blur the player or HUD.
 	float edge_focus=smoothstep(0.34,0.5,abs(SCREEN_UV.y-0.5))*smoothstep(70.0,150.0,length(p-hero))*focus_strength;
-	vec3 soft=(texture(screen_texture,SCREEN_UV+pixel*vec2(1.5,0)).rgb+texture(screen_texture,SCREEN_UV-pixel*vec2(1.5,0)).rgb+texture(screen_texture,SCREEN_UV+pixel*vec2(0,1.5)).rgb+texture(screen_texture,SCREEN_UV-pixel*vec2(0,1.5)).rgb)*0.25;
+	vec3 soft=scene;
+	if(quality>0){soft=(texture(screen_texture,SCREEN_UV+pixel*vec2(1.5,0)).rgb+texture(screen_texture,SCREEN_UV-pixel*vec2(1.5,0)).rgb+texture(screen_texture,SCREEN_UV+pixel*vec2(0,1.5)).rgb+texture(screen_texture,SCREEN_UV-pixel*vec2(0,1.5)).rgb)*0.25;}
 	scene=mix(scene,soft,edge_focus);
 	vec3 ambient=mix(vec3(1.04,1.02,0.97),vec3(0.46,0.61,0.73),night);
 	ambient*=mix(vec3(1.0),vec3(0.82,0.90,0.96),rain);
 	ambient+=vec3(0.10,0.09,0.04)*(1.0-smoothstep(15.0,65.0,length(p-hero)))*night;
 	ambient+=vec3(0.12,0.035,-0.045)*warmth*(1.0-rain);
 	float glow=texture(light_field,SCREEN_UV).r;
-	float halo=(texture(light_field,SCREEN_UV+pixel*vec2(3,0)).r+texture(light_field,SCREEN_UV-pixel*vec2(3,0)).r+texture(light_field,SCREEN_UV+pixel*vec2(0,3)).r+texture(light_field,SCREEN_UV-pixel*vec2(0,3)).r)*0.25;
+	float halo=glow;
+	if(quality>1){halo=(texture(light_field,SCREEN_UV+pixel*vec2(3,0)).r+texture(light_field,SCREEN_UV-pixel*vec2(3,0)).r+texture(light_field,SCREEN_UV+pixel*vec2(0,3)).r+texture(light_field,SCREEN_UV-pixel*vec2(0,3)).r)*0.25;}
 	scene*=ambient+vec3(1.15,0.64,0.23)*min(glow,1.5)*(0.18+night*0.88);
 	scene+=vec3(0.17,0.095,0.026)*max(0.0,halo-0.15)*(0.25+night*0.75);
 	float beams=pow(max(0.0,sin(at.x*0.022+at.y*0.009+sin(clock_time*0.09)*0.35)),12.0);

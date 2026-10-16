@@ -122,6 +122,8 @@ func _process(delta: float) -> void:
 	wind = (0.65 + 0.35 * sin(time * 0.35) + 0.25 * sin(time * 0.91)) * (1.5 if rain > 0.2 else 1.0)
 	terrain_material.set_shader_parameter("clock_time", time)
 	terrain_material.set_shader_parameter("wetness", wetness)
+	if world.canopy_material!=null:
+		world.canopy_material.set_shader_parameter("clock_time",time);world.canopy_material.set_shader_parameter("wind",wind);world.canopy_material.set_shader_parameter("wetness",wetness)
 	light_field.update(time)
 	if reflected_prop_count != world.environment_revision: refresh_reflections()
 	var screen: Rect2 = visible_rect().grow(130)
@@ -162,7 +164,7 @@ func _process(delta: float) -> void:
 	foreground.queue_redraw()
 func visible_rect() -> Rect2:
 	var transform: Transform2D = world.get_global_transform_with_canvas()
-	return Rect2(-transform.origin, Vector2(640, 360))
+	return transform.affine_inverse()*Rect2(Vector2.ZERO,world.get_viewport_rect().size)
 func exposed(at: Vector2) -> bool:
 	return world.is_safe_position(at)
 func emit_splash() -> void:
