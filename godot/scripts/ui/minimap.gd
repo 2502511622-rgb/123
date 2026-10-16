@@ -32,6 +32,11 @@ func _draw() -> void:
 			var at: Vector2 = point(spec.at)
 			draw_circle(at, 2, Color("9bbfc0") if game.state.visited_landmarks.has(id) else Color("667c73"))
 			if size.x > 200: draw_string(ThemeDB.fallback_font, at + Vector2(4, 0), spec.name, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color("d3d0b0"))
+	var first: Dictionary=YinFirstJourney.guide(game.state)
+	if not first.is_empty() and first.zone==game.state.zone:
+		var target: Vector2=point(first.at)
+		draw_arc(target,4.0,0,TAU,12,Color("ffe1a0"),1.4)
+		if size.x>200:draw_string(ThemeDB.fallback_font,target+Vector2(6,-4),"当前目标",HORIZONTAL_ALIGNMENT_LEFT,-1,10,Color("ffe1a0"))
 	var gate_names: Array=gate_labels()
 	var exits: Array=gates()
 	for i in range(exits.size()):

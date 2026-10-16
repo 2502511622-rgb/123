@@ -350,7 +350,7 @@ func prepare_enemies() -> void:
 	enemy_day = day
 	enemies = enemies.filter(func(e): return (e.has("war_id") and not e.dead) or (e.zone == "farm" and not e.dead) or e.kind in ["well_boss", "opera_boss"] or e.kind in YinIsland.BOSSES or e.kind in YinTemple.BOSSES or (e.zone == "village" and int(e.get("raid", 0)) > 0 and not e.dead))
 	for i in range(5):
-		var kind: String = "water" if i % 2 == 0 else "bone"
+		var kind: String = "archer" if i==4 else ("water" if i % 2 == 0 else "bone")
 		spawn_record(kind, "graveyard", Vector2(280 + i * 100, 240 + (i % 2) * 150), 1 + int((day - 1) / 4))
 	if day >= 3:
 		spawn_record("archer", "graveyard", Vector2(730, 425), 2)
@@ -872,6 +872,7 @@ func equip(id: int) -> bool:
 			equipped_gear = id
 			active_slot = gear_slot(gear.weapon)
 			weapon_slots[active_slot] = id
+			if gear.weapon=="silver_sword" and quests.has("first_watch") and quests.first_watch.claimed:quests.first_watch.equipped=true
 		return true
 	return false
 func grant_gear(weapon: String, tier: int = 1, quality: int = 0) -> Dictionary:

@@ -17,6 +17,7 @@ const LANDMARKS = {
 	"temple": {"name": "山门遗址", "at": Vector2(2304, 1632)}
 }
 const QUESTS = {
+	"first_watch": {"npc":0,"name":"初次守夜","kind":"hunt","target":2,"money":35,"weapon":"silver_sword","description":"义庄告示：从院落东南灯门进入乱葬坡，击败两只异怪。红圈亮起时先闪避，镇符可打断。返回义庄，在O委托页领取二阶银剑与35文，再按B换装。"},
 	"temple_arrival": {"npc": 6, "name": "北山梵影", "kind": "temple_visit", "target": 1, "money": 40, "weapon": "", "description": "砚青请你沿青槐村北侧山道进入大佛寺，记录缝合而来的护法异境。"},
 	"temple_catalog": {"npc": 2, "name": "四障异闻", "kind": "temple_hunt", "target": 4, "money": 90, "weapon": "", "parent": "temple_arrival", "description": "秋婶请你分别调查饿鬼、幽魂、罗刹、鸠槃茶。镇符可破虚化幻身，先处理遗骸可阻饿鬼吞食。"},
 	"temple_wrath": {"npc": 1, "name": "止息修罗", "kind": "temple_boss", "boss": "asura", "target": 1, "money": 130, "weapon": "", "parent": "temple_catalog", "description": "柳伯请你平息阿修罗的争斗嗔怒。六臂战阵留有空隙，半血后的战意更盛。"},
@@ -55,12 +56,15 @@ static func progress(state, id: String) -> int:
 	if spec.kind == "survey": return mini(spec.target, state.visited_landmarks.size())
 	return mini(spec.target, int(state.quests[id].progress))
 static func on_kill(state, enemy: Dictionary) -> void:
+	if enemy.zone=="graveyard" and not enemy.has("war_id") and state.quests.has("first_watch") and not state.quests.first_watch.claimed:
+		state.quests.first_watch.progress=mini(2,int(state.quests.first_watch.progress)+1)
 	if enemy.zone != "graveyard" or not state.quests.has("grave_patrol"): return
 	var quest: Dictionary = state.quests.grave_patrol
 	if not quest.claimed: quest.progress = mini(4, int(quest.progress) + 1)
 static func claim(state, id: String, npc_id: int) -> String:
 	if not QUESTS.has(id) or not state.quests.has(id): return "尚未接取。"
 	var spec: Dictionary = QUESTS[id]
+	if id=="first_watch" and state.zone!="farm":return "请先返回义庄，在告示处复命。"
 	if spec.npc != npc_id: return "请向委托人复命。"
 	if state.quests[id].claimed: return "奖励已经领取。"
 	if progress(state, id) < spec.target: return "委托尚未完成。"
@@ -97,6 +101,7 @@ static func validate(data: Dictionary) -> bool:
 	for id in data.quests:
 		if not QUESTS.has(id) or not data.quests[id] is Dictionary: return false
 		var quest: Dictionary = data.quests[id]
+		if id=="first_watch" and quest.has("equipped") and not quest.equipped is bool:return false
 		if not quest.get("claimed") is bool or not FarmState.valid_int(quest.get("progress"), 0, QUESTS[id].target): return false
 	return data.tracked_quest == "" or (data.quests.has(data.tracked_quest) and not data.quests[data.tracked_quest].claimed)
 

@@ -143,6 +143,9 @@ func build_graveyard() -> void:
 	prop("lantern", RETURN_GATE, Vector2(-16, -48), Rect2(-4, -6, 8, 6))
 	add_sign(RETURN_GATE + Vector2(-34, 8), "返回义庄 ↓")
 	add_sign(Vector2(410, 130), "乱葬坡 · 白天也不要久留")
+	add_sign(Vector2(245,505),"守夜路 ↑ 先镇符，再挥剑")
+	add_sign(Vector2(390,425),"骨冢 → 红圈蓄力时闪避")
+	add_sign(Vector2(650,330),"铳箭岗 ↑ 利用墓碑遮挡弹道")
 	prop("lantern", Vector2(850, 550), Vector2(-16, -48), Rect2(-4, -6, 8, 6))
 	add_sign(Vector2(816, 564), "后山铳林 ↑")
 
@@ -265,6 +268,9 @@ func nearest_interaction() -> String:
 	return selected
 func install_interactions() -> void:
 	if not is_inside_tree():return
+	var trail:=YinTrailGuide.new()
+	trail.world=self
+	feedback.add_child(trail)
 	for point in YinWorldLayout.points(state.zone):
 		var beacon:=YinInteractionBeacon.new()
 		beacon.world=self;beacon.point=point;beacon.position=point.at

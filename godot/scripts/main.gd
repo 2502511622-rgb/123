@@ -75,10 +75,11 @@ func _ready() -> void:
 	clock.minute_changed.connect(func(_day, _hour, _minute): update_labels())
 	refresh("存档损坏，新建义庄；原文件在首次保存前保留。" if not loaded else "槐阴村的风，带着纸灰的味道。")
 	if not state.intro_seen:
-		var box := open_modal("阴田录 · 师父遗书", "裂海将异乡传说缝进此世。你刚刚出师，来到槐阴村接管破败义庄与荒田。\n\n主线：探索装备、介入四方争端，维持势力平衡。\n种田可供旅途休憩，不要求每日劳作。\n田里长出人声，不要答应。\n驱使的东西，每夜都要点名。\n祠堂里的神，不是祖宗。\n\nWASD 移动，空格劳作，E 互动。\n7 剑 / 8 手枪 / J 手持攻击 / U 装填。\nShift 闪避 / F 镇符 / G 符火。")
-		box.add_child(button("先定制旅人外观",func(): state.intro_seen=true; show_character("外观")))
+		var box := open_modal("阴田录 · 师父遗书", "裂海将异乡传说缝进此世。你刚刚出师，来到槐阴村接管破败义庄与荒田。\n\n第一步：从东南灯门进入乱葬坡，击败两只异怪。\n返回义庄按O领取银剑，再按B比较换装。\n红圈出现先闪避，F镇符可打断。\n\n主线：探索装备、介入四方争端，维持势力平衡。\n种田可供旅途休憩，不要求每日劳作。\n田里长出人声，不要答应。\n驱使的东西，每夜都要点名。\n祠堂里的神，不是祖宗。\n\nWASD 移动，空格劳作，E 互动。\n7 剑 / 8 手枪 / J 手持攻击 / U 装填。\nShift 闪避 / F 镇符 / G 符火。")
+		box.add_child(button("先定制旅人外观",func(): state.intro_seen=true; YinFirstJourney.start(state); show_character("外观")))
 		box.add_child(button("收起遗书，走进义庄", func():
 			state.intro_seen = true
+			YinFirstJourney.start(state)
 			close_modal()
 			persist()
 		))
@@ -272,6 +273,7 @@ func build_hud() -> void:
 	quest_tracker = button("O 委托", show_quests, Vector2(194, 44))
 	quest_tracker.position = Vector2(436, 106)
 	quest_tracker.add_theme_font_size_override("font_size", 10)
+	quest_tracker.clip_text=true
 	hud.add_child(quest_tracker)
 	seed_button = button("", cycle_seed)
 	var crop_icon := AtlasTexture.new()
@@ -984,7 +986,12 @@ func equipment_content(box: VBoxContainer) -> void:
 		loadout.append("%s %s" % [{"melee": "近战", "primary": "主武器", "secondary": "副武器"}[slot], YinBalance.WEAPONS[worn[0].weapon].name if not worn.is_empty() else "—"])
 	paragraph(box, " · ".join(loadout), 10)
 	var displayed: Array = state.equipment.duplicate()
-	displayed.sort_custom(func(a, b): return (2 if a.id == state.equipped_gear else (1 if a.id == state.equipped_armor else 0)) > (2 if b.id == state.equipped_gear else (1 if b.id == state.equipped_armor else 0)))
+	var opening_reward: bool=not YinFirstJourney.guide(state).is_empty() and state.quests.has("first_watch") and state.quests.first_watch.claimed
+	displayed.sort_custom(func(a,b):
+		var rank_a: int=3 if opening_reward and a.weapon=="silver_sword" and a.id!=state.weapon_slots.melee else (2 if a.id==state.equipped_gear else (1 if a.id==state.equipped_armor else 0))
+		var rank_b: int=3 if opening_reward and b.weapon=="silver_sword" and b.id!=state.weapon_slots.melee else (2 if b.id==state.equipped_gear else (1 if b.id==state.equipped_armor else 0))
+		return rank_a>rank_b if rank_a!=rank_b else int(a.id)<int(b.id)
+	)
 	for gear in displayed:
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 4)
@@ -994,11 +1001,13 @@ func equipment_content(box: VBoxContainer) -> void:
 		if gear.weapon != "armor":
 			info = "伤害 %d · " % YinBalance.damage(spec.damage, YinBalance.level(state.cultivation), gear)
 			info += "弹匣 %d/%d" % [gear.magazine, spec.magazine] if spec.ammo != "" else ("气力 %d" % spec.energy if gear.weapon in YinBalance.MAGIC else "距离 %d" % spec.range)
+		if gear.weapon!="armor":info+=" · 间隔%.2fs"%float(spec.interval)
 		var equip_button := button("%s  %s\n%s" % [YinBalance.gear_name(gear), "已装备" if gear.id in state.weapon_slots.values() or gear.id == state.equipped_armor else "点击装备", info + ("\n" + YinAbilities.affix_text(gear, YinBalance.level(state.cultivation)) if gear.weapon != "armor" else "")], func():
 			state.equip(gear.id)
 			player.held_item = state.current_gear().weapon
 			persist()
 			show_equipment()
+			refresh("已装备："+YinBalance.gear_name(gear))
 		)
 		equip_button.add_theme_color_override("font_color", YinBalance.COLORS[int(gear.quality)].lightened(0.12))
 		equip_button.add_theme_font_size_override("font_size", 11)
@@ -1006,12 +1015,17 @@ func equipment_content(box: VBoxContainer) -> void:
 		equip_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		equip_button.icon = YinBalance.icon(gear.weapon)
 		equip_button.expand_icon=true
-		equip_button.add_theme_constant_override("icon_max_width",26)
+		equip_button.add_theme_constant_override("icon_max_width",44)
 		equip_button.tooltip_text = YinWeaponLore.describe(gear.weapon) + "\n获取时自带词条，无需加工\n" + YinAbilities.affix_text(gear, YinBalance.level(state.cultivation))
-		equip_button.text += "\n"+YinWeaponLore.describe(gear.weapon)
+		var comparison: Array=state.equipment.filter(func(other):return other.id in state.weapon_slots.values() and ((gear.weapon in YinBalance.MELEE and other.weapon in YinBalance.MELEE) or (gear.weapon in YinBalance.GUNS and other.weapon in YinBalance.GUNS) or (gear.weapon in YinBalance.MAGIC and other.weapon in YinBalance.MAGIC)))
+		if gear.weapon!="armor" and not comparison.is_empty() and comparison[0].id!=gear.id:
+			var old: Dictionary=comparison[0]
+			var delta_damage: int=YinBalance.damage(spec.damage,YinBalance.level(state.cultivation),gear)-YinBalance.damage(YinBalance.WEAPONS[old.weapon].damage,YinBalance.level(state.cultivation),old)
+			equip_button.text+="\n对比"+YinBalance.WEAPONS[old.weapon].name+"：伤害%+d"%delta_damage
+		else:equip_button.text+="\n"+YinWeaponLore.describe(gear.weapon)
 		row.add_child(equip_button)
 		equip_button.custom_minimum_size.y = 58
-		if gear.id not in [state.equipped_gear, state.equipped_armor] and gear.id not in state.weapon_slots.values():
+		if gear.id not in [state.equipped_gear, state.equipped_armor] and gear.id not in state.weapon_slots.values() and not (opening_reward and gear.weapon=="silver_sword"):
 			row.add_child(button("拆解", func():
 				var result: String = state.salvage(gear.id)
 				show_equipment()
@@ -1097,8 +1111,8 @@ func show_character(tab: String = "背包") -> void:
 			worn.add_theme_font_size_override("font_size", 11)
 			worn.add_theme_color_override("font_color", Color("ded9bf"))
 			box.add_child(worn)
-			box.add_child(button("外观定制",func(): show_character("外观"),Vector2(120,24)))
 			equipment_content(box)
+			box.add_child(button("外观定制",func(): show_character("外观"),Vector2(120,24)))
 		"外观":
 			var panel := YinAppearancePanel.new()
 			panel.name = "AppearancePanel"
@@ -1185,6 +1199,10 @@ func skill_tree_content(box: VBoxContainer) -> void:
 		card.add_child(learn)
 func companion_content(box: VBoxContainer) -> void:
 	paragraph(box, "随从 %d · 随行 %d · 驻村 %d · 出战数量不限" % [state.spirits.size(),state.spirits.filter(func(s):return s.active and s.get("assignment")=="follow").size(),state.village_guards().size()])
+	if state.spirits.is_empty():
+		paragraph(box,"暂无随从。去乱葬坡击败异怪，站到遗骸旁按V免费炼化。",12)
+		box.add_child(button("追踪初次守夜",func():YinFirstJourney.start(state);persist();show_quests()))
+		return
 	var actions:=HBoxContainer.new()
 	box.add_child(actions)
 	for command in [["全员随行","follow"],["智能驻村","village"],["全部休整","rest"]]:
@@ -1319,6 +1337,11 @@ func update_exploration() -> void:
 			notify_action("发现地标：" + spec.name)
 func update_quest_tracker() -> void:
 	if not is_instance_valid(quest_tracker): return
+	var first: Dictionary=YinFirstJourney.guide(state)
+	if not first.is_empty():
+		quest_tracker.text="O "+first.title+"\n"+first.hint
+		quest_tracker.tooltip_text=YinAdventure.QUESTS.first_watch.description
+		return
 	var id: String = state.tracked_quest
 	if id == "" or not state.quests.has(id):
 		quest_tracker.custom_minimum_size = Vector2(194, 40)
@@ -1337,6 +1360,20 @@ func update_quest_tracker() -> void:
 func show_quests() -> void:
 	var box := open_modal("委托", "O 打开任务栏 · 一次追踪一项")
 	box.get_child(0).text = "主线：获取装备，平衡四方势力。田园经营可自由选择。"
+	if not state.quests.has(YinFirstJourney.ID):
+		box.add_child(button("接取 · 初次守夜（推荐从这里开始）",func():YinFirstJourney.start(state);persist();show_quests()))
+	else:
+		var first: Dictionary=YinFirstJourney.guide(state)
+		if not first.is_empty():
+			var instruction: Label=paragraph(box,first.title+"\n"+first.hint,12)
+			instruction.custom_minimum_size.x=410
+		if not state.quests.first_watch.claimed:
+			var claim:=button("复命 · 领取银剑与35文",func():
+				var result: String=YinAdventure.claim(state,YinFirstJourney.ID,0)
+				persist();show_quests();refresh(result)
+			)
+			claim.disabled=state.zone!="farm" or YinAdventure.progress(state,YinFirstJourney.ID)<2
+			box.add_child(claim)
 	var overview: Label=paragraph(box,state.mainline_summary(),11)
 	overview.custom_minimum_size.x=418
 	box.add_child(button("领取主线阶段奖励",func():

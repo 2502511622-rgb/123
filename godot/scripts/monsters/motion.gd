@@ -9,6 +9,7 @@ var previous_windup: float=0
 var release: float=0
 var recovery: float=0
 var previous_state: String="idle"
+var anticipation: float=0
 func update(actor,delta: float) -> void:
 	if not initialized:last_at=actor.position;initialized=true
 	var distance_value: float=actor.position.distance_to(last_at)
@@ -22,6 +23,7 @@ func update(actor,delta: float) -> void:
 	recovery=maxf(0,recovery-delta)
 	if previous_windup>0 and actor.windup<=0 and actor.stun<=0:
 		release=0.18;recovery=0.38
+	anticipation=clampf(1-actor.windup/(0.8 if actor.record.kind in YinAbilities.BOSSES else 0.5),0,1)
 	previous_windup=actor.windup
 	previous_state=state
 	if actor.record.dead:state="dead"
@@ -34,7 +36,7 @@ func update(actor,delta: float) -> void:
 func descriptor(kind: String) -> Dictionary:
 	var data: Dictionary=YinBodyProfile.spec(kind)
 	var action: float=0.0
-	if state=="anticipation":action=-0.7
+	if state=="anticipation":action=-0.2-0.6*smoothstep(0,1,anticipation)
 	elif state=="strike":action=lerpf(1.0,0.0,1-release/0.18)
 	elif state=="recover":action=recovery/0.38*0.2
 	return {"state":state,"gait":travel/data.stride*TAU,"action":action,"clock":time,"floating":data.floating}

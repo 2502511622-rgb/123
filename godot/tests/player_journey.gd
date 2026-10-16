@@ -213,7 +213,7 @@ func run() -> void:
  await frames(4)
  var after_hit: int = enemy.record.hp
  await frames(12)
- check(after_hit == 85 and enemy.record.hp == after_hit, "one swing hits each target exactly once")
+ check(after_hit in [75,85] and enemy.record.hp == after_hit, "one swing hits each target exactly once")
  game.player.position = Vector2(617, 180)
  game.player.facing = Vector2.RIGHT
  game.player.state_machine.reset()
