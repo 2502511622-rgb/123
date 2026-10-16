@@ -461,6 +461,7 @@ func update_labels() -> void:
 
 	for point in YinWorldLayout.points(state.zone):
 		if point.id.begins_with("inspect_"):hints[point.id]="E 调查"+point.name
+	if kind.begins_with("post28:"):hints[kind]="E 据点 · 领地与驿路"
 	if kind.begins_with("echo27:"):hints[kind]="E 调查 · "+YinWorldDistricts.PLACES[kind.trim_prefix("echo27:")].name
 	var remains_hint: Dictionary = nearest_remains()
 	for body in get_tree().get_nodes_in_group("remains"):
@@ -649,6 +650,8 @@ func interact() -> void:
 		show_special_plot(index)
 		return
 	var interaction: String=world.nearest_interaction()
+	if interaction.begins_with("post28:"):
+		show_waypost28(interaction.trim_prefix("post28:"));return
 	if interaction.begins_with("echo27:"):
 		show_world_echo(interaction.trim_prefix("echo27:"));return
 	if interaction.begins_with("inspect_"):
@@ -944,6 +947,7 @@ func show_factions() -> void:
 					if actor.record.has("war_id"):
 						actor.remove_from_group("enemies");actor.remove_from_group("faction_guards")
 						actor.add_to_group("faction_guards" if YinFactions.friendly(state,actor.record) else "enemies")
+						actor.hurtbox.collision_layer=0 if YinFactions.friendly(state,actor.record) else 16
 				persist();show_factions();refresh(message)
 			)
 			choice.disabled=war.get("player_side","")!="" and war.player_side!=side
@@ -1650,5 +1654,41 @@ func show_world_echo(id: String) -> void:
 	if not state.world_echoes.has(id):
 		state.world_echoes[id]=true
 		state.add_log("旅途见闻："+place.name)
+	if not state.exploration_rewards.has(id):
+		var reward=button("领取探索遗物 · "+YinExploration28.reward_text(id),func():
+			if nearest_enemy(player.position,170)!=null:feedback(box,"先清理周围的敌人，再开启遗物。");return
+			var result=YinExploration28.claim(state,id);persist();show_world_echo(id);refresh(result)
+		)
+		reward.disabled=nearest_enemy(player.position,170)!=null;box.add_child(reward)
+		if reward.disabled:paragraph(box,"附近仍有守卫，清理后可领取探索遗物。",11)
+	else:box.add_child(button("遗物已领取 · B查看装备",func():show_character("穿戴")))
+	box.add_child(button("循驿路返回义庄",func():travel_post28("home")))
 	box.add_child(button("继续探索 · Esc",close_modal))
 	persist()
+
+func show_waypost28(region: String) -> void:
+	if region not in YinFactions.IDS:return
+	state.visited_posts[region]=true
+	var owner=YinTerritory28.owner(state,region)
+	var box=open_modal(YinFactions.NAMES[region]+" · 驿路据点","当前由"+YinFactions.NAMES[owner]+"控制 · 驻守%d人 / 在途%d人。\n战胜守军后，远征军必须进入并守住旗帜才能占领，幸存者会留下驻守。"%[YinTerritory28.present_guards(state,region),YinTerritory28.guards(state,region).size()-YinTerritory28.present_guards(state,region)])
+	box.add_child(button("返回义庄",func():travel_post28("home")))
+	for id in YinFactions.IDS:
+		if id==region or not state.visited_posts.has(id):continue
+		box.add_child(button("沿已发现驿路前往"+YinFactions.NAMES[id],func():travel_post28(id)))
+	if owner!=region:
+		var allies=YinTerritory28.guards(state,region).all(func(e):return e.get("player_allied",false))
+		var action="调停归还" if owner=="village" or allies else "清除占领军后归还"
+		box.add_child(button(action+YinFactions.NAMES[region],func():
+			if nearest_enemy(player.position,180)!=null:feedback(box,"先解除据点周围的威胁，再调停归还。");return
+			var result=YinTerritory28.restore_homeland(state,region);persist();show_waypost28(region);refresh(result)
+		))
+	box.add_child(button("查看领地与驻军",show_factions));persist()
+func travel_post28(id: String) -> void:
+	if nearest_enemy(player.position,250)!=null:
+		if modal!=null:feedback(modal.get_node("ModalCard/Layout"),"附近有敌人，先脱离战斗再启程。")
+		return
+	if id!="home" and not state.visited_posts.has(id):return
+	var at: Vector2=YinContinent.HOME+Vector2(0,96) if id=="home" else YinTerritory28.post(id)+Vector2(0,56)
+	if nearest_enemy(at,250)!=null:refresh("目的地正在交战，驿路暂时关闭。");return
+	close_modal();player.position=at;player.velocity=Vector2.ZERO;player.get_node("Camera2D").reset_smoothing()
+	player.get_node("Camera2D").force_update_scroll();update_territory();persist();refresh("沿已打通的驿路抵达。")

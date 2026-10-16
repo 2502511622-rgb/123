@@ -16,10 +16,11 @@ static func snapshot(enemy: YinEnemy) -> Dictionary:
  if YinEnemyPack.enabled(enemy) and enemy.model.modular!=null:
   for part in enemy.model.modular.joints:
    var t: Transform2D=enemy.model.modular.joints[part].transform
-   rig_pose[part]=[t.origin.x,t.origin.y,t.get_rotation()]
- return {"frame27":enemy.model.modular.frame_index if enemy.model.modular!=null else 0,"rig_pose":rig_pose,"modular":YinEnemyPack.enabled(enemy),"key":pose.part_key,"source":[pose.source.position.x,pose.source.position.y,pose.source.size.x,pose.source.size.y],"destination":[pose.destination.position.x,pose.destination.position.y,pose.destination.size.x,pose.destination.size.y],"flip":pose.flip,"gait":float(pose.motion.get("gait",0)),"action":float(pose.motion.get("action",0)),"moving":enemy.velocity.length()>2,"attacking":enemy.art_strike>0,"clock":enemy.art_clock,"missing":enemy.record.get("severed",[]).duplicate(),"human":enemy.record.get("faction","")=="village","face":-1 if enemy.art_facing.x<0 else 1}
+   rig_pose[part]=[t.origin.x,t.origin.y+enemy.model.position.y,t.get_rotation()]
+ return {"anatomy28":true,"frame27":enemy.model.modular.frame_index if enemy.model.modular!=null else 0,"rig_pose":rig_pose,"modular":YinEnemyPack.enabled(enemy),"key":pose.part_key,"source":[pose.source.position.x,pose.source.position.y,pose.source.size.x,pose.source.size.y],"destination":[pose.destination.position.x,pose.destination.position.y,pose.destination.size.x,pose.destination.size.y],"flip":pose.flip,"gait":float(pose.motion.get("gait",0)),"action":float(pose.motion.get("action",0)),"moving":enemy.velocity.length()>2,"attacking":enemy.art_strike>0,"clock":enemy.art_clock,"missing":enemy.record.get("severed",[]).duplicate(),"human":enemy.record.get("faction","")=="village","face":-1 if enemy.art_facing.x<0 else 1}
 static func valid(value: Variant,kind: String) -> bool:
  if not value is Dictionary:return false
+ if value.has("anatomy28") and not value.anatomy28 is bool:return false
  if value.has("frame27") and not FarmState.valid_int(value.frame27,0,3):return false
  if value.has("modular") and not value.modular is bool:return false
  if value.has("rig_pose"):
@@ -63,6 +64,9 @@ func bind(data: Dictionary,falling: bool=false) -> void:
  if valid_death and death.get("modular",false):
   modular=YinModularRig.new();modular.name="ResidualTorso";add_child(modular)
   modular.setup(data.kind);modular.frozen_frame=int(death.get("frame27",0));modular.present(data.kind,missing,clock,moving,attacking,side<0,Color("aaa99b"))
+  if death.get("anatomy28",false):
+   for part in death.get("rig_pose",{}):
+    var t=death.rig_pose[part];modular.joints[part].transform=Transform2D(t[2],Vector2(t[0],t[1]))
   modular.align_stumps()
   modular.animation.stop();modular.animation.set_process(false)
   parts=[]

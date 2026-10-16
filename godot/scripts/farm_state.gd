@@ -20,6 +20,9 @@ var quests: Dictionary = {}
 var tracked_quest: String = ""
 var visited_landmarks: Dictionary = {}
 var world_echoes: Dictionary = {}
+var exploration_rewards: Dictionary = {}
+var visited_posts: Dictionary = {}
+var territories: Dictionary = YinTerritory28.initial()
 var day: int = 1
 var money: int = 90
 var energy: int = 100
@@ -360,7 +363,7 @@ func prepare_enemies() -> void:
 		YinTemple.populate(self)
 		return
 	enemy_day = day
-	enemies = enemies.filter(func(e): return (e.has("war_id") and not e.dead) or (e.zone == "farm" and not e.dead) or e.kind in ["well_boss", "opera_boss"] or e.kind in YinIsland.BOSSES or e.kind in YinTemple.BOSSES or (e.zone == "village" and int(e.get("raid", 0)) > 0 and not e.dead))
+	enemies = enemies.filter(func(e): return ((e.has("war_id") or e.has("garrison_region") or e.has("returning_region")) and not e.dead) or (e.zone == "farm" and not e.dead) or e.kind in ["well_boss", "opera_boss"] or e.kind in YinIsland.BOSSES or e.kind in YinTemple.BOSSES or (e.zone == "village" and int(e.get("raid", 0)) > 0 and not e.dead))
 	for i in range(5):
 		var kind: String = "archer" if i==4 else ("water" if i % 2 == 0 else "bone")
 		spawn_record(kind, "graveyard", Vector2(280 + i * 100, 240 + (i % 2) * 150), 1 + int((day - 1) / 4))
@@ -538,7 +541,7 @@ func snapshot() -> Dictionary:
 	return data.duplicate(true)
 
 static func save_keys() -> Array:
-	return ["world_echoes", "continent_ready", "defense_minute", "mainline_claimed", "appearance", "temple_journal", "factions", "island_journal", "opened_chests", "quests", "tracked_quest", "visited_landmarks", "weapon_slots", "active_slot", "skill_ranks", "skill_charges", "skill_timers", "villagers", "letters", "raid_day", "raid_status", "village_integrity", "equipment", "gear_drops", "equipped_gear", "equipped_armor", "next_gear_id", "smart_farming", "day", "money", "energy", "health", "minutes", "weather", "selected_crop", "inventory", "supplies", "storage", "bag_slots", "chest_slots", "terrain", "drops", "placements", "plots", "oil", "talismans", "bones", "ash", "reputation", "cultivation", "pollution", "ward", "hall_level", "spirits", "remains", "cargo", "enemies", "enemy_day", "next_id", "total_harvest", "called_day", "ritual_count", "ritual_path", "boss_spawned", "boss_defeated", "ending", "intro_seen", "zone", "journal", "last_report", "order"]
+	return ["exploration_rewards", "visited_posts", "territories", "world_echoes", "continent_ready", "defense_minute", "mainline_claimed", "appearance", "temple_journal", "factions", "island_journal", "opened_chests", "quests", "tracked_quest", "visited_landmarks", "weapon_slots", "active_slot", "skill_ranks", "skill_charges", "skill_timers", "villagers", "letters", "raid_day", "raid_status", "village_integrity", "equipment", "gear_drops", "equipped_gear", "equipped_armor", "next_gear_id", "smart_farming", "day", "money", "energy", "health", "minutes", "weather", "selected_crop", "inventory", "supplies", "storage", "bag_slots", "chest_slots", "terrain", "drops", "placements", "plots", "oil", "talismans", "bones", "ash", "reputation", "cultivation", "pollution", "ward", "hall_level", "spirits", "remains", "cargo", "enemies", "enemy_day", "next_id", "total_harvest", "called_day", "ritual_count", "ritual_path", "boss_spawned", "boss_defeated", "ending", "intro_seen", "zone", "journal", "last_report", "order"]
 
 static func valid_int(value: Variant, minimum: int, maximum: int = 100000000) -> bool:
 	return (value is int or value is float) and is_finite(float(value)) and float(value) == floor(float(value)) and value >= minimum and value <= maximum
@@ -645,6 +648,15 @@ func restore(data: Dictionary) -> bool:
 	if not (data.get("defense_minute") is float or data.get("defense_minute") is int) or not is_finite(float(data.defense_minute)) or data.defense_minute<0 or data.defense_minute>100000000:return false
 	if int(data.version)<14:
 		data=data.duplicate(true);data.version=14;data.continent_ready=false
+	data=data.duplicate(true)
+	for key in ["exploration_rewards","visited_posts"]:
+		if not data.has(key):data[key]={}
+		if not data[key] is Dictionary:return false
+		for id in data[key]:
+			if not data[key][id] is bool or not data[key][id]:return false
+			if (id not in YinWorldDistricts.PLACES if key=="exploration_rewards" else id not in YinFactions.IDS):return false
+	if not data.has("territories"):data.territories=YinTerritory28.initial()
+	if not YinTerritory28.valid(data.territories):return false
 	if not data.has("world_echoes"):
 		data=data.duplicate(true);data.world_echoes={}
 	if not data.world_echoes is Dictionary or data.world_echoes.size()>32:return false
@@ -662,6 +674,9 @@ func restore(data: Dictionary) -> bool:
 	if not YinFactions.validate(data.factions): return false
 	for e in data.enemies:
 		if not e is Dictionary: return false
+		if e.has("player_allied") and not e.player_allied is bool:return false
+		if e.has("returning_region") and e.returning_region not in YinFactions.IDS:return false
+		if e.has("garrison_region") and (e.garrison_region not in YinFactions.IDS or e.get("faction") not in YinFactions.IDS):return false
 		if e.has("war_id"):
 			if not valid_int(e.war_id, 1) or e.get("faction") not in YinFactions.IDS or e.get("war_side") not in ["attacker", "defender"]: return false
 			if not e.get("dead", true):
@@ -790,6 +805,8 @@ func restore(data: Dictionary) -> bool:
 	var normalized: Dictionary = data.duplicate(true)
 	for key in YinAppearance.LABELS: normalized.appearance[key]=int(normalized.appearance[key])
 	YinFactions.normalize(normalized.factions)
+	for territory in normalized.territories.values():
+		territory.changed_day=int(territory.changed_day);territory.captures=int(territory.captures)
 	for e in normalized.enemies:
 		if e.has("war_id"): e.war_id = int(e.war_id)
 	for key in save_keys():
@@ -1095,7 +1112,7 @@ func mainline_stages() -> Array:
 	strengths.sort()
 	return [
 		{"id":"gear","name":"整备旅装","done":equipment.any(func(g):return g.weapon!="armor" and int(g.tier)>=2),"hint":"击败精英或开启宝箱，获得二阶以上武器","reward":80},
-		{"id":"journey","name":"走遍缝合世界","done":island_journal.visited and temple_journal.visited and (not visited_landmarks.is_empty() or not world_echoes.is_empty()),"hint":"调查后山地标，并抵达岛国与大佛寺","reward":120},
+		{"id":"journey","name":"走遍缝合世界","done":island_journal.visited and temple_journal.visited and (not visited_landmarks.is_empty() or not world_echoes.is_empty()),"hint":"调查四方遗留物，并抵达岛国与大佛寺","reward":120},
 		{"id":"balance","name":"四方制衡","done":int(strengths.back())-int(strengths.front())<=45 and factions.wars.is_empty(),"hint":"援助弱方、拦截强方，实力差压到45以内且无交战","reward":200}]
 func mainline_summary() -> String:
 	var lines: Array[String]=[]

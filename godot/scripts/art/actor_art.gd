@@ -3,8 +3,8 @@ extends RefCounted
 static var animation_bands: int=8
 # Reference-based source sheets remain intact. Metadata measures alpha bounds and feet.
 const HERO = preload("res://assets/jrpg/hero_attack.png")
-const ROSTER = preload("res://assets/monsters27/bone.png")
-const TENGU = preload("res://assets/monsters27/daitengu.png")
+const ROSTER = preload("res://assets/monsters28/bone.png")
+const TENGU = preload("res://assets/monsters28/daitengu.png")
 const HERO_WALK = preload("res://assets/jrpg/hero_walk.png")
 const HERO_WALK_ALT = preload("res://assets/jrpg/hero_walk_alt.png")
 const HERO_ATTACK = preload("res://assets/jrpg/hero_attack.png")
@@ -112,7 +112,7 @@ static func draw_pose(canvas: CanvasItem, pose: Dictionary, color: Color = Color
 		canvas.draw_texture_rect_region(pose.texture,target,source,color)
 
 static func enemy_pose(kind: String, direction: Vector2, clock: float, moving: bool, attacking: bool, boss: bool) -> Dictionary:
-	return {"part_key":kind,"texture":YinMonsterArt.texture(kind),"source":YinMonsterArt.region(YinMonsterArt.frame_at(clock,moving,attacking)*6),"destination":Rect2(-48,-92,96,96),"flip":direction.x>0.1}
+	return {"part_key":kind,"texture":YinMonsterArt.texture(kind),"source":YinMonsterArt.region(YinMonsterArt.frame_at(clock,moving,attacking)*6),"destination":Rect2(-48,-90,96,96),"flip":direction.x<-.1,"aim":direction}
 
 static func part_index() -> Dictionary:
 	if anatomy.is_empty():
@@ -128,9 +128,14 @@ static func posed_parts(kind: String, pose: Dictionary, clock: float, moving: bo
 		var cut: Dictionary=pose.duplicate()
 		cut.texture=YinMonsterArt.texture(kind)
 		cut.source=YinMonsterArt.region(frame*6+YinMonsterArt.PARTS.find(part))
-		cut.destination=Rect2(-48,-92,96,96)
-		cut.joint=part;cut.pivot=YinMonsterArt.pivot(kind,frame,part)-Vector2(48,92)
-		cut.rotation=0;cut.origin_texture=cut.texture;cut.origin_region=cut.source
+		cut.destination=Rect2(-48,-90,96,96)
+		cut.joint=part;cut.pivot=YinMonsterArt.pivot(kind,frame,part)-Vector2(48,90)
+		var phase=float(pose.get("motion",{}).get("gait",clock*10))
+		var action=YinMonsterArt.attack_key(YinMonsterArt.action_for(pose.get("motion",{}),attack))
+		var transform=YinMonsterArt.joint_pose(kind,part,phase,moving,action,-1,atan2(pose.get("aim",Vector2.RIGHT).y,absf(pose.get("aim",Vector2.RIGHT).x)))
+		var offset=transform.origin-cut.pivot
+		cut.destination.position+=offset;cut.pivot+=offset
+		cut.rotation=transform.get_rotation();cut.origin_texture=cut.texture;cut.origin_region=cut.source
 		result.append({"part":{"arm_right":"arm","leg_right":"leg"}.get(part,part),"pose":cut})
 	return result
 static func part_center(pose: Dictionary) -> Vector2:

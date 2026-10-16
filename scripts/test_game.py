@@ -39,6 +39,9 @@ with tempfile.TemporaryDirectory(prefix='mossfield-checks-') as temp:
   ['--headless', '--script', 'res://tests/playtest27.gd'],
   ['--headless', '--fixed-fps', '60', '--script', 'res://tests/test_bridge_invasion.gd'],
   ['--headless', '--fixed-fps', '60', '--script', 'res://tests/test_war_march.gd'],
+  ['--headless', '--script', 'res://tests/test_reset28.gd'],
+  ['--headless', '--script', 'res://tests/test_exploration28.gd'],
+  ['--headless', '--fixed-fps', '60', '--script', 'res://tests/test_territory28.gd'],
   ['--headless', '--quit-after', '30']]
  for index,args in enumerate(commands):
   env['MOSSFIELD_RUNTIME_DIR']=str(Path(temp)/str(index))

@@ -79,7 +79,7 @@ func draw_continent() -> void:
 	for id in YinContinent.CAPITALS:
 		var c: Vector2=YinContinent.CAPITALS[id]
 		var origin=Vector2(0 if c.x<3200 else 3200,0 if c.y<2400 else 2400)
-		draw_rect(Rect2(point(origin),Vector2(3200,2400)/YinContinent.SIZE*(size-Vector2(10,23))),Color(YinFactions.COLORS[id],0.15))
+		draw_rect(Rect2(point(origin),Vector2(3200,2400)/YinContinent.SIZE*(size-Vector2(10,23))),Color(YinFactions.COLORS[YinTerritory28.owner(game.state,id)],0.19))
 	for river in [Rect2(3104,0,192,4800),Rect2(0,2304,6400,192)]:
 		draw_rect(Rect2(point(river.position),river.size/YinContinent.SIZE*(size-Vector2(10,23))),Color("56828b"))
 	for route in YinWorldDistricts.ROUTES:
@@ -94,8 +94,12 @@ func draw_continent() -> void:
 	for b in YinContinent.BRIDGES:draw_rect(Rect2(point(b.position),b.size/YinContinent.SIZE*(size-Vector2(10,23))).grow(1),Color("c1a276"))
 	for id in YinContinent.CAPITALS:
 		var at: Vector2=point(YinContinent.CAPITALS[id])
-		draw_rect(Rect2(at-Vector2(2,2),Vector2(4,4)),YinFactions.COLORS[id])
+		draw_rect(Rect2(at-Vector2(2,2),Vector2(4,4)),YinFactions.COLORS[YinTerritory28.owner(game.state,id)])
 		if size.x>200:draw_string(ThemeDB.fallback_font,at+Vector2(6,-4),YinFactions.NAMES[id],HORIZONTAL_ALIGNMENT_LEFT,-1,11,YinFactions.COLORS[id])
+	if size.x>200:
+		for region in YinFactions.IDS:
+			var owner=YinTerritory28.owner(game.state,region)
+			if owner!=region:draw_string(ThemeDB.fallback_font,point(YinContinent.CAPITALS[region])+Vector2(6,10),"占领："+YinFactions.NAMES[owner],HORIZONTAL_ALIGNMENT_LEFT,-1,9,YinFactions.COLORS[owner])
 	if size.x>200:draw_string(ThemeDB.fallback_font,point(YinContinent.HOME)+Vector2(-14,15),"义庄",HORIZONTAL_ALIGNMENT_LEFT,-1,10,Color("e4d4ae"))
 	for id in YinAdventure.CHESTS:
 		if id in game.state.opened_chests:continue

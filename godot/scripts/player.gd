@@ -6,8 +6,14 @@ extends CharacterBody2D
 const SPEED: float = 112.0
 var appearance: Dictionary = YinAppearance.initial()
 var facing := Vector2.DOWN
+var visual_facing:=Vector2.DOWN
+var turn_target:=Vector2.DOWN
+var turn_time: float=0
+var turn_scale_x: float=1
 var aim_direction := Vector2.RIGHT
 var held_item: String = "tool0"
+var road_check: float=0
+var road_boost: float=1
 var art_hand := Vector2(10,-23)
 var snare_time: float = 0
 var scorch_time: float = 0
@@ -99,7 +105,11 @@ func _physics_process(delta: float) -> void:
 	attack_time = maxf(0, attack_time - delta)
 	last_attack_time = attack_time
 	dodge_time = maxf(0, dodge_time - delta)
-	velocity = velocity.move_toward(direction * SPEED, delta * (1600.0 if direction == Vector2.ZERO else 1900.0))
+	road_check-=delta
+	if road_check<=0:
+		road_check=.2;road_boost=YinExploration28.road_speed(get_tree().get_first_node_in_group("yintian_game"))
+	var travel_speed: float=road_boost if attack_time<=0 and dodge_time<=0 else 1.0
+	velocity = velocity.move_toward(direction * SPEED * travel_speed, delta * (1600.0 if direction == Vector2.ZERO else 1900.0))
 	if snare_time > 0: velocity *= 0.45
 	velocity += wind_impulse
 	wind_impulse = wind_impulse.move_toward(Vector2.ZERO, delta * 180)
@@ -110,6 +120,15 @@ func _physics_process(delta: float) -> void:
 		if progress>0.36 and progress<0.61:velocity+=swing_direction*(36.0 if heavy_attack else 14.0)
 	if direction != Vector2.ZERO and attack_time <= 0:
 		facing = Vector2(signf(direction.x), 0) if absf(direction.x) > absf(direction.y) else Vector2(0, signf(direction.y))
+	if facing!=turn_target:
+		turn_target=facing;turn_time=.10
+	if attack_time>0 or dodge_time>0:
+		visual_facing=facing;turn_time=0
+	elif turn_time>0:
+		turn_time=maxf(0,turn_time-delta)
+		if turn_time<=.05:visual_facing=turn_target
+	else:visual_facing=facing
+	turn_scale_x=1.0-.13*sin(PI*(1-turn_time/.10)) if turn_time>0 else 1.0
 	collision_mask = 1 if dodge_time > 0 else 5
 	collision_layer = 0 if dodge_time > 0 else 2
 	get_node("Camera2D").offset = Vector2(2 if int(hit_feedback * 40) % 2 == 0 else -2, 0) if hit_feedback > 0 else Vector2.ZERO
@@ -129,12 +148,12 @@ func _physics_process(delta: float) -> void:
 	gait_blend=move_toward(gait_blend,minf(1,travelled/maxf(delta*SPEED,0.01)),delta*12)
 	if velocity.length() < 2: animation_time = 0
 	queue_redraw()
-	weapon_layer.show_behind_parent=facing.y< -0.5
+	weapon_layer.show_behind_parent=visual_facing.y< -0.5
 	weapon_layer.material.set_shader_parameter("wetness",material.get_shader_parameter("wetness"))
 	weapon_layer.queue_redraw()
 
 func _draw() -> void:
-	var pose: Dictionary = YinActorArt.hero_motion_pose(facing, animation_time, velocity.length() > 2, attack_time, hit_feedback, attack_duration,int(appearance.body))
+	var pose: Dictionary = YinActorArt.hero_motion_pose(visual_facing, animation_time, velocity.length() > 2, attack_time, hit_feedback, attack_duration,int(appearance.body))
 	var gait: float=animation_time*16.0*TAU/8.0
 	body_offset=Vector2(sin(gait)*0.5,-absf(sin(gait))*1.1)*gait_blend
 	if attack_time>0:body_offset=YinActionMotion.body_offset(swing_direction,YinActionMotion.phase(attack_time,attack_duration),heavy_attack)
@@ -142,7 +161,7 @@ func _draw() -> void:
 		pose.gait_phase=gait
 		pose.gait_strength=0.0 # Authored walk frames now supply the leg motion.
 	YinAppearance.pose_uniforms(material,pose)
-	var direction_row: int=YinActorArt.direction_row(facing)
+	var direction_row: int=YinActorArt.direction_row(visual_facing)
 	art_hand=[Vector2(8,-24),Vector2(9,-23),Vector2(-11,-23),Vector2(11,-23)][direction_row]
 	if attack_time>0:
 		var column: int=clampi(int((1.0-attack_time/maxf(attack_duration,0.01))*6),0,5)
@@ -152,15 +171,16 @@ func _draw() -> void:
 	if int(appearance.body)==1:art_hand.y+=1.5
 	if pose.has("hand"):art_hand=pose.hand
 	art_hand+=body_offset
+	art_hand.x*=turn_scale_x
 	if attack_time<=0:art_hand+=Vector2(sin(gait)*0.8,sin(gait)*0.6)*gait_blend
 	for ghost in ghosts:
-		YinActorArt.draw_pose(self, YinActorArt.hero_motion_pose(facing, animation_time, true, 0, 0,0.22,int(appearance.body)), Color(0.55, 0.85, 0.79, (1 - ghost.age / 0.18) * 0.3), ghost.at - position)
+		YinActorArt.draw_pose(self, YinActorArt.hero_motion_pose(visual_facing, animation_time, true, 0, 0,0.22,int(appearance.body)), Color(0.55, 0.85, 0.79, (1 - ghost.age / 0.18) * 0.3), ghost.at - position)
 	YinActorArt.contact_shadow(self,10,animation_time*16.0*TAU/8.0,velocity.length()/SPEED)
 	var tint := Color("ef9a82") if hit_feedback > 0 else (Color(1, 1, 1, 0.55 if int(invincible * 20) % 2 == 0 else 1.0) if invincible > 0 else Color.WHITE)
 	var lean: float = dodge_direction.x * 0.12 if dodge_time > 0 else velocity.x/SPEED*0.025
 	if attack_time>0:lean=swing_direction.x*YinActionMotion.force(YinActionMotion.phase(attack_time,attack_duration))*(0.13 if heavy_attack else 0.07)
 	body_lean=lean
-	draw_set_transform(Vector2.ZERO, lean)
+	draw_set_transform(Vector2.ZERO, lean,Vector2(turn_scale_x,1))
 	YinActorArt.draw_pose(self, pose, tint,body_offset)
 	draw_set_transform(Vector2.ZERO)
 

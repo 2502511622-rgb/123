@@ -15,6 +15,24 @@ uniform vec4 stone_tint : source_color = vec4(0.65,0.61,0.51,1.0);
 uniform vec4 water_tint : source_color = vec4(0.25,0.44,0.48,1.0);
 varying vec2 world_at;
 void vertex(){world_at=(MODEL_MATRIX*vec4(VERTEX,0.0,1.0)).xy;}
+vec2 terrain_hash(vec2 cell){
+ return fract(sin(vec2(dot(cell,vec2(127.1,311.7)),dot(cell,vec2(269.5,183.3))))*43758.5453);
+}
+vec3 terrain_patch(vec2 corner,vec2 p,vec2 quadrant){
+ vec2 anchor=vec2(.30)+terrain_hash(corner)*.40;
+ // Each sample stays inside its material quadrant; no wrapping or mirror seam.
+ vec2 uv=anchor+(p-corner)*.18;
+ return texture(regional_material,(quadrant+uv)*.5).rgb;
+}
+vec3 continuous_ground(vec2 at,vec2 quadrant){
+ vec2 p=floor(at)/160.0;vec2 base=floor(p);vec2 f=fract(p);
+ vec2 weight=f*f*(3.0-2.0*f);
+ vec3 a=terrain_patch(base,p,quadrant);
+ vec3 b=terrain_patch(base+vec2(1,0),p,quadrant);
+ vec3 c=terrain_patch(base+vec2(0,1),p,quadrant);
+ vec3 d=terrain_patch(base+vec2(1,1),p,quadrant);
+ return mix(mix(a,b,weight.x),mix(c,d,weight.x),weight.y);
+}
 void fragment(){
 	// TileMap batches may remap UVs: the actual map type comes from world coordinates.
 	vec2 tile_uv=(floor(world_at/32.0)+0.5)/(map_size/32.0);
@@ -28,9 +46,8 @@ void fragment(){
 	float macro=0.96+0.035*sin(world_at.x*0.017+cos(world_at.y*0.012));
 	vec3 surface=turf*macro;
  vec2 quadrant=vec2(world_at.x>=3200.0?1.0:0.0,world_at.y>=2400.0?1.0:0.0);
- // Preserve terrain orientation; mirror repeats form distracting symmetric crosses.
- vec2 ground_uv=clamp(fract(floor(world_at)/384.0),vec2(0.008),vec2(0.992));
- vec3 regional_ground=texture(regional_material,(quadrant+ground_uv)*0.5).rgb;
+ vec3 regional_ground=continent?continuous_ground(world_at,quadrant):turf;
+ float pavement=0.0;
  if(continent){surface=regional_ground*macro*0.88;}
 	if(tile>=16.0 || tile==10.0){
 		vec3 stone=texture(material_atlas,local_uv+vec2(0.5,0.0)).rgb;
@@ -45,6 +62,7 @@ void fragment(){
 			float edge=max(max(left-p.x,p.x-right),max(top-p.y,p.y-bottom));
 			paving=1.0-smoothstep(-0.7,1.0,edge);
 		}
+		pavement=paving;
 		surface=mix(surface,mix(stone_tint.rgb,stone,0.55)*1.04,paving);
 		float sheen=pow(max(0.0,sin(world_at.y*0.11+world_at.x*0.05)),18.0);
 		surface*=1.0-wetness*0.15;
@@ -95,14 +113,14 @@ void fragment(){
    vec3 sand=mix(vec3(0.57,0.45,0.30),regional_ground,0.80)*(0.94+dunes*0.035+grain*0.035);
    float ridge=smoothstep(0.75,0.94,dunes);
    sand+=vec3(0.025,0.022,0.015)*ridge;
-   float trail=paved?0.75:0.0;
+   float trail=pavement*.75;
    bool courtyard=world_at.x>1088.0 && world_at.x<1920.0 && world_at.y>608.0 && world_at.y<1476.0;
    surface=courtyard && paved?mix(mix(vec3(0.46,0.40,0.31),surface,0.38),sand,0.35+grain*0.25):sand*(1.0-trail*.055);
    surface=mix(surface,sand,dust*0.12);
   }else if(edo){
    vec3 soil=mix(vec3(0.31,0.33,0.30),regional_ground,0.80)*(0.9+grain*0.08);
    float patches=smoothstep(0.2,0.8,sin(world_at.x*0.019+cos(world_at.y*.021)));
-   surface=paved?mix(vec3(0.32,0.31,0.28),surface,0.40):mix(soil,vec3(0.30,0.37,0.30),patches*.5);
+   surface=mix(mix(soil,vec3(0.30,0.37,0.30),patches*.20),mix(vec3(0.32,0.31,0.28),surface,0.65),pavement);
    float joints=step(30.5,mod(world_at.y,32.0))+step(46.5,mod(world_at.x+floor(world_at.y/32.0)*16.0,48.0));
    if(paved){surface*=1.0-min(1.0,joints)*0.25;}
    float drift=smoothstep(0.1,0.85,sin(world_at.x*.023+cos(world_at.y*.017))*.5+.5);
@@ -113,7 +131,7 @@ void fragment(){
    vec3 earth=mix(vec3(0.25,0.28,0.27),vec3(0.32,0.32,0.29),slope*.5+.5);
    earth=mix(earth,regional_ground,0.82);
    earth*=0.94+grain*.06-strata*.04;
-   float trail=paved?0.75+0.12*sin(world_at.y*.024):0.0;
+   float trail=pavement*(0.75+0.12*sin(world_at.y*.024));
    surface=earth*(1.0-trail*0.13);
    if(grain>.93 && trail>.25){surface+=vec3(0.025,0.023,0.020);}
   }

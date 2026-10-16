@@ -6,7 +6,7 @@ var duration: float=-1
 var elapsed: float=0
 var timer: float=0
 static func cell(pack: String,index: int) -> AtlasTexture:
- var result=AtlasTexture.new();result.atlas=load("res://assets/monsters27/blood.png");result.region=Rect2((index-10)*64,0,64,64);return result
+ var result=AtlasTexture.new();result.atlas=load("res://assets/monsters28/blood.png");result.region=Rect2((index-10)*64,0,64,64);return result
 static func burst(parent: Node,at: Vector2,direction: Vector2,pack: String) -> CPUParticles2D:
  if parent.get_tree().get_nodes_in_group("blood_bursts").size()>=16:return null
  var particles=CPUParticles2D.new();particles.name="ImpactBlood";particles.position=parent.to_local(at)

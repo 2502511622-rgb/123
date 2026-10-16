@@ -99,9 +99,19 @@ func run():
  check(game.world.get_instance_id()==original,"distant war runs in the same persistent scene")
  var survivor_data=game.state.snapshot();check(FarmState.new().restore(survivor_data),"active real war and soldier positions can be saved")
  for i in range(1800):
-  if game.state.factions.wars.is_empty():break
+  if YinFactions.survivors(game.state,war,"attacker").is_empty() or YinFactions.survivors(game.state,war,"defender").is_empty():break
   await frames(1)
- check(game.state.factions.wars.is_empty() and not game.state.factions.history.is_empty(),"actual army deaths settle the battle without scheduled auto victory")
+ check(YinFactions.survivors(game.state,war,"attacker").is_empty() or YinFactions.survivors(game.state,war,"defender").is_empty(),"actual army damage decides the battle without scheduled victory")
+ # This suite stages bridge combat; capital holding is separately covered by test_territory28.
+ if not game.state.factions.wars.is_empty() and YinFactions.survivors(game.state,war,"defender").is_empty():
+  check(YinTerritory28.owner(game.state,war.defender)==war.defender,"bridge victory alone does not remotely occupy a capital")
+  var target=YinTerritory28.target(game.state,war)
+  var rank=0
+  for foe in get_nodes_in_group("enemies")+get_nodes_in_group("faction_guards"):
+   if foe.record.get("war_id",0)==war.id and not foe.record.dead:
+    foe.position=target+Vector2(rank*24-24,36);foe.record.at=[foe.position.x,foe.position.y];rank+=1
+  await frames(450)
+ check(game.state.factions.wars.is_empty() and not game.state.factions.history.is_empty(),"battle and actual capital hold produce final settlement")
  # Exercise actual civilian AI attack, with an isolated hostile at a civilian's home.
  var npc=get_nodes_in_group("villagers")[0]
  var enemy_record=game.state.spawn_record("bone","village",Vector2(260,300)+Vector2(30,0),1)

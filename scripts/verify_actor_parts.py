@@ -1,31 +1,21 @@
-"""Read-only validation of the current 96px monster layers and authored poses."""
+"""Read-only validation of independently authored chibi anatomical assets."""
 from pathlib import Path
 from PIL import Image
 import json
-root=Path(__file__).resolve().parents[1]/'godot/assets/monsters27'
+root=Path(__file__).resolve().parents[1]/'godot/assets/monsters28'
 metadata=json.loads((root/'manifest.json').read_text())
 checks=0
 for kind, entry in metadata.items():
     atlas=Image.open(root/f'{kind}.png').convert('RGBA')
     assert atlas.size==(768,576),kind
-    signatures=set()
-    for frame in range(4):
-        occupied=set()
-        pixels=[]
-        for part in range(6):
-            index=frame*6+part
-            cell=atlas.crop(((index%8)*96,(index//8)*96,(index%8+1)*96,(index//8+1)*96))
-            for y in range(96):
-                for x in range(96):
-                    color=cell.getpixel((x,y))
-                    if not color[3]:continue
-                    assert (x,y) not in occupied,(kind,frame,'overlap')
-                    occupied.add((x,y));pixels.append((x,y,color))
-        assert len(occupied)>150,(kind,frame,'empty source pose')
-        assert len(occupied)<96*96*.85,(kind,frame,'opaque background')
-        signatures.add(hash(tuple(sorted(pixels))))
+    assert entry['independent_anatomy'] and entry['source_poses']==1,kind
+    assert entry['motion_keys']==8 and entry['attack_keys']==6,kind
+    for part in range(6):
+        cell=atlas.crop((part*96,0,(part+1)*96,96))
+        bounds=cell.getchannel('A').getbbox()
+        assert bounds,(kind,part,'missing body part')
+        width,height=bounds[2]-bounds[0],bounds[3]-bounds[1]
+        assert 3<=width<40 and 5<=height<40,(kind,part,'opaque background or truncated asset')
         checks+=1
-    assert len(signatures)==4,(kind,'duplicate source poses')
-    assert len(entry['pivots'])==4,kind
 assert len(metadata)==23
-print(f'PASS: {len(metadata)} independent monsters, {checks} disjoint transparent authored poses')
+print(f'PASS: {len(metadata)} chibi enemies, {checks} independent complete anatomical sprites; shared shoulder/hip overlap is intentional')

@@ -9,6 +9,9 @@ var hit_frame: int=-1
 var animation: AnimationPlayer
 var removed: Array=[]
 var facing: float=1
+var turn_blend: float=1
+var action_progress: float=1
+var aim_angle: float=0
 func setup(kind: String) -> void:
  pack=kind
  texture_filter=CanvasItem.TEXTURE_FILTER_NEAREST
@@ -22,8 +25,13 @@ func setup(kind: String) -> void:
   if part in YinEnemyPack.LIMBS or part=="head":
    var stump=Sprite2D.new();stump.name="Stump_"+part;stump.texture=sprite.texture
    stump.region_enabled=true;stump.region_rect=YinMonsterArt.region(24+frame_index*5+YinMonsterArt.PARTS.find(part)-1)
-   stump.centered=false;stump.offset=Vector2(-48,-92);stump.visible=false;stump.use_parent_material=true
+   stump.centered=false;stump.offset=Vector2(-48,-90);stump.visible=false;stump.use_parent_material=true
    add_child(stump);stumps[part]=stump
+ if kind in ["bone","archer","gunner","daitengu","rakshasa","yaksha","boss"]:
+  var weapon=YinMonsterWeapon28.new();weapon.name="HeldWeapon"
+  weapon.weapon="pistol" if kind=="gunner" else "silver_sword" if kind in ["bone","daitengu","yaksha"] else "whip" if kind=="archer" else "sword"
+  weapon.position=Vector2(0,17);weapon.rotation=-1.0;weapon.size_value=25 if kind!="boss" else 32
+  joints.arm_right.add_child(weapon)
  for part in stumps:move_child(stumps[part],get_child_count()-1)
  animation=AnimationPlayer.new();animation.name="HitAnimation";add_child(animation)
  var library=AnimationLibrary.new();var hurt=Animation.new();hurt.length=0.19
@@ -34,9 +42,10 @@ func setup(kind: String) -> void:
 func present(kind: String,missing: Array,clock: float,moving: bool,attack: bool,flip: bool,tint: Color) -> void:
  if joints.is_empty():setup(kind)
  frame_index=frozen_frame if frozen_frame>=0 else YinMonsterArt.frame_at(clock,moving,attack)
- removed=missing.duplicate();facing=-1 if flip else 1;scale.x=facing
+ removed=missing.duplicate();facing=-1 if flip else 1
  modulate=tint
  var anatomy=YinEnemyPack.anatomical(kind)
+ var action=YinMonsterArt.attack_key(action_progress if attack or action_progress<.999 else 1)
  for part in joints:
   var absent=YinEnemyPack.missing(part,missing) or (part not in ["body","head"] and part not in anatomy)
   joints[part].visible=not absent
@@ -44,8 +53,7 @@ func present(kind: String,missing: Array,clock: float,moving: bool,attack: bool,
    var sprite=joints[part].get_node_or_null("Sprite")
    if sprite!=null and not sprite.is_queued_for_deletion():sprite.queue_free()
   var pivot=YinMonsterArt.pivot(pack,frame_index,part)
-  var recoil=Vector2([-3.0,2.0,0.0][mini(hit_frame,2)],0) if hit_frame>=0 else Vector2.ZERO
-  joints[part].transform=Transform2D(0,pivot-Vector2(48,92)+recoil)
+  joints[part].transform=YinMonsterArt.joint_pose(pack,part,clock*10,moving,action,hit_frame,aim_angle)
   var sprite=joints[part].get_node_or_null("Sprite")
   if sprite!=null:
    sprite.region_rect=YinMonsterArt.region(frame_index*6+YinMonsterArt.PARTS.find(part));sprite.offset=-pivot
@@ -54,7 +62,7 @@ func present(kind: String,missing: Array,clock: float,moving: bool,attack: bool,
  align_stumps()
 func align_stumps() -> void:
  for part in stumps:
-  stumps[part].transform=Transform2D.IDENTITY
+  stumps[part].transform=joints.body.transform*Transform2D(0,-(YinMonsterArt.pivot(pack,0,"body")-Vector2(48,90)))
 func hit() -> void:
  if animation!=null:animation.stop();animation.play("hit")
 func detach(part: String,parent: Node,direction: Vector2) -> YinSeveredLimb:
@@ -69,6 +77,10 @@ func detach(part: String,parent: Node,direction: Vector2) -> YinSeveredLimb:
  limb.velocity=direction.rotated(randf_range(-0.5,0.5))*randf_range(75,120)
  limb.height=drop_height;parent.add_child(limb)
  joints[part].visible=false
+ var held=joints[part].get_node_or_null("HeldWeapon")
+ if held!=null:
+  joints[part].remove_child(held);limb.visual.add_child(held)
+  held.position=Vector2(0,17)
  var sprite=joints[part].get_node_or_null("Sprite")
  if sprite!=null:sprite.queue_free()
  if stumps.has(part):stumps[part].visible=true
@@ -76,5 +88,17 @@ func detach(part: String,parent: Node,direction: Vector2) -> YinSeveredLimb:
 func stump_positions() -> Array[Vector2]:
  var result: Array[Vector2]=[]
  for part in stumps:
-  if stumps[part].visible:result.append(stumps[part].to_global(YinMonsterArt.pivot(pack,frame_index,part)-Vector2(48,92)))
+  if stumps[part].visible:result.append(stumps[part].to_global(YinMonsterArt.pivot(pack,frame_index,part)-Vector2(48,90)))
  return result
+
+func _process(delta: float) -> void:
+ if frozen_frame>=0:return
+ var game=get_tree().get_first_node_in_group("yintian_game")
+ if game!=null and game.modal!=null:return
+ var actor=get_parent().get("actor")
+ if actor!=null:
+  for key in ["hit_stop","freeze_lock"]:
+   var remaining=actor.get(key)
+   if remaining!=null and remaining>0:return
+ turn_blend=move_toward(turn_blend,facing,delta*12)
+ scale.x=(1 if turn_blend>=0 else -1)*maxf(.65,absf(turn_blend))

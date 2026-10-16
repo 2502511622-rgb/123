@@ -25,7 +25,9 @@ static func plan(s) -> void:
 	rng.seed = s.day * 7919 + int(data.next_war) * 101
 	var candidates: Array = []
 	for attacker in IDS:
+		if s.continent_ready and YinTerritory28.region_for(s,attacker)=="":continue
 		for defender in IDS:
+			if s.continent_ready and YinTerritory28.region_for(s,defender)=="":continue
 			if attacker == defender: continue
 			var chance: float = aggression(strength(data, attacker), strength(data, defender))
 			if rng.randf() < chance:
@@ -43,6 +45,9 @@ static func declare(s, attacker: String, defender: String) -> Dictionary:
 	if attacker not in IDS or defender not in IDS or attacker == defender or not data.wars.is_empty(): return {}
 	var ratio: float = float(strength(data, attacker)) / maxi(1, strength(data, defender))
 	var war: Dictionary = {"id": int(data.next_war), "day": s.day, "attacker": attacker, "defender": defender, "status": "warned", "last_skirmish": float(s.day*1440+s.minutes), "player_side":"", "player_kills":0, "attackers": clampi(roundi(3 + ratio * 2), 4, 9), "defenders": clampi(roundi(strength(data, defender) / 28.0), 3, 7)}
+	if s.continent_ready:
+		war.target_region=YinTerritory28.region_for(s,defender)
+		if war.target_region=="":return {}
 	data.next_war += 1
 	data.wars.append(war)
 	s.add_log("势力战报：%s将于正午集结，进军%s。P 查看行军。" % [NAMES[attacker], NAMES[defender]])
@@ -59,7 +64,8 @@ static func deploy(s, war: Dictionary) -> void:
 			var at := Vector2((760 if side == "attacker" else 520) + (i % 2) * 34, 280 + int(i / 2) * 52)
 			var e: Dictionary = s.spawn_record(kind, war.defender, at, 1 + strength(s.factions, id) / 100)
 			if s.continent_ready:
-				var muster: Vector2=YinContinent.CAPITALS[id]+Vector2((i%3)*32-32,80+int(i/3)*32)
+				var region: String=YinTerritory28.region_for(s,id)
+				var muster: Vector2=YinContinent.CAPITALS[region if region!="" else id]+Vector2((i%3)*32-32,80+int(i/3)*32)
 				e.at=[muster.x,muster.y]
 			e.faction = id
 			e.war_id = int(war.id)
@@ -87,8 +93,19 @@ static func settle(s, war: Dictionary, attacker_won: bool) -> void:
 	if attacker_won and war.defender == "village":
 		s.village_integrity = maxi(0, s.village_integrity - severity)
 		for villager in s.villagers: villager.hp = maxi(1, int(villager.hp) - severity / 2)
+	if s.continent_ready and war.get("player_side","")!="":
+		for e in survivors(s,war,war.player_side):e.player_allied=true
+	if attacker_won and s.continent_ready:
+		YinTerritory28.occupy(s,war.get("target_region",war.defender),war.attacker,survivors(s,war,"attacker"))
+	elif s.continent_ready:
+		YinTerritory28.station(s,war.get("target_region",war.defender),war.defender,survivors(s,war,"defender"))
 	for e in s.enemies:
-		if int(e.get("war_id", 0)) == int(war.id): e.dead = true
+		if int(e.get("war_id", 0)) == int(war.id) and not e.dead:
+			if s.continent_ready:
+				e.erase("war_id");e.erase("war_side")
+				e.returning_region=YinTerritory28.region_for(s,e.faction)
+				if e.returning_region=="":e.returning_region=e.faction
+			else:e.dead=true
 	var contribution: bool=int(war.get("player_kills",0))>0 or (war.defender=="village" and not s.village_guards().is_empty())
 	if contribution:
 		s.money+=45
@@ -111,6 +128,9 @@ static func tick(s) -> bool:
 		if not s.continent_ready:simulate_offscreen(s,war)
 		var attackers: Array = survivors(s, war, "attacker")
 		var defenders: Array = survivors(s, war, "defender")
+		if s.continent_ready and defenders.is_empty() and not attackers.is_empty():
+			# The living army must reach and hold the capital before ownership changes.
+			continue
 		if attackers.is_empty() or defenders.is_empty():
 			settle(s, war, not attackers.is_empty())
 			changed = true
@@ -141,9 +161,11 @@ static func report(s) -> String:
 		lines.append("%s   实力 %d   兵力 %d / 物资 %d" % [NAMES[id], strength(s.factions, id), p.troops, p.supply])
 	for war in s.factions.wars:
 		lines.append("%s → %s · %s · %d 对 %d\n正午集结，经桥行军；直到一方军队覆灭才决出胜负。全境均可参战。" % [NAMES[war.attacker], NAMES[war.defender], "待集结" if war.status == "warned" else "行军 / 实体接战", war.attackers, war.defenders])
+		if war.status=="active" and s.continent_ready and survivors(s,war,"defender").is_empty():lines.append("正向%s据点推进 · 守旗进度%d%%"%[NAMES[war.get("target_region",war.defender)],int(float(war.get("capture_seconds",0))/6*100)])
 		if war.status=="active":lines.append("存活：攻方%d/%d · 守方%d/%d · 你的击杀%d\n支援：%s"%[survivors(s,war,"attacker").size(),war.attackers,survivors(s,war,"defender").size(),war.defenders,int(war.get("player_kills",0)),{"":"尚未选择","attacker":"攻方","defender":"守方"}.get(war.get("player_side",""),"无")])
 	if s.factions.wars.is_empty(): lines.append("当前休整。每天恢复兵力与物资，各方都有机会向其他势力出兵。")
 	lines.append("最近战报\n" + ("\n".join(s.factions.history) if not s.factions.history.is_empty() else "尚无战报。"))
+	if s.continent_ready:lines.append(YinTerritory28.report(s))
 	return "\n\n".join(lines)
 
 static func validate(data: Dictionary) -> bool:
@@ -164,6 +186,9 @@ static func validate(data: Dictionary) -> bool:
 		if int(war.get("id", 0)) >= int(data.next_war): return false
 		if war.get("attacker") not in IDS or war.get("defender") not in IDS or war.attacker == war.defender: return false
 		if war.get("status") not in ["warned", "active"]: return false
+		if war.has("target_region") and war.target_region not in IDS:return false
+		if war.has("capture_seconds"):
+			if not (war.capture_seconds is int or war.capture_seconds is float) or not is_finite(float(war.capture_seconds)) or war.capture_seconds<0 or war.capture_seconds>6:return false
 		if war.get("player_side","") not in ["","attacker","defender"] or not FarmState.valid_int(war.get("player_kills",0),0,1000):return false
 		var stamp: Variant=war.get("last_skirmish",0)
 		if not (stamp is float or stamp is int) or not is_finite(float(stamp)) or stamp<0 or stamp>100000000:return false
@@ -192,7 +217,7 @@ static func aid_weakest(s) -> String:
 	return "援助%s：兵力+12，物资+15。"%NAMES[weakest]
 
 static func friendly(s,record: Dictionary) -> bool:
-	if record.get("faction","")=="village":return true
+	if record.get("faction","")=="village" or record.get("player_allied",false):return true
 	for war in s.factions.wars:
 		if int(war.id)==int(record.get("war_id",0)) and war.get("player_side","")!="":return war.player_side==record.get("war_side","")
 	return false
@@ -220,6 +245,9 @@ static func simulate_offscreen(s,war: Dictionary) -> void:
 	for turn in range(turns):
 		var attackers: Array=survivors(s,war,"attacker")
 		var defenders: Array=survivors(s,war,"defender")
+		if s.continent_ready and defenders.is_empty() and not attackers.is_empty():
+			# The living army must reach and hold the capital before ownership changes.
+			continue
 		if attackers.is_empty() or defenders.is_empty():break
 		var attacking_damage: int=0
 		var defending_damage: int=0

@@ -1,10 +1,24 @@
-# 阴诡世界 v0.27 · 独立怪物、四地见闻与过桥入侵
+# 阴诡世界 v0.28 · Q版完整肢体、支路遗物与真实驻军
 
 **Godot 4.6 / 俯视角像素 2D / 连续大地图 / 四方势力 / 装备探索 / 实时战斗 / 村民自卫与随从指挥**
 
 旅人来到诡异缝合的异境，以义庄为营地，穿过界河与桥梁，探索装备、结识村民，介入四方势力的纷争。种田玩法已移除。
 
 ![四方领地大地图](docs/world23/map.png)
+
+## v0.28：重做断肢，补齐探索与占领反馈
+
+23 类怪物换成与主角更协调的 Q 版比例，每类使用完整躯干、头与四肢六个独立素材。断肢从当前关节生成完整物理肢体，开启断面，保留残躯；持械手臂连同武器掉落。行走、转向与攻击使用连续关节过渡，双腿断裂后下沉爬行。
+
+![本版实际节点断肢演示](docs/reset28/dismemberment.gif)
+
+地面取消镜像分块拼缝，改用连续混合。16 处支路调查点增加一次性实物奖励，道路加速与已发现据点的安全驿路减少空跑。胜军必须实际到旗点驻留才能占领，幸存者转为真实守军；领主、驻军、在途人数同步到旗帜、界面和地图。
+
+新档正常输入实机完成过桥、两次狩猎、银剑交付、支路护甲领取和返程。36 套回归通过，最终改动另有专项复测；云端软件渲染雨战约 45 FPS，尚未稳定 60 FPS。
+
+[实现、实机对照与测试边界](docs/RESET_V028.md) · [下载 Godot 源码工程](yintian-godot.zip)
+
+以下为历史版本记录；v0.27 整图切分怪物及其烘焙流程已退役。
 
 ## v0.27：怪物与地图重建，修复真实行军
 
@@ -387,7 +401,7 @@ python scripts/package_game.py
 
 `MOSSFIELD_RUNTIME_DIR` 是保留的启动脚本覆盖选项；默认存档和缓存位于仓库父目录 `.runtime/`。Windows / macOS 直接通过 Godot 导入即可。
 
-美术和环境音由本项目生成；当前怪物源素材在 `godot/assets/monsters27/source/`，使用 `godot/tools/bake_monsters27.gd` 整理图集；历史美术和声音工具为 `scripts/generate_art.py`、`generate_audio.py`。字体为重命名的 Noto CJK 字符子集，许可与模板 MIT 署名保留在 `godot/licenses/`。美术重生成需 Pillow，字体重生成需 fonttools；游戏运行均不需要它们。无声 / 无窗口验证不启用音频播放。
+美术和环境音由本项目生成；当前怪物源素材在 `godot/assets/monsters28/source/`，使用 `godot/tools/bake_monsters28.gd` 整理图集；历史美术和声音工具为 `scripts/generate_art.py`、`generate_audio.py`。字体为重命名的 Noto CJK 字符子集，许可与模板 MIT 署名保留在 `godot/licenses/`。美术重生成需 Pillow，字体重生成需 fonttools；游戏运行均不需要它们。无声 / 无窗口验证不启用音频播放。
 
 仓库仍保留早期网页原型与 `mossfield-godot.zip`，本版的下载文件是 **`yintian-godot.zip`**。
 

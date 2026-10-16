@@ -547,6 +547,9 @@ func path_to(start: Vector2,end: Vector2,half_size: Vector2=Vector2(7,5)) -> Pac
 		for y in range(grid.region.size.y):
 			for x in range(grid.region.size.x):
 				if not inside_level(Vector2(x*step+offset.x,y*step+offset.y)):grid.set_point_solid(Vector2i(x,y))
+				if self is YinContinentWorld:
+					var terrain=tile_farm.ground.get_cell_atlas_coords(Vector2i(x,y)).x
+					grid.set_point_weight_scale(Vector2i(x,y),1.0 if terrain==10 or terrain>=16 else 1.5)
 		# Rasterize each expanded obstacle locally rather than scan every obstacle per cell.
 		# A 32px navigation edge must not skip thin lanterns/posts between
 		# two free grid centres. Reserve cells by their footprint on the continent.

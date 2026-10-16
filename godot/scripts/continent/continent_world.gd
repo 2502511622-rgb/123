@@ -27,6 +27,7 @@ func _ready() -> void:
  environment=YinEnvironment.new();environment.world=self;add_child(environment)
  grass=YinLivingGrass.new();grass.world=self;add_child(grass)
  projectiles=YinProjectiles.new();projectiles.game=get_tree().get_first_node_in_group("yintian_game");projectiles.world=self;projectiles.z_index=18;add_child(projectiles)
+ var politics=YinTerritoryWorld28.new();politics.world=self;add_child(politics)
  call_deferred("install_interactions")
 func build_settlements() -> void:
  for side in YinContinent.CAPITALS:
@@ -91,8 +92,11 @@ func install_interactions() -> void:
   var beacon=YinInteractionBeacon.new();beacon.world=self;beacon.point=point;beacon.position=point.at;feedback.add_child(beacon)
 func nearest_interaction() -> String:
  var best=INF;var selected=""
+ for id in YinFactions.IDS:
+  var at=YinTerritory28.post(id);var distance_value=player.position.distance_to(at)
+  if distance_value<best and can_interact(at,56):selected="post28:"+id;best=distance_value
  var echo=YinWorldDistricts.nearest(self,player.position)
- if echo!="":selected="echo27:"+echo;best=player.position.distance_to(YinWorldDistricts.PLACES[echo].at+Vector2(0,18))
+ if echo!="" and player.position.distance_to(YinWorldDistricts.PLACES[echo].at+Vector2(0,18))<best:selected="echo27:"+echo;best=player.position.distance_to(YinWorldDistricts.PLACES[echo].at+Vector2(0,18))
  var chest=nearest_chest()
  if chest!="":selected="treasure";best=player.position.distance_to(YinContinent.to_world(YinAdventure.CHESTS[chest].zone,YinAdventure.CHESTS[chest].at))
  for p in YinContinent.points():

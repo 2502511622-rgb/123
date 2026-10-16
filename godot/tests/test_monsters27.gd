@@ -15,20 +15,13 @@ func run():
  for kind in YinMonsterArt.metadata():
   var image=YinMonsterArt.texture(kind).get_image()
   var hash_value=hash(image.get_data());check(not hashes.has(hash_value),"unique appearance "+kind);hashes[hash_value]=true
-  var signatures={}
-  for frame in range(4):
-   var combined=Image.create(96,96,false,Image.FORMAT_RGBA8);var overlap=false;var count=0
-   for part in range(6):
-    var cut=image.get_region(YinMonsterArt.region(frame*6+part))
-    for y in range(96):
-     for x in range(96):
-      var pixel=cut.get_pixel(x,y)
-      if pixel.a==0:continue
-      if combined.get_pixel(x,y).a>0:overlap=true
-      combined.set_pixel(x,y,pixel);count+=1
-   check(not overlap and count>150,"no duplicate pixels or opaque rectangular background "+kind+" frame "+str(frame))
-   signatures[hash(combined.get_data())]=true
-  check(signatures.size()==4,"four genuinely different source poses "+kind)
+  check(YinMonsterArt.metadata()[kind].get("independent_anatomy",false),kind+" uses complete separately authored body parts")
+  for part in range(6):
+   var cell=image.get_region(YinMonsterArt.region(part));var bounds=cell.get_used_rect()
+   check(bounds.has_area() and bounds.size.x<40 and bounds.size.y<40,kind+" complete transparent anatomical sprite "+str(part))
+  var transforms={}
+  for frame in range(8):transforms[str(YinMonsterArt.joint_pose(kind,"arm_left",frame*TAU/8,true,Vector3.ZERO))]=true
+  check(transforms.size()>=5,kind+" smooth keyed movement changes whole-limb transforms")
  check(YinEnemyPack.anatomical("ippon_datara").count("leg_left")==0 and YinEnemyPack.anatomical("wraith").is_empty(),"lore-specific one-legged and spectral anatomy")
  game=load("res://scenes/main.tscn").instantiate();root.add_child(game);await frames(6);game.close_modal()
  for e in get_nodes_in_group("enemies"):e.set_physics_process(false)

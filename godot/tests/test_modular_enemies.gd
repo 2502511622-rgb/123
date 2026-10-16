@@ -20,7 +20,7 @@ func run():
   var manifest=YinMonsterArt.metadata()[kind]
   var atlas=YinMonsterArt.texture(kind).get_image()
   check(atlas.get_size()==Vector2i(768,576) and atlas.get_pixel(0,0).a==0,kind+" normalized transparent authored frame atlas")
-  check(manifest.frames==4 and manifest.pivots.size()==4,kind+" four independent source poses with matching limb pivots")
+  check(manifest.source_poses==1 and manifest.motion_keys==8 and manifest.attack_keys==6,kind+" independent anatomical source with eight walk and six attack keys")
  game=load("res://scenes/main.tscn").instantiate();root.add_child(game);await frames(5);game.close_modal()
  game.state.minutes=900;game.state.weather="sun";game.player.invincible=1000
  for e in get_nodes_in_group("enemies")+get_nodes_in_group("faction_guards"):e.set_physics_process(false)

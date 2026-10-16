@@ -160,7 +160,8 @@ func run() -> void:
 	# Source joint transforms change with gait and remain shared by severed fragments.
 	var pose: Dictionary=enemy.art_pose()
 	var first: Array=YinActorArt.posed_parts(enemy.record.kind,pose,0.0,true,false)
-	var next: Array=YinActorArt.posed_parts(enemy.record.kind,pose,0.15,true,false)
+	var next_pose: Dictionary=pose.duplicate(true);next_pose.motion.gait+=1.5
+	var next: Array=YinActorArt.posed_parts(enemy.record.kind,next_pose,0.15,true,false)
 	check(first!=next,"monster joints have distinct movement poses")
 	var legacy: Dictionary=game.state.snapshot()
 	legacy.version=11
