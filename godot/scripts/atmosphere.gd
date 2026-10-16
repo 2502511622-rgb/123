@@ -30,6 +30,8 @@ func _process(delta: float) -> void:
 		lighting.set_shader_parameter("light_field", environment.light_field.viewport.get_texture())
 		lighting.set_shader_parameter("rain", environment.rain)
 		lighting.set_shader_parameter("wetness", environment.wetness)
+	lighting.set_shader_parameter("fog_tint",Color(YinRegionStyle.profile(state.zone).fog))
+	lighting.set_shader_parameter("focus_strength",0.25 if state.zone in ["hall","shop"] else 0.52)
 	lighting.set_shader_parameter("sunshine", clampf(1.0-absf(state.minutes-840)/480.0, 0, 1) if state.zone not in ["hall", "shop"] else 0.0)
 	lighting.set_shader_parameter("warmth", clampf(1.0-absf(state.minutes-1035)/150.0, 0, 1))
 	lighting.set_shader_parameter("lights", points)

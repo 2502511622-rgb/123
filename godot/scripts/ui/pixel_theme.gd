@@ -1,20 +1,21 @@
 class_name YinPixelTheme
 extends RefCounted
-const TEXT = Color("ded9bf")
-const MUTED = Color("acb6a2")
-const GOLD = Color("c6ac73")
-const INK = Color("152c2b")
+const TEXT = Color("eee3cb")
+const MUTED = Color("aaaab0")
+const GOLD = Color("cfad75")
+const INK = Color("1b202b")
 static func box(bg: String = "1b3330", border: String = "66745c") -> StyleBoxFlat:
 	var s := StyleBoxFlat.new()
-	s.bg_color = Color(bg)
+	var palettes: Dictionary={"1b3330":"202430","172e2cf2":"171c27ed","1f3732":"232936","2d493d":"343b49","3d5140":"444b57","223a33":"252c39","102624":"171c27","152c2b":"1b202b"}
+	s.bg_color = Color(palettes.get(bg,bg))
 	s.border_color = Color(border)
 	s.set_border_width_all(1)
-	s.set_corner_radius_all(1)
+	s.set_corner_radius_all(0)
 	s.content_margin_left = 8
 	s.content_margin_right = 8
 	s.content_margin_top = 5
 	s.content_margin_bottom = 5
-	s.shadow_color = Color("0d1e2099")
+	s.shadow_color = Color("090d16b0")
 	s.shadow_size = 3
 	s.shadow_offset = Vector2(1, 2)
 	return s

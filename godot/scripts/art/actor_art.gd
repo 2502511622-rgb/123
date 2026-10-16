@@ -1,7 +1,7 @@
 class_name YinActorArt
 extends RefCounted
 # Reference-based source sheets remain intact. Metadata measures alpha bounds and feet.
-const HERO = preload("res://assets/actors16/hero.png")
+const HERO = preload("res://assets/jrpg/hero_attack.png")
 const ROSTER = preload("res://assets/jrpg/roster.png")
 const TENGU = preload("res://assets/jrpg/tengu.png")
 const HERO_WALK = preload("res://assets/jrpg/hero_walk.png")
@@ -24,12 +24,13 @@ static func hero_column(walk: float, moving: bool, attack: float, hurt: float) -
 	return [0, 1, 0, 2][int(walk * 10) % 4] if moving else 0
 static func rect_from(values: Array) -> Rect2:
 	return Rect2(values[0], values[1], values[2], values[3])
-static func hero_pose(direction: Vector2, column: int) -> Dictionary:
-	var row: int = direction_row(direction)
-	var frame: Dictionary = atlas().hero[row][column]
-	var scale_value: float = 58.0 / float(atlas().hero[row][0].rect[3])
-	var source: Rect2 = rect_from(frame.rect)
-	return {"texture": HERO, "source": source, "destination": Rect2(-Vector2(frame.anchor[0], frame.anchor[1]) * scale_value, source.size * scale_value), "flip": row == 2 and column == 4}
+static func hero_pose(direction: Vector2,column: int) -> Dictionary:
+	var row: int=direction_row(direction)
+	if column in [1,2]:
+		var frames: Array=atlas().hero_walk[row]
+		return framed_pose(HERO_WALK,frames[1 if column==1 else 5],frames[0],58)
+	var frames: Array=atlas().hero_attack[row]
+	return framed_pose(HERO_ATTACK,frames[{0:5,3:1,4:3,5:4}.get(column,5)],frames[5],58)
 static func contact_shadow(canvas: Node2D, radius: float = 10.0, phase: float = 0.0, speed: float = 0.0) -> void:
 	canvas.draw_set_transform(Vector2(sin(phase)*speed*0.8,-1),0,Vector2(1.0+sin(phase*2.0)*speed*0.07,0.28-absf(sin(phase))*speed*0.035))
 	for i in range(3): canvas.draw_circle(Vector2.ZERO,radius*(1.0-float(i)*0.19),Color(0.08,0.12,0.10,0.05+float(i)*0.025))
@@ -48,7 +49,7 @@ static func hero_motion_pose(direction: Vector2, walk: float, moving: bool, atta
 	var walking: Array = atlas().hero_walk_alt if body==1 else atlas().hero_walk
 	var combat: Array = atlas().hero_attack_alt if body==1 else atlas().hero_attack
 	if attack > 0 or hurt > 0.08:
-		var column: int = 1 if hurt>0.08 else clampi(int((1.0-attack/maxf(duration,0.01))*6),0,5)
+		var column: int = 1 if hurt>0.08 else YinStrikeTimeline.pose_frame(1.0-attack/maxf(duration,0.01))
 		return framed_pose(HERO_ATTACK,combat[row][column],combat[row][5],50)
 	if not moving:return framed_pose(HERO_ATTACK,combat[row][5],combat[row][5],50)
 	var column: int = int(walk*16.0)%8
@@ -62,7 +63,7 @@ static func npc_texture(id: int) -> Texture2D:
 	if not npc_cache.has(id):
 		var frame: Dictionary = atlas().npc[0][clampi(id-1,0,5)]
 		var image: Image = NPC.get_image().get_region(rect_from(frame.rect))
-		image.resize(32, 48, Image.INTERPOLATE_LANCZOS)
+		image.resize(32, 48, Image.INTERPOLATE_NEAREST)
 		npc_cache[id] = ImageTexture.create_from_image(image)
 	return npc_cache[id]
 static func draw_pose(canvas: CanvasItem, pose: Dictionary, color: Color = Color.WHITE, offset: Vector2 = Vector2.ZERO) -> void:

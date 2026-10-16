@@ -73,7 +73,7 @@ func stamp(at: Vector2, icon: int) -> void:
 		draw_texture(image, Vector2(-image.get_width()*0.5,-image.get_height()+3))
 		draw_set_transform(Vector2.ZERO)
 		return
-	draw_texture_rect_region(YinArt.SCENERY, Rect2(at-Vector2(16,28),Vector2(32,32)),Rect2(icon*32,0,32,32))
+	draw_texture_rect(YinArt.texture("rock"),Rect2(at-Vector2(5,6),Vector2(10,7)),false,Color("c7c8b5aa"))
 
 func wall(rect: Rect2) -> void:
 	draw_rect(Rect2(rect.position + Vector2(6, 10), rect.size), Color("172e2c77"))

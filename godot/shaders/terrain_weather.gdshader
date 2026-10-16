@@ -1,18 +1,21 @@
 shader_type canvas_item;
 uniform float clock_time=0.0;
 uniform float wetness=0.0;
-uniform sampler2D material_atlas : filter_linear, repeat_disable;
+uniform sampler2D material_atlas : filter_nearest, repeat_disable;
 uniform sampler2D terrain_types : filter_nearest, repeat_disable;
 uniform vec2 map_size;
 uniform bool indoor = false;
+uniform vec4 turf_tint : source_color = vec4(0.35,0.44,0.29,1.0);
+uniform vec4 stone_tint : source_color = vec4(0.65,0.61,0.51,1.0);
+uniform vec4 water_tint : source_color = vec4(0.25,0.44,0.48,1.0);
 varying vec2 world_at;
 void vertex(){world_at=(MODEL_MATRIX*vec4(VERTEX,0.0,1.0)).xy;}
 void fragment(){
 	// TileMap batches may remap UVs: the actual map type comes from world coordinates.
 	vec2 tile_uv=(floor(world_at/32.0)+0.5)/(map_size/32.0);
 	float tile=floor(texture(terrain_types,tile_uv).r*255.0+0.5);
-	vec2 local_uv=clamp(fract(world_at/256.0),vec2(0.002),vec2(0.998))*0.5;
-	vec3 turf=mix(vec3(0.20,0.235,0.15),texture(material_atlas,local_uv).rgb,0.23);
+	vec2 local_uv=clamp(fract(floor(world_at)/96.0),vec2(0.002),vec2(0.998))*0.5;
+	vec3 turf=mix(turf_tint.rgb,texture(material_atlas,local_uv).rgb,0.55);
 	float macro=0.96+0.035*sin(world_at.x*0.017+cos(world_at.y*0.012));
 	vec3 surface=turf*macro;
 	if(tile>=16.0 || tile==10.0){
@@ -28,7 +31,7 @@ void fragment(){
 			float edge=max(max(left-p.x,p.x-right),max(top-p.y,p.y-bottom));
 			paving=1.0-smoothstep(-0.7,1.0,edge);
 		}
-		surface=mix(surface,mix(vec3(0.33,0.32,0.25),stone,0.74)*1.18,paving);
+		surface=mix(surface,mix(stone_tint.rgb,stone,0.55)*1.04,paving);
 		float sheen=pow(max(0.0,sin(world_at.y*0.11+world_at.x*0.05)),18.0);
 		surface*=1.0-wetness*0.15;
 		surface+=vec3(0.05,0.085,0.10)*sheen*wetness;
@@ -51,7 +54,7 @@ void fragment(){
 			}
 		}
 		float depth=smoothstep(0.0,27.0,shore);
-		surface=mix(vec3(0.24,0.31,0.25),vec3(0.065,0.17,0.19),depth);
+		surface=mix(water_tint.rgb*0.9,water_tint.rgb*0.35,depth);
 		surface+=vec3(0.035,0.06,0.055)*wave;
 		float sky=smoothstep(0.48,0.92,wave+fine*0.17);
 		surface+=vec3(0.16,0.20,0.19)*sky;

@@ -29,6 +29,7 @@ with tempfile.TemporaryDirectory(prefix='mossfield-checks-') as temp:
   ['--headless', '--script', 'res://tests/test_action_command.gd'],
   ['--headless', '--script', 'res://tests/test_models_map.gd'],
   ['--headless', '--script', 'res://tests/test_first_journey.gd'],
+  ['--headless', '--script', 'res://tests/test_hd_presentation.gd'],
   ['--headless', '--quit-after', '30']]
  for index,args in enumerate(commands):
   env['MOSSFIELD_RUNTIME_DIR']=str(Path(temp)/str(index))
@@ -43,4 +44,4 @@ with tempfile.TemporaryDirectory(prefix='mossfield-checks-') as temp:
   print(output)
   if run.returncode or 'SCRIPT ERROR' in output or 'ERROR:' in output:
    sys.exit(run.returncode or 1)
-print('PASS: import, twenty-three game suites, main-scene startup')
+print('PASS: import, twenty-four game suites, main-scene startup')

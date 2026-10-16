@@ -50,7 +50,8 @@ static func synth_cue(kind: String) -> AudioStreamWAV:
 	return stream
 func play_cue(kind: String) -> void:
 	if muted or DisplayServer.get_name()=="headless" or OS.get_environment("YINTIAN_SILENT")=="1":return
-	if not cues.has(kind):cues[kind]=synth_cue(kind)
+	if not cues.has(kind):
+		cues[kind]=load("res://assets/third_party/kenney/impact_heavy.ogg") if kind=="heavy" else (load("res://assets/third_party/kenney/impact_light.ogg") if kind in ["sword","tool","bullet"] else synth_cue(kind))
 	var voice: AudioStreamPlayer=null
 	for candidate in voices:
 		if not candidate.playing:voice=candidate;break

@@ -135,7 +135,7 @@ func _draw() -> void:
 	if attack_time>0:body_offset=YinActionMotion.body_offset(swing_direction,YinActionMotion.phase(attack_time,attack_duration),heavy_attack)
 	if attack_time<=0:
 		pose.gait_phase=gait
-		pose.gait_strength=gait_blend
+		pose.gait_strength=0.0 # Authored walk frames now supply the leg motion.
 	YinAppearance.pose_uniforms(material,pose)
 	var direction_row: int=YinActorArt.direction_row(facing)
 	art_hand=[Vector2(8,-24),Vector2(9,-23),Vector2(-11,-23),Vector2(11,-23)][direction_row]

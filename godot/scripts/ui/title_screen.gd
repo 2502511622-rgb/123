@@ -14,7 +14,7 @@ func _ready() -> void:
 	title.add_theme_color_override("font_color", Color("d4cfad"))
 	add_child(title)
 	var subtitle := Label.new()
-	subtitle.text = "槐阴村 · 十日祭帖"
+	subtitle.text = "缝合异境 · 巡夜者之旅"
 	subtitle.position = Vector2(50, 104)
 	subtitle.add_theme_font_size_override("font_size", 13)
 	subtitle.add_theme_color_override("font_color", Color("99ad9a"))
@@ -41,7 +41,7 @@ func _ready() -> void:
 		dialog.confirmed.connect(dialog.queue_free)
 	)
 	hint = Label.new()
-	hint.text = "种田谋生。杀鬼留骸。每夜点名。"
+	hint.text = "寻访异境。斩鬼拾装。守住人间。"
 	hint.position = Vector2(48, 307)
 	hint.add_theme_font_size_override("font_size", 12)
 	hint.add_theme_color_override("font_color", Color("91a28f"))
@@ -69,14 +69,14 @@ func new_game() -> void:
 	if SaveStore.save_game(FarmState.new()): get_tree().change_scene_to_file("res://scenes/main.tscn")
 	else: hint.text = "无法写入存档，请检查用户数据目录。"
 func _draw() -> void:
-	draw_rect(Rect2(0, 0, 640, 360), Color("132d30"))
+	draw_rect(Rect2(0, 0, 640, 360), Color("18212f"))
 	# A vignette built from real game assets, not a painted gameplay mockup.
 	for i in range(5):
-		var shade := Color("28433e")
+		var shade := Color("354858")
 		shade.a = 0.7 - i * 0.1
 		draw_colored_polygon(PackedVector2Array([Vector2(300, 200 + i * 16), Vector2(410, 115 + i * 18), Vector2(480, 144 + i * 10), Vector2(570, 90 + i * 16), Vector2(640, 130 + i * 20), Vector2(640, 360), Vector2(300, 360)]), shade)
 	draw_circle(Vector2(515, 68), 25, Color("c3c4a0"))
-	draw_circle(Vector2(525, 61), 23, Color("132d30"))
+	draw_circle(Vector2(525, 61), 23, Color("18212f"))
 	for x in [348, 390, 566, 610]: draw_texture(YinArt.texture("tree"), Vector2(x, 100 + x % 37), Color("738c7a"))
 	draw_texture(YinArt.texture("cottage"), Vector2(390, 174))
 	draw_texture(YinArt.texture("lantern"), Vector2(372, 258))

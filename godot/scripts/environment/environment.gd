@@ -45,6 +45,7 @@ func _ready() -> void:
 	terrain_material.shader = preload("res://shaders/terrain_weather.gdshader")
 	terrain_material.set_shader_parameter("material_atlas", YinWorldArt.GROUND)
 	terrain_material.set_shader_parameter("indoor", indoor)
+	YinRegionStyle.apply_terrain(terrain_material,world.state.zone)
 	world.tile_farm.ground.material = terrain_material
 	if world.state.zone == "farm":
 		soil_material = ShaderMaterial.new()

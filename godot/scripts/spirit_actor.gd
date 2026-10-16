@@ -17,7 +17,8 @@ var charge_direction: Vector2
 var time: float = 0
 var guard_anchor: Vector2
 var last_order: String = ""
-var navigation := AStarGrid2D.new()
+var model: YinMonsterRig
+var travelled: float=0
 var route: PackedVector2Array = []
 var repath: float = 0
 const TEXTURE = preload("res://assets/spirits.png")
@@ -34,14 +35,8 @@ func _ready() -> void:
 	hurtbox.actor = self
 	add_child(hurtbox)
 	guard_anchor = position
-	navigation.region = Rect2i(Vector2i.ZERO, Vector2i(game.world.level_size / 16))
-	navigation.cell_size = Vector2(16, 16)
-	navigation.offset = Vector2(8, 8)
-	navigation.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_ONLY_IF_NO_OBSTACLES
-	navigation.update()
-	for y in range(navigation.region.size.y):
-		for x in range(navigation.region.size.x):
-			navigation.set_point_solid(Vector2i(x, y), not game.world.is_safe_position(Vector2(x * 16 + 8, y * 16 + 8)))
+	if record.kind!="child":
+		model=YinMonsterRig.new();model.actor=self;add_child(model)
 func visible(enemy: Node2D) -> bool:
 	var ray := PhysicsRayQueryParameters2D.create(global_position - Vector2(0, 8), enemy.global_position - Vector2(0, 8), 1)
 	return get_world_2d().direct_space_state.intersect_ray(ray).is_empty()
@@ -93,9 +88,7 @@ func _physics_process(delta: float) -> void:
 	repath -= delta
 	if repath <= 0:
 		repath = 0.4
-		var start := Vector2i(position / 16)
-		var end := Vector2i(target / 16)
-		route = navigation.get_point_path(start, end, true) if navigation.is_in_boundsv(start) and navigation.is_in_boundsv(end) else PackedVector2Array()
+		route=game.world.path_to(position,target)
 		if route.size() > 0: route.remove_at(0)
 	while route.size() > 0 and position.distance_to(route[0]) < 6: route.remove_at(0)
 	velocity = position.direction_to(route[0]) * 105 if route.size() > 0 and position.distance_to(target) > 12 else Vector2.ZERO
@@ -103,22 +96,28 @@ func _physics_process(delta: float) -> void:
 		charge_duration -= delta
 		velocity = charge_direction * 160
 	if stun > 0: velocity = Vector2.ZERO
+	var before: Vector2=position
 	move_and_slide()
+	travelled+=position.distance_to(before)
 	queue_redraw()
 func _draw() -> void:
 	var row: int = {"water": 0, "bone": 1, "child": 2}.get(record.kind, 1)
 	YinActorArt.contact_shadow(self,10,time*11.0,clampf(velocity.length()/105.0,0,1))
 	if record.kind == "child":
-		draw_texture_rect_region(TEXTURE, Rect2(-16, -40 + roundf(sin(time * 2)), 32, 40), Rect2(0, row * 20, 16, 20), Color(1, 1, 1, 0.9))
+		var child_pose: Dictionary=YinActorArt.npc_pose(4,time,velocity.length()>2)
+		child_pose.destination=Rect2(child_pose.destination.position*0.72,child_pose.destination.size*0.72)
+		YinActorArt.draw_pose(self,child_pose,Color("a6d8cebb"))
 	else:
 		var direction: Vector2 = velocity.normalized() if velocity.length() > 2 else Vector2.DOWN
 		var pose: Dictionary = YinActorArt.enemy_pose(record.source_kind, direction, time, velocity.length() > 2, charge_duration > 0, false)
-		YinActorArt.draw_enemy(self, record.source_kind, pose, [], time, velocity.length() > 2, charge_duration > 0, Color("9ecdc7"))
+		pose.motion={"gait":travelled/26.0*TAU,"action":0.5 if cooldown>1.2 else 0.0}
+		model.present(record.source_kind,pose,[],time,velocity.length()>2,charge_duration>0,Color("9ecdc7"))
 
+	var height_value: float=46 if record.kind=="child" else float(YinBodyProfile.spec(record.source_kind).height)+8
 	var fraction: float = float(record.hp) / record.max_hp
-	draw_rect(Rect2(-16, -46, 32, 4), Color("263938"))
-	draw_rect(Rect2(-16, -46, 32 * fraction, 4), Color("7eafb0"))
-	draw_string(ThemeDB.fallback_font, Vector2(-15, -49), "Lv%d" % record.level, HORIZONTAL_ALIGNMENT_LEFT, -1, 9, Color("dfd1a8"))
+	draw_rect(Rect2(-16, -height_value, 32, 4), Color("263938"))
+	draw_rect(Rect2(-16, -height_value, 32 * fraction, 4), Color("7eafb0"))
+	draw_string(ThemeDB.fallback_font, Vector2(-15, -height_value-3), "Lv%d" % record.level, HORIZONTAL_ALIGNMENT_LEFT, -1, 9, Color("dfd1a8"))
 func receive_hit(damage: int) -> void:
 	if record.hp <= 0 or invincible > 0: return
 	var passive_type: String = YinAbilities.meta(record.source_kind).get("trait")

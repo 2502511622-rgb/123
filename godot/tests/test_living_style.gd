@@ -37,7 +37,7 @@ func run() -> void:
 		var frames_seen: Array = []
 		var attack_seen: Array = []
 		for i in range(8): frames_seen.append(YinActorArt.hero_motion_pose(direction,(i+0.1)/16.0,true,0,0).source)
-		for i in range(6): attack_seen.append(YinActorArt.hero_motion_pose(direction,0,false,0.22*(1.0-(i+0.1)/6.0),0).source)
+		for i in range(60): attack_seen.append(YinActorArt.hero_motion_pose(direction,0,false,0.22*(1.0-(i+0.1)/60.0),0).source)
 		var unique_walk: Dictionary = {}
 		var unique_attack: Dictionary = {}
 		for item in frames_seen: unique_walk[item]=true

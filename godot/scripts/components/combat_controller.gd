@@ -85,6 +85,7 @@ func trigger(method: String) -> bool:
 	if not ARSENAL.has(method): return false
 	var spec: YinWeaponSpec = ARSENAL[method]
 	var using_tool: bool = method == "sword" and game.player.held_item.begins_with("tool")
+	var contact_fraction: float=0.5
 	if using_tool:
 		if not TOOL_ATTACKS.has(game.player.held_item):
 			game.refresh("阴种与水壶用于经营；7 选择桃木剑，8/9/0 选择枪械。")
@@ -100,15 +101,18 @@ func trigger(method: String) -> bool:
 		spec = YinWeaponSpec.new()
 		spec.damage = weapon.damage
 		spec.reach = weapon.range
-		spec.action_time = 0.22 if game.player.held_item != "whip" else 0.3
-		spec.recovery = weapon.interval
+		var timeline:=YinStrikeTimeline.resolve(game.player.held_item)
+		spec.action_time=timeline.duration
+		spec.recovery=timeline.recovery
+		contact_fraction=timeline.contact
 	if method == "sword":
 		game.player.heavy_attack=heavy_requested
 		if heavy_requested:
-			spec.action_time=0.62 if game.player.held_item!="whip" else 0.7
-			spec.recovery=maxf(spec.recovery,0.82)
-			spec.damage=roundi(spec.damage*2.15)
-			spec.reach+=12
+			var timeline:=YinStrikeTimeline.resolve(game.player.held_item,true)
+			spec.action_time=timeline.duration
+			spec.recovery=maxf(spec.recovery,timeline.recovery)
+			spec.damage=roundi(spec.damage*timeline.damage_scale)
+			spec.reach+=timeline.reach_bonus
 		if not game.player.state_machine.begin("attack", spec.action_time): return false
 		game.player.swing_direction = game.player.facing
 		game.player.swing_sign *= -1
@@ -117,7 +121,7 @@ func trigger(method: String) -> bool:
 		game.action_cooldown = spec.recovery
 		game.player.hitbox.radius = spec.reach
 		var rolled: Dictionary = roll_hit(spec.damage, {} if using_tool else game.state.current_gear())
-		pending = {"gear_id": 0 if using_tool else game.state.equipped_gear, "payload": rolled, "actor": game.player, "facing": game.player.facing, "damage": rolled.damage, "heavy": heavy_requested, "delay": spec.action_time * 0.50, "method": "tool" if using_tool else "sword"}
+		pending = {"gear_id": 0 if using_tool else game.state.equipped_gear, "payload": rolled, "actor": game.player, "facing": game.player.facing, "damage": rolled.damage, "heavy": heavy_requested, "delay": spec.action_time * contact_fraction, "method": "tool" if using_tool else "sword"}
 	else:
 		var target: YinEnemy = spell_target(spec.reach)
 		if target == null:

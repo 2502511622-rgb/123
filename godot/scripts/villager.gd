@@ -39,10 +39,15 @@ func receive_hit(damage: int) -> void:
 	game.world.damage_number(position, damage, Color("d18c82"))
 	if record.hp == 0: game.notify_action(record.name + "受伤倒下，需要保护其他村民。")
 func _draw() -> void:
+	var available: bool=false
+	var ready_to_claim: bool=false
 	for id in YinAdventure.QUESTS:
-		if YinAdventure.QUESTS[id].npc != int(record.id) or not YinAdventure.available(game.state, id): continue
-		var mark: String = "!" if not game.state.quests.has(id) else ("?" if not game.state.quests[id].claimed and YinAdventure.progress(game.state, id) >= YinAdventure.QUESTS[id].target else "")
-		if mark != "" and record.hp > 0: draw_string(ThemeDB.fallback_font, Vector2(-3, -75), mark, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("f1cf83"))
+		if YinAdventure.QUESTS[id].npc!=int(record.id) or not YinAdventure.available(game.state,id):continue
+		if not game.state.quests.has(id):available=true
+		elif not game.state.quests[id].claimed and YinAdventure.progress(game.state,id)>=YinAdventure.QUESTS[id].target:ready_to_claim=true
+	if record.hp>0:
+		if ready_to_claim:draw_string(ThemeDB.fallback_font,Vector2(-3,-75),"?",HORIZONTAL_ALIGNMENT_LEFT,-1,14,Color("f1cf83"))
+		elif available:draw_texture_rect(preload("res://assets/third_party/kenney/interaction.png"),Rect2(-7,-85,14,14),false,Color("e3ce9f"))
 	YinActorArt.contact_shadow(self,9)
 	var pose: Dictionary = YinActorArt.npc_pose(int(record.id), walk_clock, walking, game.player.position.distance_to(position) < 50 and not walking)
 	YinActorArt.draw_pose(self, pose, Color("98aaa0") if record.hp == 0 else Color.WHITE)

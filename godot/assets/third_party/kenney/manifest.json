@@ -1,0 +1,26 @@
+{
+  "repository": "https://github.com/GDQuest/godot-open-rpg",
+  "commit": "d59f2f71bc046ac53239a4e590861269e7100a36",
+  "files": {
+    "interaction.png": {
+      "sha256": "54e50b4cdf11039be07da986e8335abdceea8369af5de80694ff98f525161c12",
+      "license": "CC0-1.0",
+      "author": "Kenney"
+    },
+    "impact_light.ogg": {
+      "sha256": "64d181339ecb33c7781f04f18036d6d8625176834e0b1d9d752a28390d89f91b",
+      "license": "CC0-1.0",
+      "author": "Kenney"
+    },
+    "impact_heavy.ogg": {
+      "sha256": "d4e3acdadfe7f63dd06d96efb443058dcb914b43f117ed8ed078c740c71ccf6a",
+      "license": "CC0-1.0",
+      "author": "Kenney"
+    },
+    "confirm.ogg": {
+      "sha256": "9f3a15ffd9d8e031e2afa17539baa4ef3655b2ad06fcf9d44e5d3bd0d0ec64e2",
+      "license": "CC0-1.0",
+      "author": "Kenney"
+    }
+  }
+}

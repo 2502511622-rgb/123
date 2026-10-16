@@ -1,16 +1,10 @@
-"""Measure transparent weapon cells and retain explicit equip grip anchors."""
+"""Index the current twelve-item pixel weapon atlas and explicit equip grips."""
 from pathlib import Path
-from PIL import Image
 import json
+from atlas_regions import grid_regions
 root=Path(__file__).resolve().parents[1]/'godot/assets/weapons19'
-im=Image.open(root/'atlas.png').convert('RGBA');a=im.getchannel('A');w,h=im.size
 names=['sword','silver_sword','ipetam','prajna','whip','pistol','smg','rifle','revolver','gatling','spellbook','curse_doll']
-grips=[(.15,.28),(.15,.30),(.15,.35),(.15,.32),(.15,.30),(.22,.74),(.22,.72),(.14,.63),(.17,.76),(.16,.64),(.45,.6),(.5,.60)]
-ys=[0,315,565,h];data={}
-for i,name in enumerate(names):
- row,col=divmod(i,4);l=round(col*w/4);r=round((col+1)*w/4);t=ys[row];b=ys[row+1]
- bounds=a.crop((l,t,r,b)).point(lambda x:255 if x>90 else 0).getbbox();assert bounds,name
- x,y,x2,y2=bounds;x+=l;x2+=l;y+=t;y2+=t
- data[name]={'rect':[x,y,x2-x,y2-y],'grip':list(grips[i])}
+grips=[(.12,.35),(.12,.50),(.12,.50),(.12,.50),(.15,.30),(.16,.74),(.22,.72),(.14,.63),(.17,.76),(.16,.64),(.5,.74),(.5,.60)]
+data={name:{'rect':region,'grip':list(grip)} for name,region,grip in zip(names,grid_regions(root/'atlas.png',4,3),grips)}
 (root/'atlas.json').write_text(json.dumps(data,indent=2)+'\n')
 print('Indexed',len(data),'equippable weapon sprites')

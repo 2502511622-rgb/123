@@ -10,7 +10,7 @@ class Stage extends Node2D:
 		draw_rect(Rect2(0, 0, 1280, 1080), Color("273332"))
 		var font: Font = ThemeDB.fallback_font
 		if mode == 0:
-			draw_string(font, Vector2(30, 30), "YINTIAN 0.16 / ENEMY ROSTER / IN-ENGINE SPRITES", HORIZONTAL_ALIGNMENT_LEFT, -1, 20, Color("dfcfaf"))
+			draw_string(font, Vector2(30, 30), "YINTIAN 0.22 / PIXEL YOKAI / IN-ENGINE RIGS", HORIZONTAL_ALIGNMENT_LEFT, -1, 20, Color("dfcfaf"))
 			for i in range(YinBalance.MONSTERS.size()):
 				var kind: String = YinBalance.MONSTERS.keys()[i]
 				var at := Vector2(128 + (i % 5) * 250, 216 + (i / 5) * 204)
@@ -38,7 +38,7 @@ class Stage extends Node2D:
 					YinActorArt.draw_enemy(self, "daitengu", pose, ["arm", "leg", "head"] if column == 3 else [], 0.18, column == 1, column == 2, Color.WHITE)
 					draw_set_transform(Vector2.ZERO)
 		else:
-			draw_string(font, Vector2(30, 36), "YINTIAN 0.16 / RUNTIME ANIMATION PREVIEW", HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color("dfcfaf"))
+			draw_string(font, Vector2(30, 36), "YINTIAN 0.22 / RUNTIME ANIMATION PREVIEW", HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color("dfcfaf"))
 			for i in range(4):
 				var direction: Vector2 = [Vector2.DOWN, Vector2.UP, Vector2.LEFT, Vector2.RIGHT][i]
 				var attack: float = maxf(0, 0.22 - fmod(clock, 1.0))

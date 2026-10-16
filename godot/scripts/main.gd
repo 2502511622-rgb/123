@@ -44,6 +44,8 @@ var weapon_popup: Panel
 var weapon_popup_label: Label
 var weapon_popup_time: float = 0
 var popup_weapon: String = ""
+var combat_icon: TextureRect
+var area_banner: YinAreaBanner
 
 func _ready() -> void:
 	YinDisplaySettings.load_settings()
@@ -133,6 +135,7 @@ func travel(zone_name: String) -> void:
 	var at: Vector2 = {"temple": YinTemple.ENTRY, "island": Vector2(224, 1408), "village": Vector2(180, 800), "sunken": Vector2(180, 800), "theatre": Vector2(180, 800), "forest": Vector2(180, 1120), "graveyard": Vector2(810, 535) if origin == "forest" else Vector2(182, 533), "hall": Vector2(480, 435), "shop": Vector2(480, 435)}.get(zone_name, Vector2(160, 218) if origin == "hall" else (Vector2(780, 260) if origin == "shop" else Vector2(810, 538)))
 	at=YinWorldLayout.arrival(origin,zone_name,at)
 	build_zone(zone_name, at)
+	if is_instance_valid(area_banner):area_banner.reveal(zone_name)
 	if zone_name == "island" and not state.island_journal.visited:
 		state.island_journal.visited = true
 		state.add_log("裂海异闻：抵达岛国，异乡民俗在此世相接。")
@@ -217,6 +220,7 @@ func style(bg: String = "172e2cf2", border: String = "788064") -> StyleBoxFlat:
 func panel(at: Vector2, size_value: Vector2, parent: Node = null) -> Panel:
 	var p := Panel.new()
 	p.position = at
+	p.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	p.size = size_value
 	p.add_theme_stylebox_override("panel", style())
 	(parent if parent != null else hud).add_child(p)
@@ -291,7 +295,13 @@ func build_hud() -> void:
 	hud.add_child(bag)
 	var combat_panel := panel(Vector2(10, 310), Vector2(190, 40))
 	combat_label = label("", Vector2(6, 4), combat_panel, 10)
-	combat_label.size = Vector2(178, 32)
+	combat_label.size = Vector2(138, 32)
+	combat_icon=TextureRect.new()
+	combat_icon.position=Vector2(6,5);combat_icon.size=Vector2(32,30)
+	combat_icon.expand_mode=TextureRect.EXPAND_IGNORE_SIZE
+	combat_icon.stretch_mode=TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	combat_icon.mouse_filter=Control.MOUSE_FILTER_IGNORE
+	combat_panel.add_child(combat_icon)
 	weapon_popup = panel(Vector2(216, 231), Vector2(208, 43))
 	weapon_popup.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	weapon_popup_label = label("",Vector2(8,4),weapon_popup,10)
@@ -313,6 +323,10 @@ func build_hud() -> void:
 	minimap.size = Vector2(118, 91)
 	minimap.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hud.add_child(minimap)
+	area_banner=YinAreaBanner.new()
+	area_banner.game=self
+	hud.add_child(area_banner)
+	area_banner.reveal(state.zone)
 
 func _physics_process(delta: float) -> void:
 	if modal != null: return
@@ -342,6 +356,9 @@ func _process(delta: float) -> void:
 		if exploration_clock >= 0.25:
 			exploration_clock = 0
 			update_exploration()
+		var threatened: bool=nearest_enemy(player.position,140)!=null
+		quest_tracker.modulate.a=move_toward(quest_tracker.modulate.a,0.22 if threatened else 1.0,delta*3)
+		quest_tracker.mouse_filter=Control.MOUSE_FILTER_IGNORE if threatened else Control.MOUSE_FILTER_STOP
 		weapon_popup_time = maxf(0,weapon_popup_time-delta)
 		weapon_popup.visible = weapon_popup_time > 0 and player.held_item==popup_weapon
 		message_time -= delta
@@ -372,7 +389,7 @@ func spawn_new_boss() -> void:
 func update_labels() -> void:
 	update_quest_tracker()
 	date_label.text = "第 %02d 日  %02d:%02d  %s" % [state.day, (int(state.minutes) % 1440) / 60, int(state.minutes) % 60, "雨" if state.weather == "rain" else ("夜" if state.minutes >= 1080 else "昼")]
-	stats_label.text = "%d 文  油 %d  新信 %d" % [state.money, state.oil, state.letters.filter(func(letter): return not letter.read).size()]
+	stats_label.text = "命%d · 气%d · %d文" % [state.health,state.energy,state.money]
 	health_bar.value = state.health
 	energy_bar.value = state.energy
 	energy_bar.tooltip_text = "气力 %d/100" % state.energy
@@ -380,6 +397,9 @@ func update_labels() -> void:
 	var gear: Dictionary = state.current_gear()
 	var spec: Dictionary = YinBalance.WEAPONS[gear.weapon]
 	var shown_name: String = TOOL_NAMES[int(player.held_item.substr(4))] if player.held_item.begins_with("tool") else spec.name
+	combat_icon.visible=not player.held_item.begins_with("tool")
+	if combat_icon.visible:combat_icon.texture=YinBalance.icon(gear.weapon)
+	combat_label.position.x=44 if combat_icon.visible else 6
 	combat_label.text = "%s  ·  %s\nF %d/2%s" % [shown_name, ("气力 %d" % state.energy if gear.weapon in YinBalance.MAGIC else "近战") if spec.ammo == "" else "%d / %d" % [gear.magazine, state.container_count("bag", spec.ammo)], state.skill_charges.seal, "    G %d/2" % state.skill_charges.fire if state.skill_ranks.fire > 0 else ""]
 	if not combat.reload_job.is_empty(): combat_label.text += " · 装填 %.1fs" % combat.reload_job.remaining
 	smart_button.text = "Z 智能劳作：" + ("开" if state.smart_farming else "手动")
@@ -533,11 +553,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		refresh("%s：%s" % [{"melee": "近战", "primary": "主武器", "secondary": "副武器"}[slot], YinBalance.gear_name(state.current_gear())])
 		return
 	if event is InputEventMouseMotion and player.attack_time <= 0:
-		player.aim_direction = player.position.direction_to(world.get_global_mouse_position())
+		player.aim_direction = YinAimResolver.direction(world,player,event.position)
 	if event is InputEventMouseButton and not event.pressed and event.button_index == MOUSE_BUTTON_LEFT: shooting_mouse = false
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT:
 		if player.held_item in YinBalance.MELEE:
-			var aim: Vector2=player.position.direction_to(world.get_global_transform_with_canvas().affine_inverse()*event.position)
+			var aim: Vector2=YinAimResolver.direction(world,player,event.position)
 			if aim!=Vector2.ZERO and player.attack_time<=0:player.facing=aim
 			if not combat.heavy() and state.energy<14:refresh("重击需要14气力。")
 		elif player.held_item in YinBalance.GUNS:combat.reload()
@@ -546,7 +566,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			if placement.place(world.get_global_mouse_position()): notify_action("放置完成。")
 			else: refresh("距离太远、田地或障碍物占用，未消耗物品。")
 		elif state.zone in ["graveyard", "forest", "sunken", "theatre", "village", "island", "temple"] or nearest_enemy(player.position, 65) != null or player.held_item in YinBalance.GUNS:
-			var aim: Vector2 = player.position.direction_to(world.get_global_mouse_position())
+			var aim: Vector2 = YinAimResolver.direction(world,player,event.position)
 			if aim != Vector2.ZERO and player.state_machine.current in ["idle", "walk"]:
 				player.facing = aim
 				player.aim_direction = aim
@@ -606,7 +626,7 @@ func open_modal(title_text: String, description: String) -> VBoxContainer:
 	hud.add_child(modal)
 	var dim := ColorRect.new()
 	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	dim.color = Color(0.08, 0.13, 0.15, 0.75)
+	dim.color = Color(0.035, 0.045, 0.075, 0.72)
 	modal.add_child(dim)
 	var card := panel(Vector2(88, 25), Vector2(464, 309), modal)
 	card.name = "ModalCard"
@@ -980,11 +1000,22 @@ func show_equipment() -> void:
 	show_character("穿戴")
 
 func equipment_content(box: VBoxContainer) -> void:
-	var loadout: Array[String] = []
-	for slot in ["melee", "primary", "secondary"]:
-		var worn: Array = state.equipment.filter(func(gear): return gear.id == state.weapon_slots[slot])
-		loadout.append("%s %s" % [{"melee": "近战", "primary": "主武器", "secondary": "副武器"}[slot], YinBalance.WEAPONS[worn[0].weapon].name if not worn.is_empty() else "—"])
-	paragraph(box, " · ".join(loadout), 10)
+	var slots:=HBoxContainer.new()
+	slots.add_theme_constant_override("separation",6)
+	box.add_child(slots)
+	for slot in ["melee","primary","secondary"]:
+		var worn: Array=state.equipment.filter(func(gear):return gear.id==state.weapon_slots[slot])
+		var text: String={"melee":"近战","primary":"主武器","secondary":"副武器"}[slot]+"\n"+(YinBalance.WEAPONS[worn[0].weapon].name if not worn.is_empty() else "空位")
+		var slot_button:=button(text,func():
+			if worn.is_empty():return
+			state.equip(worn[0].id);player.held_item=state.current_gear().weapon
+			persist();show_equipment()
+		,Vector2(160,35))
+		slot_button.disabled=worn.is_empty()
+		if not worn.is_empty():
+			slot_button.icon=YinBalance.icon(worn[0].weapon);slot_button.expand_icon=true
+			slot_button.add_theme_constant_override("icon_max_width",22)
+		slots.add_child(slot_button)
 	var displayed: Array = state.equipment.duplicate()
 	var opening_reward: bool=not YinFirstJourney.guide(state).is_empty() and state.quests.has("first_watch") and state.quests.first_watch.claimed
 	displayed.sort_custom(func(a,b):
@@ -1013,6 +1044,7 @@ func equipment_content(box: VBoxContainer) -> void:
 		equip_button.add_theme_font_size_override("font_size", 11)
 		equip_button.add_theme_stylebox_override("normal", style("223a33", YinBalance.COLORS[int(gear.quality)].darkened(0.35).to_html(false)))
 		equip_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		equip_button.alignment=HORIZONTAL_ALIGNMENT_LEFT
 		equip_button.icon = YinBalance.icon(gear.weapon)
 		equip_button.expand_icon=true
 		equip_button.add_theme_constant_override("icon_max_width",44)

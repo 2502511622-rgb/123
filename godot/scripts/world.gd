@@ -154,6 +154,7 @@ func boundary(rect: Rect2) -> void:
 	environment_revision += 1
 	var body := StaticBody2D.new()
 	body.position = rect.get_center()
+	if state.zone=="temple" and rect.position.x>=0 and rect.position.y>=0:YinWallFace.install(self,rect)
 	var collision := CollisionShape2D.new()
 	var shape := RectangleShape2D.new()
 	shape.size = rect.size
@@ -182,11 +183,11 @@ func prop(name_text: String, at: Vector2, offset: Vector2, collision_rect: Rect2
 	if sprite is YinWindSprite:
 		sprite.world = self
 		body.add_to_group("wind_trees")
-	var detailed: bool = name_text in ["cottage", "store", "tree", "lantern", "fence", "rock", "grave", "chest", "altar", "bed", "workbench", "npc"]
+	var detailed: bool=YinWorldArt.REGIONS.has(name_text) or name_text=="npc"
 	sprite.texture = YinArt.texture(name_text) if detailed or YinWorldArt.REGIONS.has(name_text) else load("res://assets/%s.png" % name_text)
 	sprite.name = "ArtSprite"
 	if name_text == "tree":
-		sprite.texture = YinArt.texture(["tree", "tree_autumn", "tree_pine"][absi(hash(at)) % 3])
+		sprite.texture = YinArt.texture(YinRegionStyle.tree(state.zone,at))
 	sprite.centered = false
 	sprite.position = Vector2(-48, -124) if name_text == "tree" else (Vector2(-16, -48) if name_text == "npc" else offset)
 	sprite.scale = Vector2.ONE if detailed else Vector2(2, 2)
@@ -268,6 +269,9 @@ func nearest_interaction() -> String:
 	return selected
 func install_interactions() -> void:
 	if not is_inside_tree():return
+	var composition:=YinRegionComposition.new()
+	composition.world=self
+	add_child(composition)
 	var trail:=YinTrailGuide.new()
 	trail.world=self
 	feedback.add_child(trail)
@@ -279,7 +283,8 @@ func install_interactions() -> void:
 		for id in YinAdventure.LANDMARKS:
 			var kind: String={"well":"well","camp":"brazier","temple":"shrine"}[id]
 			var at: Vector2=YinAdventure.LANDMARKS[id].at
-			prop(kind,at,Vector2(-24,-48),Rect2(-17,-15,34,15))
+			var size_value: Vector2=Vector2(YinWorldArt.SIZES[kind])
+			prop(kind,at,Vector2(-size_value.x*0.5,-size_value.y+2),Rect2(-17,-15,34,15))
 
 func effect(at: Vector2, tint: Color) -> void:
 	var burst := YinPixelBurst.new()
