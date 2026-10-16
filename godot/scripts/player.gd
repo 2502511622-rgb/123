@@ -146,20 +146,24 @@ func _physics_process(delta: float) -> void:
 	var travelled: float=position.distance_to(previous_position)
 	animation_time += travelled / SPEED
 	gait_blend=move_toward(gait_blend,minf(1,travelled/maxf(delta*SPEED,0.01)),delta*12)
-	if velocity.length() < 2: animation_time = 0
 	queue_redraw()
 	weapon_layer.show_behind_parent=visual_facing.y< -0.5
 	weapon_layer.material.set_shader_parameter("wetness",material.get_shader_parameter("wetness"))
 	weapon_layer.queue_redraw()
 
+func art_pose() -> Dictionary:
+	var pose: Dictionary = YinActorArt.hero_motion_pose(visual_facing, animation_time, gait_blend > .01, attack_time, hit_feedback, attack_duration,int(appearance.body))
+	if attack_time<=0 and dodge_time<=0 and hit_feedback<=.08:
+		pose.gait_phase=animation_time*16.0*TAU/8.0
+		pose.gait_strength=gait_blend
+		pose.gait_row=YinActorArt.direction_row(visual_facing)
+	return pose
+
 func _draw() -> void:
-	var pose: Dictionary = YinActorArt.hero_motion_pose(visual_facing, animation_time, velocity.length() > 2, attack_time, hit_feedback, attack_duration,int(appearance.body))
+	var pose: Dictionary = art_pose()
 	var gait: float=animation_time*16.0*TAU/8.0
 	body_offset=Vector2(sin(gait)*0.5,-absf(sin(gait))*1.1)*gait_blend
 	if attack_time>0:body_offset=YinActionMotion.body_offset(swing_direction,YinActionMotion.phase(attack_time,attack_duration),heavy_attack)
-	if attack_time<=0:
-		pose.gait_phase=gait
-		pose.gait_strength=0.0 # Authored walk frames now supply the leg motion.
 	YinAppearance.pose_uniforms(material,pose)
 	var direction_row: int=YinActorArt.direction_row(visual_facing)
 	art_hand=[Vector2(8,-24),Vector2(9,-23),Vector2(-11,-23),Vector2(11,-23)][direction_row]

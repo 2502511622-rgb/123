@@ -13,11 +13,13 @@ var push_distance: float=0
 static func snapshot(enemy: YinEnemy) -> Dictionary:
  var pose: Dictionary=enemy.art_pose()
  var rig_pose: Dictionary={}
+ var rig_scale: Dictionary={}
  if YinEnemyPack.enabled(enemy) and enemy.model.modular!=null:
   for part in enemy.model.modular.joints:
    var t: Transform2D=enemy.model.modular.joints[part].transform
    rig_pose[part]=[t.origin.x,t.origin.y+enemy.model.position.y,t.get_rotation()]
- return {"anatomy28":true,"frame27":enemy.model.modular.frame_index if enemy.model.modular!=null else 0,"rig_pose":rig_pose,"modular":YinEnemyPack.enabled(enemy),"key":pose.part_key,"source":[pose.source.position.x,pose.source.position.y,pose.source.size.x,pose.source.size.y],"destination":[pose.destination.position.x,pose.destination.position.y,pose.destination.size.x,pose.destination.size.y],"flip":pose.flip,"gait":float(pose.motion.get("gait",0)),"action":float(pose.motion.get("action",0)),"moving":enemy.velocity.length()>2,"attacking":enemy.art_strike>0,"clock":enemy.art_clock,"missing":enemy.record.get("severed",[]).duplicate(),"human":enemy.record.get("faction","")=="village","face":-1 if enemy.art_facing.x<0 else 1}
+   rig_scale[part]=[t.get_scale().x,t.get_scale().y]
+ return {"anatomy28":true,"frame27":enemy.model.modular.frame_index if enemy.model.modular!=null else 0,"rig_pose":rig_pose,"rig_scale":rig_scale,"modular":YinEnemyPack.enabled(enemy),"key":pose.part_key,"source":[pose.source.position.x,pose.source.position.y,pose.source.size.x,pose.source.size.y],"destination":[pose.destination.position.x,pose.destination.position.y,pose.destination.size.x,pose.destination.size.y],"flip":pose.flip,"gait":float(pose.motion.get("gait",0)),"action":float(pose.motion.get("action",0)),"moving":enemy.velocity.length()>2,"attacking":enemy.art_strike>0,"clock":enemy.art_clock,"missing":enemy.record.get("severed",[]).duplicate(),"human":enemy.record.get("faction","")=="village","face":-1 if enemy.art_facing.x<0 else 1}
 static func valid(value: Variant,kind: String) -> bool:
  if not value is Dictionary:return false
  if value.has("anatomy28") and not value.anatomy28 is bool:return false
@@ -29,6 +31,14 @@ static func valid(value: Variant,kind: String) -> bool:
    if part not in YinEnemyPack.PARTS or not value.rig_pose[part] is Array or value.rig_pose[part].size()!=3:return false
    for n in value.rig_pose[part]:
     if not (n is int or n is float) or not is_finite(float(n)) or absf(float(n))>4096:return false
+ # Optional for old saves: the walking rig now also bends by shortening a leg.
+ if value.has("rig_scale"):
+  if not value.rig_scale is Dictionary:return false
+  for part in value.rig_scale:
+   var scale_value=value.rig_scale[part]
+   if part not in YinEnemyPack.PARTS or not scale_value is Array or scale_value.size()!=2:return false
+   for n in scale_value:
+    if not (n is int or n is float) or not is_finite(float(n)) or n<.1 or n>4:return false
  if value.get("key") not in YinActorArt.part_index():return false
  if value.key!=kind and not (kind=="daitengu" and value.key.begins_with("daitengu:")):return false
  for key in ["source","destination"]:
@@ -66,7 +76,8 @@ func bind(data: Dictionary,falling: bool=false) -> void:
   modular.setup(data.kind);modular.frozen_frame=int(death.get("frame27",0));modular.present(data.kind,missing,clock,moving,attacking,side<0,Color("aaa99b"))
   if death.get("anatomy28",false):
    for part in death.get("rig_pose",{}):
-    var t=death.rig_pose[part];modular.joints[part].transform=Transform2D(t[2],Vector2(t[0],t[1]))
+    var t=death.rig_pose[part];var scale_value=death.get("rig_scale",{}).get(part,[1.0,1.0])
+    modular.joints[part].transform=Transform2D(t[2],Vector2(t[0],t[1])).scaled_local(Vector2(scale_value[0],scale_value[1]))
   modular.align_stumps()
   modular.animation.stop();modular.animation.set_process(false)
   parts=[]

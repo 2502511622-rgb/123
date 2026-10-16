@@ -85,24 +85,7 @@ static func draw_pose(canvas: CanvasItem, pose: Dictionary, color: Color = Color
 		canvas.draw_primitive(vertices,PackedColorArray([color,color,color,color]),PackedVector2Array([uv.position,Vector2(uv.end.x,uv.position.y),uv.end,Vector2(uv.position.x,uv.end.y)]),pose.texture)
 		return
 	if pose.has("gait_phase") and float(pose.get("gait_strength",0))>0.01:
-		# Foot planting deforms the lower legs around fixed hip points, rather than
-		# translating the whole sprite. UVs stay on the authored walking frame.
-		var tex_size: Vector2=pose.texture.get_size()
-		for band in range(20):
-			for side in range(2):
-				var f0:=Vector2(float(side)*0.5,float(band)/20.0)
-				var f1:=f0+Vector2(0.5,1.0/20.0)
-				var fractions:=PackedVector2Array([f0,Vector2(f1.x,f0.y),f1,Vector2(f0.x,f1.y)])
-				var vertices:=PackedVector2Array()
-				var uvs:=PackedVector2Array()
-				var step: float=sin(float(pose.gait_phase)+(PI if side==0 else 0.0))
-				for f in fractions:
-					var vertex_value: Vector2=destination.position+destination.size*f
-					var foot_weight: float=smoothstep(0.66,1.0,f.y)*float(pose.gait_strength)*smoothstep(0.0,0.22,absf(f.x-0.5))
-					vertex_value+=Vector2(step*3.2,-maxf(0,step)*4.0)*foot_weight
-					vertices.append(vertex_value)
-					uvs.append((pose.source.position+pose.source.size*f)/tex_size)
-				canvas.draw_primitive(vertices,PackedColorArray([color,color,color,color]),uvs,pose.texture)
+		YinFootstep.draw(canvas,pose,destination,color,offset)
 		return
 	var bands: int = animation_bands if not pose.get("rigid",false) and pose.texture in [HERO, HERO_WALK, HERO_WALK_ALT, HERO_ATTACK, NPC] else 1
 	for band in range(bands):
@@ -133,8 +116,9 @@ static func posed_parts(kind: String, pose: Dictionary, clock: float, moving: bo
 		var phase=float(pose.get("motion",{}).get("gait",clock*10))
 		var action=YinMonsterArt.attack_key(YinMonsterArt.action_for(pose.get("motion",{}),attack))
 		var transform=YinMonsterArt.joint_pose(kind,part,phase,moving,action,-1,atan2(pose.get("aim",Vector2.RIGHT).y,absf(pose.get("aim",Vector2.RIGHT).x)))
-		var offset=transform.origin-cut.pivot
-		cut.destination.position+=offset;cut.pivot+=offset
+		var part_scale=transform.get_scale()
+		cut.destination.position=transform.origin+(cut.destination.position-cut.pivot)*part_scale
+		cut.destination.size*=part_scale;cut.pivot=transform.origin
 		cut.rotation=transform.get_rotation();cut.origin_texture=cut.texture;cut.origin_region=cut.source
 		result.append({"part":{"arm_right":"arm","leg_right":"leg"}.get(part,part),"pose":cut})
 	return result

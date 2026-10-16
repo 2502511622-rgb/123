@@ -31,10 +31,13 @@ static func attack_key(progress: float) -> Vector3:
  return keys[i].lerp(keys[mini(i+1,5)],smoothstep(0,1,p-i))
 static func joint_pose(kind: String,part: String,phase: float,moving: bool,action: Vector3,hit: int=-1,aim: float=0) -> Transform2D:
  var base=pivot(kind,0,part)-Vector2(48,90);var gait=walk_key(phase) if moving else Vector3.ZERO
- var angle=0.0;var step_sign=-1.0 if part.ends_with("left") else 1.0
+ var angle=0.0;var leg_scale=1.0;var step_sign=-1.0 if part.ends_with("left") else 1.0
  if part.begins_with("leg_"):
   var foot=walk_key(phase+(PI if step_sign<0 else 0)) if moving else Vector3.ZERO
-  base+=Vector2(foot.x*2,foot.y);angle=foot.z*.6
+  # Rotate and shorten around the fixed hip: the whole foot visibly lifts,
+  # without moving the leg's attachment away from the torso.
+  angle=foot.x*.40
+  leg_scale=1-maxf(0,foot.x)*.20
  elif part.begins_with("arm_"):
   angle=-gait.z*step_sign+action.x*(1.0 if step_sign>0 else -.35)
   if part=="arm_right":angle+=aim*clampf(absf(action.x),0,1)
@@ -43,7 +46,7 @@ static func joint_pose(kind: String,part: String,phase: float,moving: bool,actio
   angle=action.z*.30;base+=Vector2(action.y*.35,-absf(gait.x)*.65)
  elif part=="head":base+=Vector2(action.y*.20,-absf(gait.x)*.4);angle=-action.z*.1
  if hit>=0:base.x+=[-3.0,2.0,0.0][mini(hit,2)]
- return Transform2D(angle,base)
+ return Transform2D(angle,base).scaled_local(Vector2(1,leg_scale))
 
 static func action_for(motion: Dictionary,attack: bool) -> float:
  var state: String=motion.get("state","");var value=float(motion.get("action",0))
