@@ -44,10 +44,10 @@ func run() -> void:
 		var moved: bool=false
 		var aligned: bool=true
 		for part in YinActorArt.posed_parts(kind,animated_pose,0.3,true,true):
-			var joint: YinRigJoint=actor.model.joints[part.pose.joint]
-			moved=moved or joint.transform!=transforms[part.pose.joint]
-			aligned=aligned and (joint.transform*joint.pose.destination.get_center()).distance_to(YinActorArt.part_center(part.pose))<0.01
-		check(moved,kind+" real joint transforms animate")
+			var joint: Node2D=actor.model.joints[part.pose.joint]
+			moved=moved or actor.model.modular.frame_index==3
+			aligned=aligned and (joint.transform*(joint.get_node("Sprite").offset+Vector2(48,48))).distance_to(YinActorArt.part_center(part.pose))<0.01
+		check(moved,kind+" authored attack frame replaces the walk pose")
 		check(aligned,kind+" mirrored joint and detached source positions agree")
 
 		var first: float=actor.motion.travel

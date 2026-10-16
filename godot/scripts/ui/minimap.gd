@@ -82,8 +82,15 @@ func draw_continent() -> void:
 		draw_rect(Rect2(point(origin),Vector2(3200,2400)/YinContinent.SIZE*(size-Vector2(10,23))),Color(YinFactions.COLORS[id],0.15))
 	for river in [Rect2(3104,0,192,4800),Rect2(0,2304,6400,192)]:
 		draw_rect(Rect2(point(river.position),river.size/YinContinent.SIZE*(size-Vector2(10,23))),Color("56828b"))
-	for y in [1056,3552]:draw_line(point(Vector2(256,y)),point(Vector2(6144,y)),Color("8b8665"),1)
-	for x in [1504,4896]:draw_line(point(Vector2(x,256)),point(Vector2(x,4544)),Color("8b8665"),1)
+	for route in YinWorldDistricts.ROUTES:
+		for i in range(route.size()-1):draw_line(point(route[i]),point(route[i+1]),Color("8b8665"),1)
+	if size.x>200:
+		for id in YinWorldDistricts.PLACES:
+			var place: Dictionary=YinWorldDistricts.PLACES[id]
+			var known=game.state.world_echoes.has(id)
+			var at=point(place.at)
+			draw_circle(at,1.8,Color("b8c999") if known else Color("d6bb76"))
+			if known:draw_string(preload("res://assets/mossfield-font.ttf"),at+Vector2(3,9),place.name,HORIZONTAL_ALIGNMENT_LEFT,-1,8,Color("d1c6ad"))
 	for b in YinContinent.BRIDGES:draw_rect(Rect2(point(b.position),b.size/YinContinent.SIZE*(size-Vector2(10,23))).grow(1),Color("c1a276"))
 	for id in YinContinent.CAPITALS:
 		var at: Vector2=point(YinContinent.CAPITALS[id])

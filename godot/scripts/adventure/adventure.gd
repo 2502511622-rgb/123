@@ -32,7 +32,7 @@ const QUESTS = {
 	"grave_patrol": {"npc": 1, "name": "清理乱葬坡", "kind": "hunt", "target": 4, "money": 65, "weapon": "whip", "description": "在乱葬坡击败四只鬼物，回村向柳伯复命。"},
 	"lamp_supplies": {"npc": 4, "name": "修复村口纸灯", "kind": "delivery", "target": 3, "item": "wood", "money": 45, "weapon": "revolver", "description": "交给灯匠小满三份槐木，修好村口纸灯。"},
 	"forge_supplies": {"npc": 3, "name": "重铸银剑", "kind": "delivery", "target": 3, "item": "scrap", "money": 30, "weapon": "silver_sword", "description": "交给铁匠阿祁三份零件，换取一把银剑。"},
-	"lost_records": {"npc": 6, "name": "后山遗迹调查", "kind": "survey", "target": 3, "money": 100, "weapon": "spellbook", "description": "调查后山的断碑营地、枯井和山门遗址，再找砚青。"}
+	"lost_records": {"npc": 6, "name": "后山遗迹调查", "kind": "survey", "target": 3, "money": 100, "weapon": "spellbook", "description": "调查后山遗址或四方领地的遗留物，记录三处见闻，再找砚青。"}
 }
 static func accept(state, id: String) -> String:
 	if not QUESTS.has(id): return "没有这项委托。"
@@ -53,7 +53,7 @@ static func progress(state, id: String) -> int:
 	if spec.kind == "island_boss": return 1 if spec.boss in state.island_journal.defeated else 0
 	if spec.kind == "island_relic": return 1 if "ryomen_sukuna" in state.island_journal.defeated else 0
 	if spec.kind == "delivery": return mini(spec.target, state.container_count("bag", spec.item))
-	if spec.kind == "survey": return mini(spec.target, state.visited_landmarks.size())
+	if spec.kind == "survey": return mini(spec.target, state.visited_landmarks.size()+state.world_echoes.size())
 	return mini(spec.target, int(state.quests[id].progress))
 static func on_kill(state, enemy: Dictionary) -> void:
 	if enemy.zone=="graveyard" and not enemy.has("war_id") and state.quests.has("first_watch") and not state.quests.first_watch.claimed:

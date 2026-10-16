@@ -34,11 +34,16 @@ with tempfile.TemporaryDirectory(prefix='mossfield-checks-') as temp:
   ['--headless', '--script', 'res://tests/test_performance_corpses.gd'],
   ['--headless', '--script', 'res://tests/test_modular_enemies.gd'],
   ['--headless', '--script', 'res://tests/test_regional_world.gd'],
+  ['--headless', '--script', 'res://tests/test_monsters27.gd'],
+  ['--headless', '--script', 'res://tests/test_district_routes27.gd'],
+  ['--headless', '--script', 'res://tests/playtest27.gd'],
+  ['--headless', '--fixed-fps', '60', '--script', 'res://tests/test_bridge_invasion.gd'],
+  ['--headless', '--fixed-fps', '60', '--script', 'res://tests/test_war_march.gd'],
   ['--headless', '--quit-after', '30']]
  for index,args in enumerate(commands):
   env['MOSSFIELD_RUNTIME_DIR']=str(Path(temp)/str(index))
   try:
-   run=subprocess.run(['sh',str(root/'scripts/godot.sh'),*args],cwd=root,env=env,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True,timeout=120 if "res://tests/test_continent.gd" in args else 60)
+   run=subprocess.run(['sh',str(root/'scripts/godot.sh'),*args],cwd=root,env=env,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True,timeout=180 if any(name in args for name in ["res://tests/test_continent.gd","res://tests/test_bridge_invasion.gd","res://tests/test_war_march.gd"]) else 90)
   except subprocess.TimeoutExpired as error:
    output=error.stdout or b''
    print(output.decode(errors='replace') if isinstance(output,bytes) else output)

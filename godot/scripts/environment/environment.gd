@@ -47,6 +47,7 @@ func _ready() -> void:
 	terrain_material = ShaderMaterial.new()
 	terrain_material.shader = preload("res://shaders/terrain_weather.gdshader")
 	terrain_material.set_shader_parameter("material_atlas", YinWorldArt.GROUND)
+	terrain_material.set_shader_parameter("regional_material",preload("res://assets/districts27/ground.png"))
 	terrain_material.set_shader_parameter("indoor", indoor)
 	terrain_material.set_shader_parameter("continent",world is YinContinentWorld)
 	YinRegionStyle.apply_terrain(terrain_material,world.state.zone)

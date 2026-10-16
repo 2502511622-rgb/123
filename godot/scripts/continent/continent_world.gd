@@ -10,7 +10,7 @@ func _ready() -> void:
  for y in range(150):
   for x in range(200):
    var at=Vector2(x*32+16,y*32+16)
-   var road=absf(at.y-1056)<48 or absf(at.y-3552)<48 or absf(at.x-1504)<48 or absf(at.x-4896)<48
+   var road=false
    var id=11 if YinContinent.water(at) else (10 if road else absi(hash(Vector2i(x,y)))%8)
    for b in YinContinent.BRIDGES:
     if b.has_point(at):id=10
@@ -40,7 +40,7 @@ func build_settlements() -> void:
    var size_value: Vector2=Vector2(YinWorldArt.SIZES[building])
    prop(building,center+offset,Vector2(-size_value.x/2,-size_value.y),Rect2(-20,-24,40,24))
   prop("lantern",center+Vector2(-64,-48),Vector2(-16,-48),Rect2(-4,-6,8,6))
- build_biomes()
+ YinWorldDistricts.build(self)
  prop("cottage",YinContinent.HOME+Vector2(0,-48),Vector2(-80,-132),Rect2(-60,-90,120,84))
  prop("chest",YinContinent.HOME+Vector2(-96,0),Vector2(-20,-30),Rect2(-15,-20,30,20))
  prop("store",Vector2(1680,3488),Vector2(-64,-116),Rect2(-48,-80,96,70))
@@ -53,6 +53,11 @@ func build_settlements() -> void:
    if at.distance_to(p.at)<170:clear=true
   for npc in state.villagers:
    if at.distance_to(Vector2(npc.at[0],npc.at[1]))<90:clear=true
+  for place in YinWorldDistricts.PLACES.values():
+   if at.distance_to(place.at)<110:clear=true
+  for route in YinWorldDistricts.ROUTES:
+   for j in range(route.size()-1):
+    if at.distance_to(Geometry2D.get_closest_point_to_segment(at,route[j],route[j+1]))<90:clear=true
   if clear:continue
   if not is_safe_position(at,Vector2(24,20)):continue
   var side=YinContinent.faction(at)
@@ -71,28 +76,6 @@ func build_settlements() -> void:
 func biome_prop(kind: String,at: Vector2,width: float=40) -> void:
  var size_value: Vector2i=YinBiomeArt.SIZES[kind]
  prop(kind,at,Vector2(-size_value.x/2,-size_value.y),Rect2(-width/2,-24,width,24))
-func build_biomes() -> void:
- # Main military corridors and all river crossings remain open.
- biome_prop("desert_hall",Vector2(1312,864),132)
- biome_prop("desert_buddha",Vector2(1744,864),60)
- for at in [Vector2(1248,1344),Vector2(1760,1344)]:biome_prop("desert_stupa",at,34)
- for at in [Vector2(1008,832),Vector2(1952,1408),Vector2(1728,624)]:biome_prop("desert_columns",at,56)
- for wall in [Rect2(1088,608,288,20),Rect2(1632,608,288,20),Rect2(1088,1456,288,20),Rect2(1632,1456,288,20)]:
-  boundary(wall);YinWallFace.install(self,wall)
- for y in [704,960,1312,1568]:
-  biome_prop("edo_shop",Vector2(4672,y),96)
-  biome_prop("edo_house",Vector2(5120,y+16),96)
-  biome_prop("street_lantern",Vector2(4800,y+20),10)
-  biome_prop("street_lantern",Vector2(4992,y+20),10)
- biome_prop("broken_torii",Vector2(4656,1472),54)
- for at in [Vector2(4544,3280),Vector2(5216,3296),Vector2(4544,3824),Vector2(5248,3856)]:
-  biome_prop("mountain_crag",at,64)
-  biome_prop("burial_cairn",at+Vector2(112,48),42)
- for at in [Vector2(4672,3408),Vector2(5072,3728),Vector2(5344,3504)]:biome_prop("dead_pine",at,22)
- biome_prop("mountain_hut",Vector2(4704,3840),68)
- add_sign(Vector2(1280,1184),"大佛寺 · 沙海残殿")
- add_sign(Vector2(4720,1136),"岛国 · 江户荒街")
- add_sign(Vector2(4720,3640),"乱葬岗 · 荒岭孤坟")
 func _process(delta: float) -> void:
  time+=delta
 func _draw() -> void:
@@ -108,6 +91,8 @@ func install_interactions() -> void:
   var beacon=YinInteractionBeacon.new();beacon.world=self;beacon.point=point;beacon.position=point.at;feedback.add_child(beacon)
 func nearest_interaction() -> String:
  var best=INF;var selected=""
+ var echo=YinWorldDistricts.nearest(self,player.position)
+ if echo!="":selected="echo27:"+echo;best=player.position.distance_to(YinWorldDistricts.PLACES[echo].at+Vector2(0,18))
  var chest=nearest_chest()
  if chest!="":selected="treasure";best=player.position.distance_to(YinContinent.to_world(YinAdventure.CHESTS[chest].zone,YinAdventure.CHESTS[chest].at))
  for p in YinContinent.points():

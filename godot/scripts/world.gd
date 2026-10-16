@@ -199,8 +199,8 @@ func prop(name_text: String, at: Vector2, offset: Vector2, collision_rect: Rect2
 		body.add_to_group("wind_trees")
 	var biome: bool=YinBiomeArt.SIZES.has(name_text)
 	if biome:body.set_meta("biome_prop",name_text)
-	var detailed: bool=biome or YinWorldArt.REGIONS.has(name_text) or name_text=="npc"
-	sprite.texture = YinBiomeArt.texture(name_text) if biome else (YinArt.texture(name_text) if detailed or YinWorldArt.REGIONS.has(name_text) else load("res://assets/%s.png" % name_text))
+	var detailed: bool=biome or YinWorldDetailArt.SIZES.has(name_text) or YinWorldArt.REGIONS.has(name_text) or name_text=="npc"
+	sprite.texture = YinWorldDetailArt.texture(name_text) if YinWorldDetailArt.SIZES.has(name_text) else YinBiomeArt.texture(name_text) if biome else (YinArt.texture(name_text) if detailed or YinWorldArt.REGIONS.has(name_text) else load("res://assets/%s.png" % name_text))
 	sprite.name = "ArtSprite"
 	if name_text == "tree":
 		sprite.texture = YinArt.texture(YinRegionStyle.tree(YinContinent.faction(at) if self is YinContinentWorld else state.zone,at))
@@ -548,13 +548,17 @@ func path_to(start: Vector2,end: Vector2,half_size: Vector2=Vector2(7,5)) -> Pac
 			for x in range(grid.region.size.x):
 				if not inside_level(Vector2(x*step+offset.x,y*step+offset.y)):grid.set_point_solid(Vector2i(x,y))
 		# Rasterize each expanded obstacle locally rather than scan every obstacle per cell.
+		# A 32px navigation edge must not skip thin lanterns/posts between
+		# two free grid centres. Reserve cells by their footprint on the continent.
+		var grid_margin:=Vector2.ONE*(step*0.5) if self is YinContinentWorld else Vector2.ZERO
+		var clearance: Vector2=half_size+grid_margin
 		for obstacle in obstacles:
-			var bounds:=Rect2(obstacle.position-half_size+Vector2(0,4),obstacle.size+half_size*2)
+			var bounds:=Rect2(obstacle.position-clearance+Vector2(0,4),obstacle.size+clearance*2)
 			var low:=Vector2i(((bounds.position-offset)/step).floor()).max(Vector2i.ZERO)
 			var high:=Vector2i(((bounds.end-offset)/step).ceil()).min(grid.region.size-Vector2i.ONE)
 			for y in range(low.y,high.y+1):
 				for x in range(low.x,high.x+1):
-					var body:=Rect2(Vector2(x*step+offset.x,y*step+offset.y-4)-half_size,half_size*2)
+					var body:=Rect2(Vector2(x*step+offset.x,y*step+offset.y-4)-clearance,clearance*2)
 					if obstacle.intersects(body):grid.set_point_solid(Vector2i(x,y))
 		navigation_cache[key]=grid
 	combat_navigation=navigation_cache[key]
@@ -562,7 +566,11 @@ func path_to(start: Vector2,end: Vector2,half_size: Vector2=Vector2(7,5)) -> Pac
 	var from_cell: Vector2i=nearest_nav_cell(combat_navigation,Vector2i(start/step))
 	var to_cell: Vector2i=nearest_nav_cell(combat_navigation,Vector2i(end/step))
 	if from_cell.x<0 or to_cell.x<0:return PackedVector2Array()
-	return combat_navigation.get_point_path(from_cell,to_cell,false)
+	var points: PackedVector2Array=combat_navigation.get_point_path(from_cell,to_cell,false)
+	# A repath starts inside a grid cell, not at its centre. Returning that
+	# centre makes slow units reverse every refresh before reaching the next cell.
+	if points.size()>1 and clear_body_path(start,points[1],half_size):points.remove_at(0)
+	return points
 func nearest_nav_cell(grid: AStarGrid2D,cell: Vector2i) -> Vector2i:
 	for radius in range(5):
 		for y in range(-radius,radius+1):

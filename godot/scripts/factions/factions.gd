@@ -67,7 +67,7 @@ static func deploy(s, war: Dictionary) -> void:
 			e.hp = 50 + strength(s.factions, id) / 4
 			e.max_hp = e.hp
 			e.damage = 9 + strength(s.factions, id) / 25
-	s.add_log("交战：%s进军%s，双方队伍已接战。" % [NAMES[war.attacker], NAMES[war.defender]])
+	s.add_log("出征：%s进军%s，双方队伍已集结，沿桥行军。" % [NAMES[war.attacker], NAMES[war.defender]])
 
 static func survivors(s, war: Dictionary, side: String) -> Array:
 	return s.enemies.filter(func(e): return int(e.get("war_id", 0)) == int(war.id) and e.get("war_side", "") == side and not e.dead)

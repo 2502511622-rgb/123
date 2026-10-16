@@ -1,29 +1,31 @@
-"""Verify source-pixel conservation and non-overlap of anatomical alpha layers."""
+"""Read-only validation of the current 96px monster layers and authored poses."""
 from pathlib import Path
 from PIL import Image
 import json
-ROOT=Path(__file__).resolve().parents[1]
-base=ROOT/'godot/assets/jrpg'
-data=json.loads((base/'parts/parts.json').read_text())
-sources={name:Image.open(base/(name+'.png')).convert('RGBA') for name in ['roster','tengu']}
+root=Path(__file__).resolve().parents[1]/'godot/assets/monsters27'
+metadata=json.loads((root/'manifest.json').read_text())
 checks=0
-for name,entry in data.items():
- l,t,w,h=map(int,entry['frame']['rect'])
- raw=sources[entry['atlas']].crop((l,t,l+w,t+h));expected=raw.tobytes()
- actual=bytearray(w*h*4);occupied=bytearray(w*h)
- for part in entry['parts']:
-  p=ROOT/'godot'/part['path'].removeprefix('res://')
-  im=Image.open(p).convert('RGBA');px=im.tobytes();cx,cy,cw,ch=part['crop']
-  assert im.size==(cw,ch),(name,part['joint'],'size')
-  for y in range(ch):
-   for x in range(cw):
-    i=(y*cw+x)*4
-    if not px[i+3]:continue
-    j=(y+cy)*w+x+cx
-    assert not occupied[j],(name,part['joint'],'overlap',x,y)
-    occupied[j]=1;actual[j*4:j*4+4]=px[i:i+4]
- for i in range(w*h):
-  if expected[i*4+3]:assert actual[i*4:i*4+4]==expected[i*4:i*4+4],(name,'pixel mismatch',i)
-  else:assert not actual[i*4+3],(name,'extra pixel',i)
- checks+=1
-print('PARTS PASS:',checks,'poses reconstruct source pixels exactly with disjoint anatomical layers')
+for kind, entry in metadata.items():
+    atlas=Image.open(root/f'{kind}.png').convert('RGBA')
+    assert atlas.size==(768,576),kind
+    signatures=set()
+    for frame in range(4):
+        occupied=set()
+        pixels=[]
+        for part in range(6):
+            index=frame*6+part
+            cell=atlas.crop(((index%8)*96,(index//8)*96,(index%8+1)*96,(index//8+1)*96))
+            for y in range(96):
+                for x in range(96):
+                    color=cell.getpixel((x,y))
+                    if not color[3]:continue
+                    assert (x,y) not in occupied,(kind,frame,'overlap')
+                    occupied.add((x,y));pixels.append((x,y,color))
+        assert len(occupied)>150,(kind,frame,'empty source pose')
+        assert len(occupied)<96*96*.85,(kind,frame,'opaque background')
+        signatures.add(hash(tuple(sorted(pixels))))
+        checks+=1
+    assert len(signatures)==4,(kind,'duplicate source poses')
+    assert len(entry['pivots'])==4,kind
+assert len(metadata)==23
+print(f'PASS: {len(metadata)} independent monsters, {checks} disjoint transparent authored poses')

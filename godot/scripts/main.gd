@@ -461,6 +461,7 @@ func update_labels() -> void:
 
 	for point in YinWorldLayout.points(state.zone):
 		if point.id.begins_with("inspect_"):hints[point.id]="E 调查"+point.name
+	if kind.begins_with("echo27:"):hints[kind]="E 调查 · "+YinWorldDistricts.PLACES[kind.trim_prefix("echo27:")].name
 	var remains_hint: Dictionary = nearest_remains()
 	for body in get_tree().get_nodes_in_group("remains"):
 		if body is YinCorpse:body.highlight(not remains_hint.is_empty() and body.record.id==remains_hint.id)
@@ -648,6 +649,8 @@ func interact() -> void:
 		show_special_plot(index)
 		return
 	var interaction: String=world.nearest_interaction()
+	if interaction.begins_with("echo27:"):
+		show_world_echo(interaction.trim_prefix("echo27:"));return
 	if interaction.begins_with("inspect_"):
 		show_landmark(interaction.trim_prefix("inspect_"))
 		return
@@ -1639,3 +1642,13 @@ func use_landmark(id: String) -> String:
 			state.tick(5)
 	persist()
 	return {"camp":"完成营地整备：生命+20、气力+10。","well":"完成井水净身：中毒、灼烧与束缚已清除。","temple":"完成役灵祈安：存活役灵恢复20%生命。"}[id]
+
+func show_world_echo(id: String) -> void:
+	if not YinWorldDistricts.PLACES.has(id):return
+	var place: Dictionary=YinWorldDistricts.PLACES[id]
+	var box=open_modal(place.name,place.text)
+	if not state.world_echoes.has(id):
+		state.world_echoes[id]=true
+		state.add_log("旅途见闻："+place.name)
+	box.add_child(button("继续探索 · Esc",close_modal))
+	persist()

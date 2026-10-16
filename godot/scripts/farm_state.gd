@@ -19,6 +19,7 @@ var opened_chests: Array = []
 var quests: Dictionary = {}
 var tracked_quest: String = ""
 var visited_landmarks: Dictionary = {}
+var world_echoes: Dictionary = {}
 var day: int = 1
 var money: int = 90
 var energy: int = 100
@@ -537,7 +538,7 @@ func snapshot() -> Dictionary:
 	return data.duplicate(true)
 
 static func save_keys() -> Array:
-	return ["continent_ready", "defense_minute", "mainline_claimed", "appearance", "temple_journal", "factions", "island_journal", "opened_chests", "quests", "tracked_quest", "visited_landmarks", "weapon_slots", "active_slot", "skill_ranks", "skill_charges", "skill_timers", "villagers", "letters", "raid_day", "raid_status", "village_integrity", "equipment", "gear_drops", "equipped_gear", "equipped_armor", "next_gear_id", "smart_farming", "day", "money", "energy", "health", "minutes", "weather", "selected_crop", "inventory", "supplies", "storage", "bag_slots", "chest_slots", "terrain", "drops", "placements", "plots", "oil", "talismans", "bones", "ash", "reputation", "cultivation", "pollution", "ward", "hall_level", "spirits", "remains", "cargo", "enemies", "enemy_day", "next_id", "total_harvest", "called_day", "ritual_count", "ritual_path", "boss_spawned", "boss_defeated", "ending", "intro_seen", "zone", "journal", "last_report", "order"]
+	return ["world_echoes", "continent_ready", "defense_minute", "mainline_claimed", "appearance", "temple_journal", "factions", "island_journal", "opened_chests", "quests", "tracked_quest", "visited_landmarks", "weapon_slots", "active_slot", "skill_ranks", "skill_charges", "skill_timers", "villagers", "letters", "raid_day", "raid_status", "village_integrity", "equipment", "gear_drops", "equipped_gear", "equipped_armor", "next_gear_id", "smart_farming", "day", "money", "energy", "health", "minutes", "weather", "selected_crop", "inventory", "supplies", "storage", "bag_slots", "chest_slots", "terrain", "drops", "placements", "plots", "oil", "talismans", "bones", "ash", "reputation", "cultivation", "pollution", "ward", "hall_level", "spirits", "remains", "cargo", "enemies", "enemy_day", "next_id", "total_harvest", "called_day", "ritual_count", "ritual_path", "boss_spawned", "boss_defeated", "ending", "intro_seen", "zone", "journal", "last_report", "order"]
 
 static func valid_int(value: Variant, minimum: int, maximum: int = 100000000) -> bool:
 	return (value is int or value is float) and is_finite(float(value)) and float(value) == floor(float(value)) and value >= minimum and value <= maximum
@@ -644,6 +645,11 @@ func restore(data: Dictionary) -> bool:
 	if not (data.get("defense_minute") is float or data.get("defense_minute") is int) or not is_finite(float(data.defense_minute)) or data.defense_minute<0 or data.defense_minute>100000000:return false
 	if int(data.version)<14:
 		data=data.duplicate(true);data.version=14;data.continent_ready=false
+	if not data.has("world_echoes"):
+		data=data.duplicate(true);data.world_echoes={}
+	if not data.world_echoes is Dictionary or data.world_echoes.size()>32:return false
+	for echo in data.world_echoes:
+		if echo not in YinWorldDistricts.PLACES or not data.world_echoes[echo] is bool or not data.world_echoes[echo]:return false
 	for key in save_keys():
 		if not data.has(key): return false
 		var expected: Variant = defaults.get(key)
@@ -1089,7 +1095,7 @@ func mainline_stages() -> Array:
 	strengths.sort()
 	return [
 		{"id":"gear","name":"整备旅装","done":equipment.any(func(g):return g.weapon!="armor" and int(g.tier)>=2),"hint":"击败精英或开启宝箱，获得二阶以上武器","reward":80},
-		{"id":"journey","name":"走遍缝合世界","done":island_journal.visited and temple_journal.visited and not visited_landmarks.is_empty(),"hint":"调查后山地标，并抵达岛国与大佛寺","reward":120},
+		{"id":"journey","name":"走遍缝合世界","done":island_journal.visited and temple_journal.visited and (not visited_landmarks.is_empty() or not world_echoes.is_empty()),"hint":"调查后山地标，并抵达岛国与大佛寺","reward":120},
 		{"id":"balance","name":"四方制衡","done":int(strengths.back())-int(strengths.front())<=45 and factions.wars.is_empty(),"hint":"援助弱方、拦截强方，实力差压到45以内且无交战","reward":200}]
 func mainline_summary() -> String:
 	var lines: Array[String]=[]

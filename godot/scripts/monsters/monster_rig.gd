@@ -7,36 +7,11 @@ func _ready() -> void:
 	name="MonsterModel"
 	use_parent_material=true
 func present(kind: String,pose: Dictionary,missing: Array,clock: float,moving: bool,attack: bool,tint: Color) -> void:
-	if YinEnemyPack.enabled(actor):
-		if modular==null:
-			modular=YinModularRig.new();add_child(modular);modular.setup(kind)
-			var bleeding=YinBloodFX.new();bleeding.emitter=modular;add_child(bleeding)
-		var gait_clock: float=float(pose.get("motion",{}).get("gait",clock*10.0))/10.0 if moving else clock
-		modular.present(kind,missing,gait_clock,moving,attack,pose.flip,tint)
-		return
-	var active: Array=[]
-	for part in YinActorArt.posed_parts(kind,pose,clock,moving,attack):
-		var cut: Dictionary=part.pose.duplicate()
-		var joint_name: String=cut.joint
-		active.append(joint_name)
-		if not joints.has(joint_name):
-			var joint:=YinRigJoint.new()
-			joint.name=joint_name
-			add_child(joint)
-			joints[joint_name]=joint
-		var node: YinRigJoint=joints[joint_name]
-		node.visible=part.part not in missing
-		# Store a genuine pivot transform on each independently animated joint.
-		var pivot: Vector2=cut.get("pivot",Vector2.ZERO)
-		var angle_value: float=float(cut.get("rotation",0))
-		node.scale=Vector2(-1,1) if cut.flip else Vector2.ONE
-		node.position=Vector2(-pivot.x,pivot.y) if cut.flip else pivot
-		node.rotation=-angle_value if cut.flip else angle_value
-		cut.destination.position-=pivot
-		cut.flip=false
-		cut.erase("pivot");cut.rotation=0
-		node.pose=cut
-		node.tint=tint
-		node.queue_redraw()
-	for key in joints:
-		if key not in active:joints[key].visible=false
+	if modular==null:
+		modular=YinModularRig.new();add_child(modular);modular.setup(kind)
+		var bleeding=YinBloodFX.new();bleeding.emitter=modular;add_child(bleeding)
+	var gait_clock: float=float(pose.get("motion",{}).get("gait",clock*10))/10 if moving else clock
+	var phase: String=pose.get("motion",{}).get("state","")
+	modular.position=Vector2(-float(pose.get("motion",{}).get("action",0))*2,0) if phase=="anticipation" else Vector2.ZERO
+	modular.present(kind,missing,gait_clock,moving,attack and phase!="anticipation",pose.flip,tint)
+	joints=modular.joints

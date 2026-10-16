@@ -4,6 +4,7 @@ uniform float wetness=0.0;
 uniform float snow=0.0;
 uniform float dust=0.0;
 uniform sampler2D material_atlas : filter_nearest, repeat_disable;
+uniform sampler2D regional_material : filter_nearest, repeat_disable;
 uniform sampler2D terrain_types : filter_nearest, repeat_disable;
 uniform vec2 map_size;
 uniform bool indoor = false;
@@ -26,6 +27,11 @@ void fragment(){
 	vec3 turf=mix(region_turf,texture(material_atlas,local_uv).rgb,0.55);
 	float macro=0.96+0.035*sin(world_at.x*0.017+cos(world_at.y*0.012));
 	vec3 surface=turf*macro;
+ vec2 quadrant=vec2(world_at.x>=3200.0?1.0:0.0,world_at.y>=2400.0?1.0:0.0);
+ // Preserve terrain orientation; mirror repeats form distracting symmetric crosses.
+ vec2 ground_uv=clamp(fract(floor(world_at)/384.0),vec2(0.008),vec2(0.992));
+ vec3 regional_ground=texture(regional_material,(quadrant+ground_uv)*0.5).rgb;
+ if(continent){surface=regional_ground*macro*0.88;}
 	if(tile>=16.0 || tile==10.0){
 		vec3 stone=texture(material_atlas,local_uv+vec2(0.5,0.0)).rgb;
 		float paving=1.0;
@@ -86,16 +92,15 @@ void fragment(){
   bool paved=tile==10.0 || tile>=16.0;
   if(desert){
    float dunes=sin(world_at.y*0.028+sin(world_at.x*0.009)*2.3);
-   vec3 sand=vec3(0.57,0.45,0.30)*(0.94+dunes*0.075+grain*0.055);
+   vec3 sand=mix(vec3(0.57,0.45,0.30),regional_ground,0.80)*(0.94+dunes*0.035+grain*0.035);
    float ridge=smoothstep(0.75,0.94,dunes);
    sand+=vec3(0.025,0.022,0.015)*ridge;
-   float trail_distance=min(min(abs(world_at.x-1504.0),abs(world_at.x-4896.0)),min(abs(world_at.y-1056.0),abs(world_at.y-3552.0)));
-   float trail=1.0-smoothstep(14.0,44.0,trail_distance+sin(world_at.y*.045)*6.0);
+   float trail=paved?0.75:0.0;
    bool courtyard=world_at.x>1088.0 && world_at.x<1920.0 && world_at.y>608.0 && world_at.y<1476.0;
    surface=courtyard && paved?mix(mix(vec3(0.46,0.40,0.31),surface,0.38),sand,0.35+grain*0.25):sand*(1.0-trail*.055);
    surface=mix(surface,sand,dust*0.12);
   }else if(edo){
-   vec3 soil=vec3(0.31,0.33,0.30)*(0.9+grain*0.13);
+   vec3 soil=mix(vec3(0.31,0.33,0.30),regional_ground,0.80)*(0.9+grain*0.08);
    float patches=smoothstep(0.2,0.8,sin(world_at.x*0.019+cos(world_at.y*.021)));
    surface=paved?mix(vec3(0.32,0.31,0.28),surface,0.40):mix(soil,vec3(0.30,0.37,0.30),patches*.5);
    float joints=step(30.5,mod(world_at.y,32.0))+step(46.5,mod(world_at.x+floor(world_at.y/32.0)*16.0,48.0));
@@ -106,9 +111,9 @@ void fragment(){
    float slope=sin(world_at.x*.011+sin(world_at.y*.006)*2.0);
    float strata=smoothstep(0.75,0.96,sin(world_at.y*.043+slope*2.0));
    vec3 earth=mix(vec3(0.25,0.28,0.27),vec3(0.32,0.32,0.29),slope*.5+.5);
-   earth*=0.94+grain*.1-strata*.08;
-   float trail_distance=min(min(abs(world_at.x-1504.0),abs(world_at.x-4896.0)),min(abs(world_at.y-1056.0),abs(world_at.y-3552.0)));
-   float trail=1.0-smoothstep(10.0,46.0,trail_distance+sin(world_at.y*.024)*8.0+sin(world_at.x*.033)*4.0);
+   earth=mix(earth,regional_ground,0.82);
+   earth*=0.94+grain*.06-strata*.04;
+   float trail=paved?0.75+0.12*sin(world_at.y*.024):0.0;
    surface=earth*(1.0-trail*0.13);
    if(grain>.93 && trail>.25){surface+=vec3(0.025,0.023,0.020);}
   }

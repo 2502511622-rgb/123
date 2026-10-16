@@ -82,7 +82,7 @@ func run() -> void:
 	enemy.record.hp = enemy.record.max_hp
 	enemy.receive_hit(roundi(enemy.record.max_hp * 0.78), "bullet")
 	var fragments: Array = game.world.feedback.get_children().filter(func(n): return n is YinSeveredLimb)
-	check(not fragments.is_empty() and fragments.all(func(n): return n.source_region.has_area() and n.draw_size.length() > 0 and n.source_atlas == YinActorArt.ROSTER), "detached body parts use matching reference atlas regions")
+	check(not fragments.is_empty() and fragments.all(func(n): return n.source_region.has_area() and n.draw_size.length() > 0 and n.source_atlas == YinMonsterArt.texture(enemy.record.kind)), "detached body parts use matching reference atlas regions")
 	check(FarmState.new().restore(JSON.parse_string(JSON.stringify(game.state.snapshot()))), "visual refactor preserves valid persisted gameplay data")
 	game.queue_free()
 	await frames()

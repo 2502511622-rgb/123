@@ -3,8 +3,8 @@ extends RefCounted
 static var animation_bands: int=8
 # Reference-based source sheets remain intact. Metadata measures alpha bounds and feet.
 const HERO = preload("res://assets/jrpg/hero_attack.png")
-const ROSTER = preload("res://assets/jrpg/roster.png")
-const TENGU = preload("res://assets/jrpg/tengu.png")
+const ROSTER = preload("res://assets/monsters27/bone.png")
+const TENGU = preload("res://assets/monsters27/daitengu.png")
 const HERO_WALK = preload("res://assets/jrpg/hero_walk.png")
 const HERO_WALK_ALT = preload("res://assets/jrpg/hero_walk_alt.png")
 const HERO_ATTACK = preload("res://assets/jrpg/hero_attack.png")
@@ -12,13 +12,8 @@ const NPC = preload("res://assets/jrpg/npc.png")
 static var npc_cache: Dictionary = {}
 static var data: Dictionary = {}
 static var anatomy: Dictionary = {}
-static var part_textures: Dictionary = {}
-static var packed_regions: Dictionary={}
-static var packed_texture: Texture2D
 static func prepare_parts() -> void:
-	if packed_texture!=null:return
-	packed_regions=JSON.parse_string(FileAccess.get_file_as_string("res://assets/jrpg/parts/packed.json"))
-	packed_texture=load("res://assets/jrpg/parts/packed.png")
+	YinMonsterArt.metadata()
 static func atlas() -> Dictionary:
 	if data.is_empty(): data = JSON.parse_string(FileAccess.get_file_as_string("res://assets/jrpg/atlas.json"))
 	return data
@@ -117,67 +112,26 @@ static func draw_pose(canvas: CanvasItem, pose: Dictionary, color: Color = Color
 		canvas.draw_texture_rect_region(pose.texture,target,source,color)
 
 static func enemy_pose(kind: String, direction: Vector2, clock: float, moving: bool, attacking: bool, boss: bool) -> Dictionary:
-	var key: String = kind
-	var frame: Dictionary = atlas().roster[kind]
-	var texture_value: Texture2D = ROSTER
-	var reference: Dictionary = frame
-	var flip: bool = direction.x > 0.1
-	if kind == "daitengu":
-		var row: int = direction_row(direction)
-		var column: int = 3 if attacking else ([0, 1, 0, 2][int(clock * 8) % 4] if moving else 0)
-		key = "daitengu:%d:%d"%[row,column]
-		frame = atlas().tengu[row][column]
-		reference = atlas().tengu[row][0]
-		texture_value = TENGU
-		flip = false
-	var scale_value: float = float(YinBodyProfile.spec(kind).height) / float(reference.rect[3])
-	if kind in ["chochin", "sogenbi"]: scale_value *= 0.78
-	var source: Rect2 = rect_from(frame.rect)
-	return {"part_key": key, "texture": texture_value, "source": source, "destination": Rect2(-Vector2(frame.anchor[0], frame.anchor[1]) * scale_value, source.size * scale_value), "flip": flip}
+	return {"part_key":kind,"texture":YinMonsterArt.texture(kind),"source":YinMonsterArt.region(YinMonsterArt.frame_at(clock,moving,attacking)*6),"destination":Rect2(-48,-92,96,96),"flip":direction.x>0.1}
 
 static func part_index() -> Dictionary:
-	if anatomy.is_empty(): anatomy=JSON.parse_string(FileAccess.get_file_as_string("res://assets/jrpg/parts/parts.json"))
+	if anatomy.is_empty():
+		for kind in YinMonsterArt.metadata():anatomy[kind]={}
+		# Read-only identity aliases permit importing pre-v0.27 corpse snapshots.
+		for row in range(4):
+			for col in range(4):anatomy["daitengu:%d:%d"%[row,col]]={}
 	return anatomy
 static func posed_parts(kind: String, pose: Dictionary, clock: float, moving: bool, attack: bool) -> Array:
-	var articulated: bool = moving and kind!="daitengu"
-	var movement: Dictionary=pose.get("motion",{})
-	var gait: float=float(movement.get("gait",clock*11.0))
-	var action: float=float(movement.get("action",-0.14 if attack else 0.0))
-	var step: float = sin(gait) if articulated else 0.0
-	var bob: float = sin(clock*2.5)*1.2 if kind in ["sogenbi","wraith","chochin"] else (-absf(sin(gait))*1.5 if articulated else sin(clock*2.0)*0.25)
-	if articulated and kind=="ippon_datara":bob=-maxf(0,sin(clock*8.0))*5.0
-	if articulated and kind=="jorogumo":bob=-absf(step)*0.6
-	var result: Array = []
-	var entry: Dictionary=part_index()[pose.part_key]
-	for piece in entry.parts:
-		prepare_parts()
+	var result: Array=[]
+	var frame=YinMonsterArt.frame_at(clock,moving,attack)
+	for part in YinMonsterArt.PARTS:
 		var cut: Dictionary=pose.duplicate()
-		var crop: Rect2=rect_from(piece.crop)
-		var scale_value: Vector2=pose.destination.size/pose.source.size
-		cut.origin_texture=pose.texture
-		cut.origin_region=Rect2(pose.source.position+crop.position,crop.size)
-		cut.texture=packed_texture
-		cut.source=rect_from(packed_regions[piece.path])
-		cut.destination=Rect2(pose.destination.position+crop.position*scale_value,crop.size*scale_value)
-		cut.destination.position.y+=bob
-		cut.joint=piece.joint
-		var offset := Vector2(0,bob)
-		var rotation_value: float=0
-		if articulated and piece.joint in ["leg","leg_left"]:
-			var side: float=-1.0 if piece.joint=="leg_left" else 1.0
-			offset.y-=maxf(0,step*side)*1.2
-			rotation_value=step*side*0.075
-		if kind!="daitengu" and piece.joint in ["arm","arm_left"]:
-			var side: float=1.0 if piece.joint=="arm" else -1.0
-			offset.x+=side*0.2 if attack else 0.0
-			rotation_value=side*(action*0.24 if attack or absf(action)>0.01 else step*0.075)
-		if piece.joint=="head":rotation_value+=sin(clock*2.0)*0.006+action*0.012
-		if piece.joint=="body":rotation_value+=action*0.012
-		offset+=Vector2(action*1.4,-absf(action)*0.8)
-		cut.destination.position+=offset-Vector2(0,bob)
-		cut.rotation=rotation_value
-		cut.pivot=pose.destination.position+Vector2(piece.pivot[0],piece.pivot[1])*pose.destination.size+offset
-		result.append({"part":piece.part,"pose":cut})
+		cut.texture=YinMonsterArt.texture(kind)
+		cut.source=YinMonsterArt.region(frame*6+YinMonsterArt.PARTS.find(part))
+		cut.destination=Rect2(-48,-92,96,96)
+		cut.joint=part;cut.pivot=YinMonsterArt.pivot(kind,frame,part)-Vector2(48,92)
+		cut.rotation=0;cut.origin_texture=cut.texture;cut.origin_region=cut.source
+		result.append({"part":{"arm_right":"arm","leg_right":"leg"}.get(part,part),"pose":cut})
 	return result
 static func part_center(pose: Dictionary) -> Vector2:
 	var center: Vector2=pose.destination.get_center()

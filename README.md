@@ -1,10 +1,24 @@
-# 阴诡世界 v0.26 · 地域重构与环境融合
+# 阴诡世界 v0.27 · 独立怪物、四地见闻与过桥入侵
 
 **Godot 4.6 / 俯视角像素 2D / 连续大地图 / 四方势力 / 装备探索 / 实时战斗 / 村民自卫与随从指挥**
 
 旅人来到诡异缝合的异境，以义庄为营地，穿过界河与桥梁，探索装备、结识村民，介入四方势力的纷争。种田玩法已移除。
 
 ![四方领地大地图](docs/world23/map.png)
+
+## v0.27：怪物与地图重建，修复真实行军
+
+旧五套共用怪物躯体已移除，23类怪物换成独立像素素材与四张源动作，保留物理断肢、残躯、打击反馈和旧档兼容。河童、灯妖、蜘蛛、独足妖与幽魂保留各自形态；左右镜像，目前还没有完整四方向动画。
+
+四地增加九条探索路线、16处具名调查地点和24类细节素材，见闻可保存并关联调查委托。残寺、江户荒街、荒山散冢与青槐生活街区有不同的道路、建筑组合和故事痕迹。
+
+修复军队在桥前反复折返：每次寻路不再强迫士兵回到脚下网格中心，追击同时验证身体通行空间。四桥双向、六人队伍和正式主城部署后的自然过桥交战均有实际单位验证。
+
+![本版独立怪物图鉴](docs/reset27/monster-roster.png)
+
+[本版实现与实机画面](docs/RESET_V027.md) · [玩家视角试玩与仍存不足](docs/PLAYTEST_V027.md) · [下载Godot源码工程](yintian-godot.zip)
+
+以下为历史版本记录；旧五套共用怪物及其烘焙流程已经退役。
 
 ## v0.26：沙海残殿、江户荒街与荒岭血月
 
@@ -373,7 +387,7 @@ python scripts/package_game.py
 
 `MOSSFIELD_RUNTIME_DIR` 是保留的启动脚本覆盖选项；默认存档和缓存位于仓库父目录 `.runtime/`。Windows / macOS 直接通过 Godot 导入即可。
 
-美术和环境音由本项目生成；生成源在 `scripts/generate_art.py`、`generate_audio.py`。字体为重命名的 Noto CJK 字符子集，许可与模板 MIT 署名保留在 `godot/licenses/`。美术重生成需 Pillow，字体重生成需 fonttools；游戏运行均不需要它们。无声 / 无窗口验证不启用音频播放。
+美术和环境音由本项目生成；当前怪物源素材在 `godot/assets/monsters27/source/`，使用 `godot/tools/bake_monsters27.gd` 整理图集；历史美术和声音工具为 `scripts/generate_art.py`、`generate_audio.py`。字体为重命名的 Noto CJK 字符子集，许可与模板 MIT 署名保留在 `godot/licenses/`。美术重生成需 Pillow，字体重生成需 fonttools；游戏运行均不需要它们。无声 / 无窗口验证不启用音频播放。
 
 仓库仍保留早期网页原型与 `mossfield-godot.zip`，本版的下载文件是 **`yintian-godot.zip`**。
 

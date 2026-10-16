@@ -315,7 +315,7 @@ func _draw() -> void:
 	if record.is_empty(): return
 	if record.has("faction"):
 		draw_circle(Vector2(0, 1), 13, YinFactions.COLORS[record.faction])
-		draw_string(ThemeDB.fallback_font, Vector2(-18, -72), YinFactions.NAMES[record.faction], HORIZONTAL_ALIGNMENT_LEFT, -1, 10, YinFactions.COLORS[record.faction])
+		draw_string(preload("res://assets/mossfield-font.ttf"), Vector2(-18, -72), YinFactions.NAMES[record.faction], HORIZONTAL_ALIGNMENT_LEFT, -1, 10, YinFactions.COLORS[record.faction])
 	YinActorArt.contact_shadow(self,15 if record.kind in YinAbilities.BOSSES else 10,float(motion.descriptor(record.kind).gait),clampf(velocity.length()/45.0,0,1))
 	if position.distance_to(game.player.position)<145:
 		draw_arc(Vector2(0,-3),float(YinBodyProfile.spec(record.kind).size.x)*0.5+3,0,TAU,24,Color(0.88,0.56,0.41,0.75 if windup>0 else 0.3),1.2)
@@ -338,7 +338,7 @@ func _draw() -> void:
 		draw_rect(Rect2(-16, -art_height, 32, 3), Color("413e3e"))
 		draw_rect(Rect2(-16, -art_height, 32 * health_trail / record.max_hp, 3), Color("e6bb83"))
 		draw_rect(Rect2(-16, -art_height, 32 * float(record.hp) / record.max_hp, 3), Color("aa7164"))
-	if windup>0:draw_string(ThemeDB.fallback_font,Vector2(19,-art_height-5),"蓄力",HORIZONTAL_ALIGNMENT_LEFT,-1,10,Color("ffd793"))
+	if windup>0:draw_string(preload("res://assets/mossfield-font.ttf"),Vector2(19,-art_height-5),"蓄力",HORIZONTAL_ALIGNMENT_LEFT,-1,10,Color("ffd793"))
 	if shield > 0: draw_arc(Vector2(0, -25), 25, 0, TAU, 20, Color("96c0db"), 2)
 	if burn_time > 0: draw_circle(Vector2(8, -24), 3, Color("f4a261"))
 	if chill_time > 0: draw_arc(Vector2(0, -20), 18, 0, TAU, 12, Color("91d8ee"), 1)
@@ -346,7 +346,7 @@ func _draw() -> void:
 	var caption: String = YinBalance.MONSTERS[record.kind].name + " Lv%d" % int(record.get("level", 1)) + (" · 精英" if record.get("elite", false) else "")
 	if record.get("faction", "") == "village": caption = "护村役卫 Lv%d" % int(record.get("level", 1))
 	if reveal:
-		draw_string(ThemeDB.fallback_font, Vector2(-24, -art_height - 5), caption, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color("e6c485") if record.get("elite", false) else Color("c8c9ae"))
+		draw_string(preload("res://assets/mossfield-font.ttf"), Vector2(-24, -art_height - 5), caption, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color("e6c485") if record.get("elite", false) else Color("c8c9ae"))
 	if YinTemple.ROWS.has(record.kind):
 		YinTempleCombat.draw_warning(self)
 	elif YinIsland.ROWS.has(record.kind):
@@ -500,7 +500,7 @@ func faction_tick(delta: float, spec: Dictionary) -> void:
 		windup = 0.5
 		attack_center = victim.position
 	else:
-		if sight: velocity = position.direction_to(victim.position) * float(spec.speed)
+		if sight and game.world.clear_body_path(position,victim.position,YinBodyProfile.spec(record.kind).half): velocity = position.direction_to(victim.position) * float(spec.speed)
 		else:
 			repath -= delta
 			if repath <= 0:

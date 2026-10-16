@@ -73,9 +73,10 @@ for row_index,row in enumerate(attack):
  for column in [0,5]:
   frame=row[column];sx=-dx if frame.get('mirror',False) else dx
   frame['hand']=[frame['anchor'][0]+sx/scale,frame['anchor'][1]+dy/scale]
+legacy=json.loads((ROOT/'atlas.json').read_text())
 out={'hero':attack[:3]+[mirror(attack[2])],'hero_walk':walk,'hero_walk_alt':walk_alt,
      'hero_attack':attack[:3]+[mirror(attack[2])], 'hero_attack_alt':attack[3:6]+[mirror(attack[5])],
-     'roster':dict(zip(KINDS,[f for row in index('roster',6,seams('roster',4)) for f in row])),
-     'npc':index('npc',6,seams('npc',4)), 'tengu':(lambda frames: [frames[0],frames[1],frames[3],frames[2]])(index('tengu',4,seams('tengu',4)))}
+     'roster':legacy.get('roster',{}),
+     'npc':index('npc',6,seams('npc',4)), 'tengu':legacy.get('tengu',[])}
 (ROOT/'atlas.json').write_text(json.dumps(out,ensure_ascii=False,indent=2)+'\n')
-print('Indexed JRPG: 2 body presets, four directions x 8 walk / 6 combat poses; 23 enemies; 6 NPCs')
+print('Indexed JRPG: 2 body presets, four directions x 8 walk / 6 combat poses; 6 NPCs; legacy monster identities retained, new monsters use bake_monsters27.gd')

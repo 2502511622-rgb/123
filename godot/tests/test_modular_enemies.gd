@@ -16,22 +16,11 @@ func capture(label_value: String):
  await process_frame;await RenderingServer.frame_post_draw
  check(root.get_texture().get_image().save_png(folder.path_join(label_value+".png"))==OK,"capture "+label_value)
 func run():
- for pack in YinEnemyPack.IDS:
-  var folder="res://assets/enemy_packs/"+pack+"/"
-  var manifest=JSON.parse_string(FileAccess.get_file_as_string(folder+"manifest.json"))
-  var atlas=load(folder+"atlas.png").get_image()
-  var allowed: Dictionary={}
-  for hex in YinEnemyPack.PALETTE:allowed[Color(hex).to_rgba32()]=true
-  var palette_ok=true
-  for y in range(atlas.get_height()):
-   for x in range(atlas.get_width()):
-    var c=atlas.get_pixel(x,y)
-    if c.a>0 and not allowed.has(c.to_rgba32()):palette_ok=false
-  check(palette_ok and atlas.get_pixel(0,0).a==0,pack+" exact shared palette and transparent background")
-  check(manifest.cell_size==[64.0,64.0] and manifest.parts.size()==6 and manifest.stumps.size()==4,pack+" unified 64px cells and four independent whole limbs")
-  check(manifest.animations.idle.frames==4 and manifest.animations.walk.frames==8 and manifest.animations.hit.frames==3,pack+" complete idle / walk / hit sequences")
-  var residual=load(folder+"residual.png").get_image()
-  check(residual.get_pixel(27,58).a==0 and residual.get_pixel(37,58).a==0,pack+" residual has no baked feet")
+ for kind in YinBalance.MONSTERS:
+  var manifest=YinMonsterArt.metadata()[kind]
+  var atlas=YinMonsterArt.texture(kind).get_image()
+  check(atlas.get_size()==Vector2i(768,576) and atlas.get_pixel(0,0).a==0,kind+" normalized transparent authored frame atlas")
+  check(manifest.frames==4 and manifest.pivots.size()==4,kind+" four independent source poses with matching limb pivots")
  game=load("res://scenes/main.tscn").instantiate();root.add_child(game);await frames(5);game.close_modal()
  game.state.minutes=900;game.state.weather="sun";game.player.invincible=1000
  for e in get_nodes_in_group("enemies")+get_nodes_in_group("faction_guards"):e.set_physics_process(false)
@@ -46,7 +35,7 @@ func run():
   game.world.actors.add_child(e);e.add_to_group("enemies");e.set_physics_process(false)
   e.model.present(kind,e.art_pose(),[],0.2,true,false,Color.WHITE);actors.append(e)
   check(e.model.modular!=null and e.model.modular.joints.arm_left.get_node("Sprite") is Sprite2D,kind+" live enemy uses actual child sprites")
-  check(e.model.modular.pack==YinEnemyPack.IDS[i],kind+" selects its independent pack")
+  check(e.model.modular.pack==kind,kind+" selects its independent pack")
  await capture("five-enemy-packs")
  var distant: YinEnemy=actors[4];var local_position=distant.position
  distant.position=Vector2(5500,4000);distant.modular_hit_feedback(Vector2.RIGHT)
@@ -68,7 +57,7 @@ func run():
  var limb_id=limb.get_instance_id();var at=limb.position
  check(game.world.screen_bounds().grow(100).has_point(enemy.position),"hit-feedback fixture is inside the real camera view")
  enemy.modular_hit_feedback(Vector2.RIGHT)
- check(rig.animation is AnimationPlayer and rig.animation.is_playing(),"AnimationPlayer runs the authored three hit poses")
+ check(rig.animation is AnimationPlayer and rig.animation.is_playing(),"AnimationPlayer runs the three-stage hit recoil")
  check(Engine.time_scale<1 and not get_nodes_in_group("blood_bursts").is_empty(),"impact triggers time dilation and one-shot blood burst")
  rig.animation.advance(0.06)
  check(rig.hit_frame==1,"hit animation advances through the second hit frame")
@@ -131,7 +120,7 @@ func run():
  check(YinDisplaySettings.corpse_lifetime==60,"retention preference persists through settings reload")
  var timed_record=game.state.leave_remains(actors[0].record,actors[0].position)
  var timed_body=YinCorpse.new();timed_body.bind(timed_record);game.world.actors.add_child(timed_body)
- var timed_limb=YinSeveredLimb.new();timed_limb.source_texture=YinEnemyPack.texture("drowned");timed_limb.source_region=YinEnemyPack.region(2);timed_limb.draw_size=Vector2.ONE*64
+ var timed_limb=YinSeveredLimb.new();timed_limb.source_texture=YinMonsterArt.texture("water");timed_limb.source_region=YinMonsterArt.region(2);timed_limb.draw_size=Vector2.ONE*96
  game.world.feedback.add_child(timed_limb)
  check(timed_body.lifetime==60 and timed_limb.lifetime==60,"new torso and detached rigid limb share selected lifetime")
  timed_body.queue_free();timed_limb.queue_free();settings.queue_free()

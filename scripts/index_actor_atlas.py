@@ -41,7 +41,9 @@ def index(name,cols,rows,ys=None):
    frames.append({'rect':[l,t,r-l,b-t],'anchor':[anchor-l,b-t]})
   output.append(frames)
  return output
-out={'hero':index('hero',6,4,[0,334,626,924,1254]),'roster':dict(zip(KINDS,[f for row in index('roster',6,4,[0,343,659,940,1254]) for f in row]))}
-if (ROOT/'tengu.png').exists():out['tengu']=index('tengu',4,4,[0,310,610,906,1254])
+# This historical helper now indexes only the retained hero source.
+# Enemy metadata below is retained solely for legacy identities, not rendering.
+out=json.loads((ROOT/'atlas.json').read_text())
+out['hero']=index('hero',6,4,[0,334,626,924,1254])
 (ROOT/'atlas.json').write_text(json.dumps(out,ensure_ascii=False,indent=2)+'\n')
-print('Indexed',len(out['roster']),'enemy cells and 24 hero poses; tengu:', 'tengu' in out)
+print('Indexed 24 historical hero poses. Current monsters: godot/tools/bake_monsters27.gd')
