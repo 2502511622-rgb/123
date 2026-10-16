@@ -19,11 +19,11 @@ static func populate(s) -> void:
 			var at: Vector2 = [Vector2(448, 1024), Vector2(384, 672), Vector2(864, 768), Vector2(1184, 928), Vector2(608, 896), Vector2(480, 576), Vector2(960, 544), Vector2(1312, 992), Vector2(320, 896), Vector2(288, 512), Vector2(1088, 704), Vector2(1152, 1088), Vector2(768, 992), Vector2(384, 416), Vector2(1408, 480), Vector2(1280, 800)][i]
 			var e: Dictionary = s.spawn_record(kind, "temple", at, 3 + int((s.day - 1) / 5), i in [10, 14])
 			e.temple_day = s.day
-			e.home_at = [at.x, at.y]
+			e.home_at = e.at.duplicate()
 	for kind in BOSSES:
 		if s.enemies.any(func(e): return e.kind == kind): continue
 		var e: Dictionary = s.spawn_record(kind, "temple", ARENAS[kind], 5 + BOSSES.find(kind), true)
-		e.home_at = [ARENAS[kind].x, ARENAS[kind].y]
+		e.home_at = e.at.duplicate()
 static func on_kill(s, e: Dictionary) -> void:
 	if e.zone != "temple" or e.has("war_id"): return
 	if e.kind in MINIONS and e.kind not in s.temple_journal.hunted: s.temple_journal.hunted.append(e.kind)

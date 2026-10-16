@@ -45,7 +45,7 @@ static func declare(s, attacker: String, defender: String) -> Dictionary:
 	var war: Dictionary = {"id": int(data.next_war), "day": s.day, "attacker": attacker, "defender": defender, "status": "warned", "last_skirmish": float(s.day*1440+s.minutes), "player_side":"", "player_kills":0, "attackers": clampi(roundi(3 + ratio * 2), 4, 9), "defenders": clampi(roundi(strength(data, defender) / 28.0), 3, 7)}
 	data.next_war += 1
 	data.wars.append(war)
-	s.add_log("势力战报：%s将于正午进攻%s。P 查看局势。" % [NAMES[attacker], NAMES[defender]])
+	s.add_log("势力战报：%s将于正午集结，进军%s。P 查看行军。" % [NAMES[attacker], NAMES[defender]])
 	return war
 
 static func deploy(s, war: Dictionary) -> void:
@@ -58,6 +58,9 @@ static func deploy(s, war: Dictionary) -> void:
 			var kind: String = {"temple": ["hungry_ghost", "rakshasa", "kumbhanda"], "island": ["kappa", "chochin", "ippon_datara"], "graveyard": ["bone", "water", "brute"], "village": ["gunner", "archer", "bone"]}[id][i % 3]
 			var at := Vector2((760 if side == "attacker" else 520) + (i % 2) * 34, 280 + int(i / 2) * 52)
 			var e: Dictionary = s.spawn_record(kind, war.defender, at, 1 + strength(s.factions, id) / 100)
+			if s.continent_ready:
+				var muster: Vector2=YinContinent.CAPITALS[id]+Vector2((i%3)*32-32,80+int(i/3)*32)
+				e.at=[muster.x,muster.y]
 			e.faction = id
 			e.war_id = int(war.id)
 			e.war_side = side
@@ -105,13 +108,13 @@ static func tick(s) -> bool:
 			deploy(s, war)
 			changed = true
 		if war.status != "active": continue
-		simulate_offscreen(s,war)
+		if not s.continent_ready:simulate_offscreen(s,war)
 		var attackers: Array = survivors(s, war, "attacker")
 		var defenders: Array = survivors(s, war, "defender")
 		if attackers.is_empty() or defenders.is_empty():
 			settle(s, war, not attackers.is_empty())
 			changed = true
-		elif s.day > war.day or s.minutes >= 1200:
+		elif not s.continent_ready and (s.day > war.day or s.minutes >= 1200):
 			var attack_hp: int = 0
 			var defend_hp: int = 0
 			for e in attackers: attack_hp += int(e.hp)
@@ -137,7 +140,7 @@ static func report(s) -> String:
 		var p: Dictionary = s.factions.powers[id]
 		lines.append("%s   实力 %d   兵力 %d / 物资 %d" % [NAMES[id], strength(s.factions, id), p.troops, p.supply])
 	for war in s.factions.wars:
-		lines.append("%s → %s · %s · %d 对 %d\n正午开战，入夜结算；前往守方地图可参战。" % [NAMES[war.attacker], NAMES[war.defender], "行军中" if war.status == "warned" else "交战中", war.attackers, war.defenders])
+		lines.append("%s → %s · %s · %d 对 %d\n正午集结，经桥行军；直到一方军队覆灭才决出胜负。全境均可参战。" % [NAMES[war.attacker], NAMES[war.defender], "待集结" if war.status == "warned" else "行军 / 实体接战", war.attackers, war.defenders])
 		if war.status=="active":lines.append("存活：攻方%d/%d · 守方%d/%d · 你的击杀%d\n支援：%s"%[survivors(s,war,"attacker").size(),war.attackers,survivors(s,war,"defender").size(),war.defenders,int(war.get("player_kills",0)),{"":"尚未选择","attacker":"攻方","defender":"守方"}.get(war.get("player_side",""),"无")])
 	if s.factions.wars.is_empty(): lines.append("当前休整。每天恢复兵力与物资，各方都有机会向其他势力出兵。")
 	lines.append("最近战报\n" + ("\n".join(s.factions.history) if not s.factions.history.is_empty() else "尚无战报。"))
@@ -202,6 +205,7 @@ static func choose_side(s,id: int,side: String) -> String:
 		return "已支援%s；其军队不会将你视为敌人。"%NAMES[war[side]]
 	return "战事已结束。"
 static func simulate_offscreen(s,war: Dictionary) -> void:
+	if s.continent_ready:return
 	var now: float=s.day*1440+s.minutes
 	if not war.has("last_skirmish"):
 		war.last_skirmish=now

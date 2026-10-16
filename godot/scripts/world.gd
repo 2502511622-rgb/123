@@ -154,7 +154,7 @@ func boundary(rect: Rect2) -> void:
 	environment_revision += 1
 	var body := StaticBody2D.new()
 	body.position = rect.get_center()
-	if state.zone=="temple" and rect.position.x>=0 and rect.position.y>=0:YinWallFace.install(self,rect)
+	if not self is YinContinentWorld and state.zone=="temple" and rect.position.x>=0 and rect.position.y>=0:YinWallFace.install(self,rect)
 	var collision := CollisionShape2D.new()
 	var shape := RectangleShape2D.new()
 	shape.size = rect.size
@@ -179,7 +179,7 @@ func prop(name_text: String, at: Vector2, offset: Vector2, collision_rect: Rect2
 	body.position = at
 	body.set_meta("interaction_anchor",at)
 	actors.add_child(body)
-	var sprite: Sprite2D = YinWindSprite.new() if name_text == "tree" else Sprite2D.new()
+	var sprite: Sprite2D = YinWindSprite.new() if name_text.begins_with("tree") else Sprite2D.new()
 	if sprite is YinWindSprite:
 		sprite.world = self
 		body.add_to_group("wind_trees")
@@ -187,7 +187,7 @@ func prop(name_text: String, at: Vector2, offset: Vector2, collision_rect: Rect2
 	sprite.texture = YinArt.texture(name_text) if detailed or YinWorldArt.REGIONS.has(name_text) else load("res://assets/%s.png" % name_text)
 	sprite.name = "ArtSprite"
 	if name_text == "tree":
-		sprite.texture = YinArt.texture(YinRegionStyle.tree(state.zone,at))
+		sprite.texture = YinArt.texture(YinRegionStyle.tree(YinContinent.faction(at) if self is YinContinentWorld else state.zone,at))
 	sprite.centered = false
 	sprite.position = Vector2(-48, -124) if name_text == "tree" else (Vector2(-16, -48) if name_text == "npc" else offset)
 	sprite.scale = Vector2.ONE if detailed else Vector2(2, 2)

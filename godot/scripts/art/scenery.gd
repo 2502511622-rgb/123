@@ -38,6 +38,7 @@ func _draw() -> void:
 		draw_set_transform(prop_node.position + Vector2(6, 0), 0, Vector2(1, 0.25))
 		draw_circle(Vector2.ZERO, width, Color("142e2a55"))
 		draw_set_transform(Vector2.ZERO)
+	if world is YinContinentWorld:return
 	if world.state.zone == "farm":
 		for y in range(40, 640, 32):
 			if y >= 212 and y <= 300: continue

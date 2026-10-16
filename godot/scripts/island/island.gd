@@ -31,11 +31,11 @@ static func populate(state) -> void:
 			][i]
 			var e: Dictionary = state.spawn_record(kind, "island", at, 3 + int((state.day - 1) / 5), i in [12, 18])
 			e.island_day = state.day
-			e.home_at = [at.x, at.y]
+			e.home_at = e.at.duplicate()
 	for kind in BOSSES:
 		if state.enemies.any(func(e): return e.kind == kind): continue
 		var e: Dictionary = state.spawn_record(kind, "island", ARENAS[kind], 4 + BOSSES.find(kind), true)
-		e.home_at = [ARENAS[kind].x, ARENAS[kind].y]
+		e.home_at = e.at.duplicate()
 static func on_kill(state, enemy: Dictionary) -> void:
 	if enemy.zone != "island": return
 	if enemy.kind in MINIONS and enemy.kind not in state.island_journal.hunted: state.island_journal.hunted.append(enemy.kind)

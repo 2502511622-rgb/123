@@ -58,7 +58,7 @@ static func tick(e, delta: float, spec: Dictionary) -> bool:
 	e.myth_regen += delta
 	if e.myth_regen >= 1:
 		e.myth_regen = 0
-		if e.record.kind == "kappa" and YinIsland.near_water(e.position) and not e.record.suppressed and "head" not in e.record.get("severed", []): e.record.hp = mini(e.record.max_hp, e.record.hp + 3)
+		if e.record.kind == "kappa" and ((absf(e.position.x-3200)<220 or absf(e.position.y-2400)<220) if e.game.state.continent_ready else YinIsland.near_water(e.position)) and not e.record.suppressed and "head" not in e.record.get("severed", []): e.record.hp = mini(e.record.max_hp, e.record.hp + 3)
 	var home := Vector2(e.record.get("home_at", e.record.at)[0], e.record.get("home_at", e.record.at)[1])
 	var distance: float = e.position.distance_to(e.victim.position)
 	var is_boss: bool = e.record.kind in YinIsland.BOSSES
@@ -81,7 +81,7 @@ static func tick(e, delta: float, spec: Dictionary) -> bool:
 		var reach: float = 85 if melee else (180 if e.record.kind == "chochin" else 340)
 		var speed: float = spec.speed
 		if e.record.kind == "ippon_datara": speed *= 1.5 if fmod(e.myth_time, 0.8) < 0.3 else 0.25
-		if e.record.kind == "kappa" and YinIsland.near_water(e.position) and not e.record.suppressed: speed *= 1.35
+		if e.record.kind == "kappa" and ((absf(e.position.x-3200)<220 or absf(e.position.y-2400)<220) if e.game.state.continent_ready else YinIsland.near_water(e.position)) and not e.record.suppressed: speed *= 1.35
 		if distance > (65 if melee else 240): advance(e, e.victim.position, speed)
 		elif not melee and distance < 110: advance(e, e.position - e.position.direction_to(e.victim.position) * 40, speed * 0.7)
 		else: e.velocity = Vector2.ZERO

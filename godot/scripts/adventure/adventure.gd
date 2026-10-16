@@ -17,7 +17,7 @@ const LANDMARKS = {
 	"temple": {"name": "山门遗址", "at": Vector2(2304, 1632)}
 }
 const QUESTS = {
-	"first_watch": {"npc":0,"name":"初次守夜","kind":"hunt","target":2,"money":35,"weapon":"silver_sword","description":"义庄告示：从院落东南灯门进入乱葬坡，击败两只异怪。红圈亮起时先闪避，镇符可打断。返回义庄，在O委托页领取二阶银剑与35文，再按B换装。"},
+	"first_watch": {"npc":0,"name":"初次守夜","kind":"hunt","target":2,"money":35,"weapon":"silver_sword","description":"义庄告示：沿东路跨过界河桥前往乱葬岗，击败两只异怪。红圈亮起时先闪避，镇符可打断。返回义庄，在O委托页领取二阶银剑与35文，再按B换装。"},
 	"temple_arrival": {"npc": 6, "name": "北山梵影", "kind": "temple_visit", "target": 1, "money": 40, "weapon": "", "description": "砚青请你沿青槐村北侧山道进入大佛寺，记录缝合而来的护法异境。"},
 	"temple_catalog": {"npc": 2, "name": "四障异闻", "kind": "temple_hunt", "target": 4, "money": 90, "weapon": "", "parent": "temple_arrival", "description": "秋婶请你分别调查饿鬼、幽魂、罗刹、鸠槃茶。镇符可破虚化幻身，先处理遗骸可阻饿鬼吞食。"},
 	"temple_wrath": {"npc": 1, "name": "止息修罗", "kind": "temple_boss", "boss": "asura", "target": 1, "money": 130, "weapon": "", "parent": "temple_catalog", "description": "柳伯请你平息阿修罗的争斗嗔怒。六臂战阵留有空隙，半血后的战意更盛。"},
@@ -81,8 +81,9 @@ static func open_chest(state, id: String, player_at: Vector2) -> String:
 	if not CHESTS.has(id): return "没有这个宝箱。"
 	var spec: Dictionary = CHESTS[id]
 	if id in state.opened_chests: return "宝箱已经打开。"
-	if spec.zone != state.zone or player_at.distance_to(spec.at) > 56: return "走近宝箱再开启。"
-	if state.enemies.any(func(e): return e.zone == spec.zone and not e.dead and Vector2(e.at[0], e.at[1]).distance_to(spec.at) < 150): return "附近仍有守卫，先清理再开箱。"
+	var chest_at: Vector2=YinContinent.to_world(spec.zone,spec.at) if state.continent_ready else spec.at
+	if (not state.continent_ready and spec.zone != state.zone) or player_at.distance_to(chest_at) > 56: return "走近宝箱再开启。"
+	if state.enemies.any(func(e): return e.zone == spec.zone and not e.dead and Vector2(e.at[0], e.at[1]).distance_to(chest_at) < 150): return "附近仍有守卫，先清理再开箱。"
 	var supplies: Dictionary = {"light_ammo": 12, "rifle_ammo": 6, "scrap": 1}
 	if state.equipment.size() >= 20 or not state.can_gain_many(supplies): return "装备或行囊已满，宝箱奖励仍保留。"
 	var gear: Dictionary = state.grant_gear(spec.weapon, spec.tier, 2)

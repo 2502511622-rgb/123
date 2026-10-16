@@ -3,7 +3,7 @@ from pathlib import Path
 import os, subprocess, sys, tempfile
 root = Path(__file__).resolve().parents[1]
 with tempfile.TemporaryDirectory(prefix='mossfield-checks-') as temp:
- env = dict(os.environ, MOSSFIELD_RUNTIME_DIR=temp)
+ env = dict(os.environ, MOSSFIELD_RUNTIME_DIR=temp, YINTIAN_LEGACY_MAPS="1")
  commands = [
   ['--headless', '--editor', '--import', '--quit'],
   ['--headless', '--script', 'res://tests/test_farm.gd'],
@@ -30,11 +30,12 @@ with tempfile.TemporaryDirectory(prefix='mossfield-checks-') as temp:
   ['--headless', '--script', 'res://tests/test_models_map.gd'],
   ['--headless', '--script', 'res://tests/test_first_journey.gd'],
   ['--headless', '--script', 'res://tests/test_hd_presentation.gd'],
+  ['--headless', '--script', 'res://tests/test_continent.gd'],
   ['--headless', '--quit-after', '30']]
  for index,args in enumerate(commands):
   env['MOSSFIELD_RUNTIME_DIR']=str(Path(temp)/str(index))
   try:
-   run=subprocess.run(['sh',str(root/'scripts/godot.sh'),*args],cwd=root,env=env,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True,timeout=60)
+   run=subprocess.run(['sh',str(root/'scripts/godot.sh'),*args],cwd=root,env=env,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True,timeout=120 if "res://tests/test_continent.gd" in args else 60)
   except subprocess.TimeoutExpired as error:
    output=error.stdout or b''
    print(output.decode(errors='replace') if isinstance(output,bytes) else output)
@@ -44,4 +45,4 @@ with tempfile.TemporaryDirectory(prefix='mossfield-checks-') as temp:
   print(output)
   if run.returncode or 'SCRIPT ERROR' in output or 'ERROR:' in output:
    sys.exit(run.returncode or 1)
-print('PASS: import, twenty-four game suites, main-scene startup')
+print('PASS: import, twenty-four historical suites and seamless-world suite, main-scene startup')

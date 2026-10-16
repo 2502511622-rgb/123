@@ -93,6 +93,13 @@ func _physics_process(delta: float) -> void:
 		hit_stop -= delta
 		return
 	var active_world: Node2D = game.world
+	if game.state.continent_ready and not record.has("war_id") and position.distance_squared_to(game.player.position)>1600000:
+		var defending: bool=false
+		for ally in get_tree().get_nodes_in_group("villagers")+get_tree().get_nodes_in_group("companions"):
+			if not ally.is_queued_for_deletion() and ally.record.hp>0 and position.distance_squared_to(ally.position)<270400:defending=true;break
+		if not defending:
+			velocity=Vector2.ZERO
+			return
 	victim = faction_target() if record.has("war_id") else game.closest_ally(position)
 	if victim == null: return
 	chill_time = maxf(0, chill_time - delta)
@@ -312,7 +319,12 @@ func _draw() -> void:
 	if YinTempleCombat.phantom(self): tint = Color("c8a3e0aa")
 	var missing: Array = record.get("severed", [])
 	var pose: Dictionary = art_pose()
-	model.present(record.kind,pose,missing,art_clock,velocity.length()>2 and freeze_lock<=0,art_strike>0,tint)
+	if game.state.continent_ready and record.get("faction","")=="village":
+		model.visible=false
+		YinActorArt.draw_pose(self,YinActorArt.npc_pose(int(record.id)%6+1,art_clock,velocity.length()>2,windup>0),tint)
+		if windup>0:draw_line(Vector2(8,-22),Vector2(32,-32),Color("e8d5ab"),3)
+	else:
+		model.present(record.kind,pose,missing,art_clock,velocity.length()>2 and freeze_lock<=0,art_strike>0,tint)
 	draw_set_transform(Vector2.ZERO)
 	var art_height: float = -pose.destination.position.y + 7
 	var reveal: bool = record.hp < record.max_hp or record.kind in YinAbilities.BOSSES or record.get("elite", false) or position.distance_to(game.player.position) < 160
@@ -423,6 +435,7 @@ func apply_element(element: String, power: int = 3, harmonious: bool = false) ->
 
 # Expedition units seek the opposing army; village militia never target the player.
 func faction_target() -> Node2D:
+	if game.state.continent_ready and not YinFactions.friendly(game.state,record) and position.distance_to(game.player.position)<110:return game.player
 	var target: Node2D = null
 	var best: float = INF
 	for group in ["enemies", "faction_guards"]:
@@ -433,7 +446,9 @@ func faction_target() -> Node2D:
 			if distance < best:
 				best = distance
 				target = actor
-	if target == null and not YinFactions.friendly(game.state,record): return game.closest_ally(position)
+	if target == null and not YinFactions.friendly(game.state,record):
+		var ally: Node2D=game.closest_ally(position)
+		if not game.state.continent_ready or position.distance_to(ally.position)<240:return ally
 	return target
 
 func faction_tick(delta: float, spec: Dictionary) -> void:

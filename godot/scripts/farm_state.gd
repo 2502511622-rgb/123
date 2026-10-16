@@ -79,6 +79,7 @@ var ending: String = ""
 var intro_seen: bool = false
 var player_position := Vector2(300, 350)
 var saved_facing := Vector2.RIGHT
+var continent_ready: bool = false
 var zone: String = "farm"
 var journal: Array = ["师父遗书：田里长出人声，不要答应。驱使的东西，每夜都要点名。祠堂里的神，不是祖宗。"]
 var last_report: String = ""
@@ -195,6 +196,16 @@ func rollcall() -> String:
 	return "已点名 %d 位役灵。每夜睡前再点一次。" % spirits.size()
 
 func next_day() -> void:
+	if continent_ready:
+		day+=1;minutes=360;energy=100;health=mini(100,health+35)
+		weather="rain" if day%4==0 else "sun"
+		for npc in villagers:npc.hp=mini(100,npc.hp+12)
+		for spirit in spirits:
+			spirit.job="guard" if spirit.active else "rest"
+			spirit.hp=mini(spirit.max_hp,spirit.hp+12)
+		last_report="营地休整完毕。领地军队继续行军，战事由实体交锋决定。"
+		add_log(last_report);prepare_enemies()
+		return
 	var report: Array[String] = []
 	var kept: Array = []
 	settle_raid()
@@ -378,6 +389,7 @@ func prepare_forest_extension() -> void:
 		added.forest_extension = true
 
 func spawn_record(kind: String, zone_name: String, at: Vector2, level_value: int, elite: bool = false) -> Dictionary:
+	if continent_ready:at=YinContinent.to_world(zone_name,at)
 	var stats: Dictionary = YinBalance.enemy(kind, level_value, elite)
 	var record: Dictionary = {"id": next_id, "kind": kind, "zone": zone_name, "at": [at.x, at.y], "hp": stats.hp, "max_hp": stats.hp, "integrity": 100, "suppressed": false, "dead": false}
 	record.merge(stats)
@@ -513,23 +525,23 @@ func choose_ending(choice: String) -> String:
 func snapshot() -> Dictionary:
 	YinInventoryModel.new(self, "bag").sync()
 	YinInventoryModel.new(self, "chest").sync()
-	var data: Dictionary = {"version": 13}
+	var data: Dictionary = {"version": 14}
 	for key in save_keys(): data[key] = get(key)
 	data.player_position = [player_position.x, player_position.y]
 	data.saved_facing = [saved_facing.x, saved_facing.y]
 	return data.duplicate(true)
 
 static func save_keys() -> Array:
-	return ["defense_minute", "mainline_claimed", "appearance", "temple_journal", "factions", "island_journal", "opened_chests", "quests", "tracked_quest", "visited_landmarks", "weapon_slots", "active_slot", "skill_ranks", "skill_charges", "skill_timers", "villagers", "letters", "raid_day", "raid_status", "village_integrity", "equipment", "gear_drops", "equipped_gear", "equipped_armor", "next_gear_id", "smart_farming", "day", "money", "energy", "health", "minutes", "weather", "selected_crop", "inventory", "supplies", "storage", "bag_slots", "chest_slots", "terrain", "drops", "placements", "plots", "oil", "talismans", "bones", "ash", "reputation", "cultivation", "pollution", "ward", "hall_level", "spirits", "remains", "cargo", "enemies", "enemy_day", "next_id", "total_harvest", "called_day", "ritual_count", "ritual_path", "boss_spawned", "boss_defeated", "ending", "intro_seen", "zone", "journal", "last_report", "order"]
+	return ["continent_ready", "defense_minute", "mainline_claimed", "appearance", "temple_journal", "factions", "island_journal", "opened_chests", "quests", "tracked_quest", "visited_landmarks", "weapon_slots", "active_slot", "skill_ranks", "skill_charges", "skill_timers", "villagers", "letters", "raid_day", "raid_status", "village_integrity", "equipment", "gear_drops", "equipped_gear", "equipped_armor", "next_gear_id", "smart_farming", "day", "money", "energy", "health", "minutes", "weather", "selected_crop", "inventory", "supplies", "storage", "bag_slots", "chest_slots", "terrain", "drops", "placements", "plots", "oil", "talismans", "bones", "ash", "reputation", "cultivation", "pollution", "ward", "hall_level", "spirits", "remains", "cargo", "enemies", "enemy_day", "next_id", "total_harvest", "called_day", "ritual_count", "ritual_path", "boss_spawned", "boss_defeated", "ending", "intro_seen", "zone", "journal", "last_report", "order"]
 
 static func valid_int(value: Variant, minimum: int, maximum: int = 100000000) -> bool:
 	return (value is int or value is float) and is_finite(float(value)) and float(value) == floor(float(value)) and value >= minimum and value <= maximum
 
 static func valid_point(value: Variant) -> bool:
-	return value is Array and value.size() == 2 and (value[0] is float or value[0] is int) and (value[1] is float or value[1] is int) and is_finite(float(value[0])) and is_finite(float(value[1])) and value[0] >= 0 and value[0] <= 2880 and value[1] >= 0 and value[1] <= 1920
+	return value is Array and value.size() == 2 and (value[0] is float or value[0] is int) and (value[1] is float or value[1] is int) and is_finite(float(value[0])) and is_finite(float(value[1])) and value[0] >= 0 and value[0] <= 6400 and value[1] >= 0 and value[1] <= 4800
 
 func restore(data: Dictionary) -> bool:
-	if not valid_int(data.get("version"), 3, 13): return false
+	if not valid_int(data.get("version"), 3, 14): return false
 	var defaults := FarmState.new()
 	if int(data.version) == 3:
 		data = data.duplicate(true)
@@ -625,6 +637,8 @@ func restore(data: Dictionary) -> bool:
 			if not spirit.has("assignment"):spirit.assignment="follow" if spirit.get("active",false) else "rest"
 			if not spirit.has("guard_villager"):spirit.guard_villager=0
 	if not (data.get("defense_minute") is float or data.get("defense_minute") is int) or not is_finite(float(data.defense_minute)) or data.defense_minute<0 or data.defense_minute>100000000:return false
+	if int(data.version)<14:
+		data=data.duplicate(true);data.version=14;data.continent_ready=false
 	for key in save_keys():
 		if not data.has(key): return false
 		var expected: Variant = defaults.get(key)
@@ -1017,6 +1031,7 @@ func heal_spirit(id: int) -> String:
 		return "疗养完成，倒下的役灵可重新出战。"
 	return "没有这位役灵。"
 func update_raid() -> bool:
+	if continent_ready:return false
 	if raid_status == "warned" and day == raid_day and minutes >= 1080:
 		raid_status = "active"
 		defense_minute=day*1440+minutes

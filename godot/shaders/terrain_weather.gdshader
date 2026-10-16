@@ -5,6 +5,7 @@ uniform sampler2D material_atlas : filter_nearest, repeat_disable;
 uniform sampler2D terrain_types : filter_nearest, repeat_disable;
 uniform vec2 map_size;
 uniform bool indoor = false;
+uniform bool continent = false;
 uniform vec4 turf_tint : source_color = vec4(0.35,0.44,0.29,1.0);
 uniform vec4 stone_tint : source_color = vec4(0.65,0.61,0.51,1.0);
 uniform vec4 water_tint : source_color = vec4(0.25,0.44,0.48,1.0);
@@ -15,7 +16,11 @@ void fragment(){
 	vec2 tile_uv=(floor(world_at/32.0)+0.5)/(map_size/32.0);
 	float tile=floor(texture(terrain_types,tile_uv).r*255.0+0.5);
 	vec2 local_uv=clamp(fract(floor(world_at)/96.0),vec2(0.002),vec2(0.998))*0.5;
-	vec3 turf=mix(turf_tint.rgb,texture(material_atlas,local_uv).rgb,0.55);
+	vec3 region_turf=turf_tint.rgb;
+	if(continent){
+		region_turf=world_at.y<2400.0?(world_at.x<3200.0?vec3(0.39,0.39,0.27):vec3(0.41,0.38,0.25)):(world_at.x<3200.0?vec3(0.34,0.43,0.27):vec3(0.28,0.35,0.32));
+	}
+	vec3 turf=mix(region_turf,texture(material_atlas,local_uv).rgb,0.55);
 	float macro=0.96+0.035*sin(world_at.x*0.017+cos(world_at.y*0.012));
 	vec3 surface=turf*macro;
 	if(tile>=16.0 || tile==10.0){

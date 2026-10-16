@@ -3,6 +3,7 @@ const SaveStore = preload("res://scripts/save_store.gd")
 const TOOL_NAMES = ["铁锹", "阴种", "浇灌", "收割", "斧头", "铁镐"]
 const CROP_IDS = ["candle", "vine", "gourd", "rice"]
 var state := FarmState.new()
+var seamless: bool = OS.get_environment("YINTIAN_LEGACY_MAPS") != "1"
 var world: FarmWorld
 var player: FarmPlayer
 var tool: int = 0
@@ -64,6 +65,7 @@ func _ready() -> void:
 		state.player_position = player.position
 		state.saved_facing = player.facing
 	var loaded: bool = save_component.load_game()
+	if seamless:YinContinent.migrate(state)
 	build_zone(state.zone, state.player_position)
 	var weather_layer := CanvasLayer.new()
 	weather_layer.layer = 5
@@ -77,7 +79,7 @@ func _ready() -> void:
 	clock.minute_changed.connect(func(_day, _hour, _minute): update_labels())
 	refresh("存档损坏，新建义庄；原文件在首次保存前保留。" if not loaded else "槐阴村的风，带着纸灰的味道。")
 	if not state.intro_seen:
-		var box := open_modal("阴田录 · 师父遗书", "裂海将异乡传说缝进此世。你刚刚出师，来到槐阴村接管破败义庄与荒田。\n\n第一步：从东南灯门进入乱葬坡，击败两只异怪。\n返回义庄按O领取银剑，再按B比较换装。\n红圈出现先闪避，F镇符可打断。\n\n主线：探索装备、介入四方争端，维持势力平衡。\n种田可供旅途休憩，不要求每日劳作。\n田里长出人声，不要答应。\n驱使的东西，每夜都要点名。\n祠堂里的神，不是祖宗。\n\nWASD 移动，空格劳作，E 互动。\n7 剑 / 8 手枪 / J 手持攻击 / U 装填。\nShift 闪避 / F 镇符 / G 符火。")
+		var box := open_modal("阴诡世界 · 师父遗书", "裂海将异乡传说缝进此世。你刚刚出师，来到青槐村，接管边境义庄。\n\n第一步：沿东路跨过界河桥，前往乱葬岗，击败两只异怪。\n返回义庄按O领取银剑，再按B比较换装。\n红圈出现先闪避，F镇符可打断。\n\n主线：探索装备、介入四方争端，维持势力平衡。\n各方领地由河流分隔，沿道路过桥可无缝抵达。\n田里长出人声，不要答应。\n驱使的东西，每夜都要点名。\n祠堂里的神，不是祖宗。\n\nWASD 移动，左键轻击，右键重击，E 互动。\n7 剑 / 8 手枪 / J 手持攻击 / U 装填。\nShift 闪避 / F 镇符 / G 符火。")
 		box.add_child(button("先定制旅人外观",func(): state.intro_seen=true; YinFirstJourney.start(state); show_character("外观")))
 		box.add_child(button("收起遗书，走进义庄", func():
 			state.intro_seen = true
@@ -89,6 +91,9 @@ func _ready() -> void:
 	ambience = audio_manager.player
 
 func build_zone(zone_name: String, at: Vector2) -> void:
+	if seamless:
+		build_continent(at)
+		return
 	if not YinSceneRouter.ROUTES.has(zone_name): return
 	if is_instance_valid(weapon_popup):
 		weapon_popup.visible=false
@@ -129,7 +134,35 @@ func build_zone(zone_name: String, at: Vector2) -> void:
 	spawn_remains_visuals()
 	world.install_chests(self)
 
+func build_continent(at: Vector2) -> void:
+	state.prepare_enemies()
+	bag_model=YinInventoryModel.new(state,"bag");chest_model=YinInventoryModel.new(state,"chest");bag_model.sync();chest_model.sync()
+	for old in get_node("Levels").get_children():
+		get_node("Levels").remove_child(old);old.queue_free()
+	world=YinContinentWorld.new();world.state=state;get_node("Levels").add_child(world)
+	player=preload("res://scenes/actors/player.tscn").instantiate()
+	player.position=at if world.is_safe_position(at) else YinContinent.HOME+Vector2(0,96)
+	player.appearance=state.appearance;player.facing=state.saved_facing;player.aim_direction=state.saved_facing
+	player.held_item=state.current_gear().weapon
+	world.actors.add_child(player);world.player=player
+	player.health_receiver.bind_source(state,"health")
+	var camera: Camera2D=player.get_node("Camera2D");camera.limit_right=6400;camera.limit_bottom=4800
+	combat.pending.clear();combat.reload_job.clear();clock.bind(state)
+	world.loot_requested.connect(spawn_loot)
+	placement=YinPlacementController.new();placement.game=self;world.add_child(placement)
+	spawn_enemies();spawn_villagers();spawn_spirits();spawn_pickups();spawn_gear_pickups();spawn_remains_visuals();world.install_chests(self)
+func update_territory() -> void:
+	var next: String=YinContinent.zone_at(player.position)
+	if next==state.zone:return
+	state.zone=next
+	area_banner.reveal(next)
+	# The same world, actors, projectiles and camera survive every border crossing.
+	spawn_enemies()
+
 func travel(zone_name: String) -> void:
+	if seamless:
+		notify_action("沿道路与界河桥步行前往领地，地图不再切换。")
+		return
 	close_modal()
 	var origin: String = state.zone
 	var at: Vector2 = {"temple": YinTemple.ENTRY, "island": Vector2(224, 1408), "village": Vector2(180, 800), "sunken": Vector2(180, 800), "theatre": Vector2(180, 800), "forest": Vector2(180, 1120), "graveyard": Vector2(810, 535) if origin == "forest" else Vector2(182, 533), "hall": Vector2(480, 435), "shop": Vector2(480, 435)}.get(zone_name, Vector2(160, 218) if origin == "hall" else (Vector2(780, 260) if origin == "shop" else Vector2(810, 538)))
@@ -148,7 +181,7 @@ func spawn_enemies() -> void:
 		if enemy.get_parent() == world.actors and not enemy.is_queued_for_deletion(): existing.append(enemy.record.id)
 	for e in state.enemies:
 		if e.id in existing: continue
-		if e.zone != state.zone or e.dead: continue
+		if (not seamless and e.zone != state.zone) or e.dead: continue
 		if e.zone == "island" and not YinIsland.available(state, e.kind): continue
 		if e.zone == "temple" and not YinTemple.available(state, e.kind): continue
 		var enemy: YinEnemy = preload("res://scenes/actors/enemy.tscn").instantiate()
@@ -174,12 +207,14 @@ func spawn_spirits() -> void:
 	var existing: Dictionary = {}
 	for actor in get_tree().get_nodes_in_group("companions"):
 		var found: Array = state.spirits.filter(func(s): return s.id == actor.record.id)
-		if actor.get_parent() == world.actors and not actor.is_queued_for_deletion() and not found.is_empty() and state.spirit_present(found[0],state.zone):
+		if actor.get_parent() == world.actors and not actor.is_queued_for_deletion() and not found.is_empty() and ((found[0].active and found[0].hp>0) if seamless else state.spirit_present(found[0],state.zone)):
 			actor.record = found[0]
 			existing[actor.record.id] = actor
 		else: actor.queue_free()
 	for s in state.spirits:
-		if not state.spirit_present(s,state.zone): continue
+		if seamless:
+			if not s.active or s.hp<=0:continue
+		elif not state.spirit_present(s,state.zone):continue
 		if existing.has(s.id): continue
 		var actor := CharacterBody2D.new()
 		actor.set_script(preload("res://scripts/spirit_actor.gd"))
@@ -188,7 +223,7 @@ func spawn_spirits() -> void:
 		actor.position = player.position + Vector2(-30-int(s.id)%4*12, 20)
 		if s.get("assignment")=="village":
 			var citizens: Array=state.villagers.filter(func(v):return int(v.id)==int(s.get("guard_villager",0)))
-			actor.position=Vector2(citizens[0].at[0],citizens[0].at[1])+Vector2(-24,16) if not citizens.is_empty() else Vector2(560,400)
+			actor.position=Vector2(citizens[0].at[0],citizens[0].at[1])+Vector2(-24,16) if not citizens.is_empty() else (YinContinent.CAPITALS.village if seamless else Vector2(560,400))
 		actor.add_to_group("companions")
 		world.actors.add_child(actor)
 
@@ -196,7 +231,7 @@ func spawn_remains_visuals() -> void:
 	for node in get_tree().get_nodes_in_group("remains"):
 		node.queue_free()
 	for r in state.remains:
-		if r.zone != state.zone: continue
+		if not seamless and r.zone != state.zone: continue
 		var sprite := Sprite2D.new()
 		sprite.texture = preload("res://assets/remains.png")
 		sprite.position = Vector2(r.at[0], r.at[1])
@@ -340,16 +375,17 @@ func _process(delta: float) -> void:
 		if state.day != previous_day:
 			spawn_spirits()
 			notify_action(("新求救信：青槐村今夜遭袭，K 阅读。" if state.raid_status == "warned" else "天亮了，仍留在原地。") + state.last_report)
+		if seamless:update_territory()
 		if YinFactions.tick(state):
-			if state.factions.wars.any(func(w): return w.status == "active" and w.defender == state.zone): spawn_enemies()
+			if seamless or state.factions.wars.any(func(w): return w.status == "active" and w.defender == state.zone): spawn_enemies()
 			notify_action("势力战况有变，P 查看四方局势。")
 		if state.update_raid():
-			if state.zone == "village": spawn_enemies()
+			if seamless or state.zone == "village": spawn_enemies()
 			notify_action("求救来信：青槐村遭袭！角色 → 书信查看，义庄东侧 E 前往村庄。")
-		if state.maybe_boss() and state.zone == "farm":
+		if not seamless and state.maybe_boss() and state.zone == "farm":
 			spawn_new_boss()
 			refresh("义庄门前响了三声。棺中客来了。J 攻击，F 压制，Shift 躲开预兆。")
-		if state.zone == "farm" and state.minutes >= 1080 and whisper_day != state.day and state.plots.any(func(p): return p.crop == "rice" and p.growth >= 2 and not p.sealed):
+		if not seamless and state.zone == "farm" and state.minutes >= 1080 and whisper_day != state.day and state.plots.any(func(p): return p.crop == "rice" and p.growth >= 2 and not p.sealed):
 			whisper_day = state.day
 			refresh("田里响起师父的声音：你回来啦？——不要答应，靠近返魂稻按 E 封声。")
 		exploration_clock += delta
@@ -413,8 +449,10 @@ func update_labels() -> void:
 		if point.id.begins_with("inspect_"):hints[point.id]="E 调查"+point.name
 	var remains_hint: Dictionary = nearest_remains()
 	context_label.text = "V 免费炼化 · E 处理 · " + remains_hint.name if not remains_hint.is_empty() else hints.get(kind, "")
+	if seamless:
+		context_label.text={"workbench":"E 义庄整备与休息","counter":"E 商队交易","storage":"E 仓箱","villager":"E 交谈与委托","treasure":"E 开启宝箱","altar":"E 祈愿祭坛"}.get(kind,context_label.text)
 	context_label.get_parent().visible = context_label.text != ""
-	if state.zone == "farm" and state.smart_farming and kind == "":
+	if not seamless and state.zone == "farm" and state.smart_farming and kind == "":
 		var index: int = world.front_plot()
 		if world.reachable(index): context_label.text = "空格 " + suggested_action(index)
 		context_label.get_parent().visible = world.reachable(index)
@@ -442,6 +480,7 @@ func cycle_seed() -> void:
 	notify_action("选择 %s。按 2 播种。" % FarmState.CROPS[state.selected_crop].display_name)
 
 func use_plot(index: int) -> void:
+	if seamless:return
 	if state.smart_farming and index >= 0:
 		var suggested: int = smart_tool(index)
 		if suggested < 0:
@@ -488,7 +527,7 @@ func take_damage(amount: int) -> void:
 		state.health = 60
 		state.energy = 35
 		state.money = maxi(0, state.money - 15)
-		build_zone("farm", Vector2(160, 218))
+		build_zone("farm", YinContinent.HOME+Vector2(0,96) if seamless else Vector2(160,218))
 		notify_action("护命符将你送回义庄，损失 15 文。")
 
 func _input(event: InputEvent) -> void:
@@ -512,8 +551,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif event.is_action_pressed("map"): show_character("地图")
 		elif event.is_action_pressed("companions"): show_character("随从")
 		elif event.is_action_pressed("mail"): show_character("书信")
-		elif event.is_action_pressed("smart_farming"): toggle_smart()
-		elif event.is_action_pressed("cycle_seed"): cycle_seed()
+		elif event.is_action_pressed("smart_farming") and not seamless: toggle_smart()
+		elif event.is_action_pressed("cycle_seed") and not seamless: cycle_seed()
 		elif event.is_action_pressed("inventory"): show_inventory()
 		elif event.is_action_pressed("pause_game"):
 			if placement.selected != "":
@@ -521,7 +560,9 @@ func _unhandled_input(event: InputEvent) -> void:
 				refresh("已取消放置，物品仍在行囊。")
 			else: show_pause()
 		elif event.is_action_pressed("interact"): interact()
-		elif event.is_action_pressed("use_tool"): use_plot(world.front_plot())
+		elif event.is_action_pressed("use_tool"):
+			if seamless:attack("sword")
+			else:use_plot(world.front_plot())
 		elif event.is_action_pressed("attack"): attack("sword")
 		elif event.is_action_pressed("seal"): attack("seal")
 		elif event.is_action_pressed("fire"): attack("fire")
@@ -565,7 +606,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		if placement.selected != "":
 			if placement.place(world.get_global_mouse_position()): notify_action("放置完成。")
 			else: refresh("距离太远、田地或障碍物占用，未消耗物品。")
-		elif state.zone in ["graveyard", "forest", "sunken", "theatre", "village", "island", "temple"] or nearest_enemy(player.position, 65) != null or player.held_item in YinBalance.GUNS:
+		elif seamless or state.zone in ["graveyard", "forest", "sunken", "theatre", "village", "island", "temple"] or nearest_enemy(player.position, 65) != null or player.held_item in YinBalance.GUNS:
 			var aim: Vector2 = YinAimResolver.direction(world,player,event.position)
 			if aim != Vector2.ZERO and player.state_machine.current in ["idle", "walk"]:
 				player.facing = aim
@@ -576,7 +617,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func nearest_remains() -> Dictionary:
 	for r in state.remains:
-		if r.zone == state.zone and world.can_interact(Vector2(r.at[0],r.at[1]),46): return r
+		if (seamless or r.zone == state.zone) and world.can_interact(Vector2(r.at[0],r.at[1]),46): return r
 	return {}
 
 func interact() -> void:
@@ -613,7 +654,7 @@ func interact() -> void:
 func advance_day() -> void:
 	state.next_day()
 	close_modal()
-	build_zone("farm", Vector2(160, 218))
+	build_zone("farm", YinContinent.HOME+Vector2(0,96) if seamless else Vector2(160,218))
 	persist()
 	if state.raid_status == "warned": notify_action("收到求救信：青槐村今夜遭袭，K 阅读。")
 
@@ -671,6 +712,8 @@ func open_modal(title_text: String, description: String) -> VBoxContainer:
 	return column
 
 func close_modal() -> void:
+	if seamless and not state.intro_seen:
+		state.intro_seen=true;YinFirstJourney.start(state)
 	if modal != null:
 		modal.queue_free()
 		modal = null
@@ -701,13 +744,16 @@ func show_crafting() -> void:
 	var box := open_modal("制作与扩建", "选择配方后制作；材料不足时保留现有物品。")
 	box.add_child(button("制作 12 轻弹 · 1 零件 + 1 骨料", func(): feedback(box, state.craft_ammo("light_ammo"))))
 	box.add_child(button("制作 6 步枪弹 · 1 零件 + 1 骨料", func(): feedback(box, state.craft_ammo("rifle_ammo"))))
-	for pair in [["oil", "烛穗 → 4 灯油"], ["talisman", "1 阴灰或 12 文 → 3 张符"], ["ward", "修阵：1 骨料 + 1 灯油 → 镇守 +30"], ["hall", "扩建：3 骨料 + 80 文 → 3 安置位"], ["paper_lamp", "纸灯：2 槐木 + 1 灯油"], ["ward_stake", "阵桩：1 骨料 + 1 青石"]]:
+	for pair in ([] if seamless else [["oil", "烛穗 → 4 灯油"]]) + [ ["talisman", "1 阴灰或 12 文 → 3 张符"], ["ward", "修阵：1 骨料 + 1 灯油 → 镇守 +30"], ["hall", "扩建：3 骨料 + 80 文 → 3 安置位"], ["paper_lamp", "纸灯：2 槐木 + 1 灯油"], ["ward_stake", "阵桩：1 骨料 + 1 青石"]]:
 		box.add_child(button(pair[1], func():
 			var text: String = state.craft(pair[0])
 			feedback(box, text)
 		))
 
 func show_spirits() -> void:
+	if seamless:
+		show_character("随从")
+		return
 	var box := open_modal("役灵册 · 名字必须由你来记", "安置 %d/%d；每日需要 %d 灯油，现有 %d。\n漏点名怨气 +20；缺供养 +25；错配工作 +8。怨气达 60 时失踪并增加污染。\nC 切换跟随 / 驻守 / 集火，主动追击敌人；驻守围绕当前位置巡逻。" % [state.spirits.size(), state.capacity(), state.spirits.size(), state.oil])
 	for s in state.spirits:
 		box.add_child(button("%s · 怨气 %d · 契合 %d · %s" % [s.name, s.risk, s.affinity, {"rest": "休息", "water": "浇灌", "dig": "开荒", "clean": "净秽", "guard": "守门"}[s.job]], func(): show_job(s)))
@@ -764,10 +810,11 @@ func show_special_plot(index: int) -> void:
 		))
 
 func show_shop() -> void:
-	var box := open_modal("槐阴村 · 阴物换粮", "持有 %d 文。烛穗还可在义庄炼灯油。" % state.money)
-	for id in CROP_IDS:
-		var spec: CropSpec = FarmState.CROPS[id]
-		box.add_child(button("%s种子 ×3 · %d 文 · %d 日成熟" % [spec.display_name, spec.seed_price * 3, spec.growth_days], func(): feedback(box, state.buy_seeds(id, 3))))
+	var box := open_modal("槐阴村 · 阴物换粮", "持有 %d 文。补充弹药、装备与旅途物资。" % state.money)
+	if not seamless:
+		for id in CROP_IDS:
+			var spec: CropSpec = FarmState.CROPS[id]
+			box.add_child(button("%s种子 ×3 · %d 文 · %d 日成熟" % [spec.display_name, spec.seed_price * 3, spec.growth_days], func(): feedback(box, state.buy_seeds(id, 3))))
 	box.add_child(button("购买 4 灯油 · 18 文", func():
 		if state.money < 18: feedback(box, "铜钱不足。")
 		elif not state.can_gain("oil", 4): feedback(box, "行囊已满。")
@@ -832,7 +879,7 @@ func show_inventory_grid(with_storage: bool) -> void:
 	bag_model.sync()
 	chest_model.sync()
 	var box := open_modal("义庄仓箱" if with_storage else "行囊", "命息 %d · 铜钱 %d · 修为 %d
-种田为休闲支线；站到遗骸上按 V 顷刻炼化。" % [state.health, state.money, state.cultivation])
+探索装备并参与四方纷争；站到遗骸上按 V 顷刻炼化。" % [state.health, state.money, state.cultivation])
 	if with_storage:
 		var card: Panel = modal.get_node("ModalCard")
 		card.position = Vector2(12, 12)
@@ -896,7 +943,7 @@ func show_factions() -> void:
 
 func show_pause() -> void:
 	var box := open_modal("暂停", "进度自动保存 · 世界已暂停")
-	box.add_child(button("操作帮助", func(): open_modal("操作", "WASD 移动 · E 互动 · 空格劳作\nJ / 左键轻击 · 右键近战重击 · 滚轮换武器 · U 装填\nShift 闪避 · F 镇符 · G 符火 · V 免费炼化\nI 行囊 · B 装备 · H 随从 · Tab 地图\nR 点名 · C 指令 · K 书信 · L 手札\nQ 阴种 · Z 智能劳作 · T 黄昏 · M 环境音")))
+	box.add_child(button("操作帮助", func(): open_modal("操作", "WASD 移动 · E 互动 · 空格/左键攻击\nJ / 左键轻击 · 右键近战重击 · 滚轮换武器 · U 装填\nShift 闪避 · F 镇符 · G 符火 · V 免费炼化\nI 行囊 · B 装备 · H 随从 · Tab 地图\nR 点名 · C 指令 · K 书信 · L 手札\nP 势力 · O 委托 · T 黄昏 · M 环境音")))
 	box.add_child(button("四方势力 · P", show_factions))
 	box.add_child(button("委托 · O", show_quests))
 	box.add_child(button("地图 · Tab", func(): show_character("地图")))
@@ -962,7 +1009,7 @@ func spawn_loot(item: String, count: int, at: Vector2) -> void:
 func spawn_pickups() -> void:
 	for old in get_tree().get_nodes_in_group("loose_items"): old.queue_free()
 	for record in state.drops:
-		if record.zone != state.zone: continue
+		if not seamless and record.zone != state.zone: continue
 		var pickup := YinItemPickup.new()
 		pickup.game = self
 		pickup.record = record
@@ -989,7 +1036,7 @@ func toggle_smart() -> void:
 func spawn_gear_pickups() -> void:
 	for old in get_tree().get_nodes_in_group("gear_pickups"): old.queue_free()
 	for record in state.gear_drops:
-		if record.zone != state.zone: continue
+		if not seamless and record.zone != state.zone: continue
 		var pickup := YinGearPickup.new()
 		pickup.game = self
 		pickup.record = record
@@ -1066,6 +1113,7 @@ func equipment_content(box: VBoxContainer) -> void:
 			))
 
 func choose_tool(index: int) -> void:
+	if seamless:return
 	combat.cancel_reload()
 	tool = clampi(index, 0, TOOL_NAMES.size() - 1)
 	state.smart_farming = false
@@ -1120,9 +1168,10 @@ func show_character(tab: String = "背包") -> void:
 			box.add_child(columns)
 			var shortcuts := HBoxContainer.new()
 			columns.add_child(shortcuts)
-			shortcuts.add_child(button("农具 · " + TOOL_NAMES[tool], show_tools, Vector2(155, 24)))
-			shortcuts.add_child(button("智能 " + ("开" if state.smart_farming else "关"), func(): toggle_smart(); show_character("背包"), Vector2(110, 24)))
-			shortcuts.add_child(button("阴种 · " + FarmState.CROPS[state.selected_crop].display_name, func(): cycle_seed(); show_character("背包"), Vector2(210, 24)))
+			if not seamless:
+				shortcuts.add_child(button("农具 · " + TOOL_NAMES[tool], show_tools, Vector2(155, 24)))
+				shortcuts.add_child(button("智能 " + ("开" if state.smart_farming else "关"), func(): toggle_smart(); show_character("背包"), Vector2(110, 24)))
+				shortcuts.add_child(button("阴种 · " + FarmState.CROPS[state.selected_crop].display_name, func(): cycle_seed(); show_character("背包"), Vector2(210, 24)))
 			var view := YinInventoryPanel.new()
 			view.bag = bag_model
 			view.chest = chest_model
@@ -1164,13 +1213,14 @@ func show_character(tab: String = "背包") -> void:
 			box.add_child(atlas)
 			var route_label := Label.new()
 			route_label.text = "义庄 → 乱葬坡 → 后山铳林\n后山东北 → 沉水村【井中龙婆】\n后山东南 → 废戏台【无面伶王】\n后山向东 → 断碑营地 / 枯井 / 山门遗址\n村东码头 → 岛国【荒冢 / 风山 / 双面社】\n村北山道 → 大佛寺【修罗道场 / 护法殿】\n黄点出口 · 红点敌人 · 蓝点役灵 · 白点自己"
+			if seamless:route_label.text="西北大佛寺 · 东北岛国 · 西南青槐村 · 东南乱葬岗\n蓝色界河 · 棕色桥梁 · 彩点军队 · 白点旅人\n沿桥跨境，无需出口传送；战场与军队位置实时显示。"
 			route_label.add_theme_font_size_override("font_size", 11)
 			route_label.add_theme_color_override("font_color", Color("ded9bf"))
 			box.add_child(route_label)
 		"设置": box.add_child(YinDisplaySettings.panel())
 
 func spawn_villagers() -> void:
-	if state.zone != "village": return
+	if not seamless and state.zone != "village": return
 	for record in state.villagers:
 		var actor := YinVillager.new()
 		actor.game = self
@@ -1321,7 +1371,7 @@ func show_villager() -> void:
 	candidates.sort_custom(func(a,b):return a.position.distance_squared_to(player.position)<b.position.distance_squared_to(player.position))
 	for actor in candidates:
 		var record: Dictionary = actor.record
-		var box := open_modal(record.name, "生命 %d/100 · 村庄完好度 %d\n%s" % [record.hp, state.village_integrity, "今晚求道长护村。" if state.raid_status in ["warned", "active"] else "村口邪祟每隔几日便来叩门。"])
+		var box := open_modal(record.name, "生命 %d/100 · 村庄完好度 %d\n%s" % [record.hp, state.village_integrity, "今晚求道长护村。" if state.raid_status in ["warned", "active"] else "村民已组织自卫；四方军队会沿界河桥进军。"])
 		box.add_child(button("四方局势与援村", show_factions))
 		box.add_child(button("派随从保护这位村民",func():show_villager_guard(record)))
 		box.add_child(button("聊一聊", func(): show_chat(record)))
@@ -1364,7 +1414,7 @@ func update_exploration() -> void:
 	if state.zone != "forest": return
 	for id in YinAdventure.LANDMARKS:
 		var spec: Dictionary = YinAdventure.LANDMARKS[id]
-		if not state.visited_landmarks.has(id) and player.position.distance_to(spec.at) < 110:
+		if not state.visited_landmarks.has(id) and player.position.distance_to(YinContinent.to_world("forest",spec.at) if seamless else spec.at) < 110:
 			state.visited_landmarks[id] = true
 			notify_action("发现地标：" + spec.name)
 func update_quest_tracker() -> void:
@@ -1546,7 +1596,7 @@ func show_landmark(id: String) -> void:
 
 func use_landmark(id: String) -> String:
 	if not YinAdventure.LANDMARKS.has(id) or state.zone!="forest":return "此处无法使用。"
-	var at: Vector2=YinAdventure.LANDMARKS[id].at+Vector2(0,40)
+	var at: Vector2=(YinContinent.to_world("forest",YinAdventure.LANDMARKS[id].at) if seamless else YinAdventure.LANDMARKS[id].at)+Vector2(0,40)
 	if not world.can_interact(at,45):return "请靠近地标。"
 	if nearest_enemy(player.position,150)!=null:return "附近仍有敌人，先确保安全。"
 	match id:

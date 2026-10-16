@@ -8,22 +8,22 @@ func _ready() -> void:
 	theme = YinPixelTheme.install()
 	ThemeDB.fallback_font = preload("res://assets/mossfield-font.ttf")
 	var title := Label.new()
-	title.text = "阴 田 录"
+	title.text = "阴 诡 世 界"
 	title.position = Vector2(48, 50)
 	title.add_theme_font_size_override("font_size", 38)
 	title.add_theme_color_override("font_color", Color("d4cfad"))
 	add_child(title)
 	var subtitle := Label.new()
-	subtitle.text = "缝合异境 · 巡夜者之旅"
+	subtitle.text = "四方领地 · 界河纷争"
 	subtitle.position = Vector2(50, 104)
 	subtitle.add_theme_font_size_override("font_size", 13)
 	subtitle.add_theme_color_override("font_color", Color("99ad9a"))
 	add_child(subtitle)
 	var saved := FarmState.new()
-	existing_valid = FileAccess.file_exists(SaveStore.PATH) and SaveStore.load_game(saved)
-	var start := make_button("新建义庄", Vector2(48, 160))
+	existing_valid = SaveStore.has_save() and SaveStore.load_game(saved)
+	var start := make_button("踏入异境", Vector2(48, 160))
 	start.pressed.connect(func():
-		if FileAccess.file_exists(SaveStore.PATH): confirmation.popup_centered()
+		if SaveStore.has_save(): confirmation.popup_centered()
 		else: new_game()
 	)
 	var continue_button := make_button("继续 · 第 %d 日" % saved.day if existing_valid else "继续 · 尚无有效存档", Vector2(48, 203))
@@ -61,8 +61,8 @@ func make_button(text: String, at: Vector2) -> Button:
 	add_child(button)
 	return button
 func new_game() -> void:
-	if FileAccess.file_exists(SaveStore.PATH):
-		var result: int = DirAccess.copy_absolute(SaveStore.PATH, SaveStore.PATH + ".backup-" + str(Time.get_unix_time_from_system()))
+	if SaveStore.has_save():
+		var result: int = DirAccess.copy_absolute(SaveStore.existing_path(), SaveStore.PATH + ".backup-" + str(Time.get_unix_time_from_system()))
 		if result != OK:
 			hint.text = "无法备份原存档，未覆盖进度。"
 			return

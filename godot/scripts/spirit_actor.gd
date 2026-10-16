@@ -42,7 +42,7 @@ func visible(enemy: Node2D) -> bool:
 	return get_world_2d().direct_space_state.intersect_ray(ray).is_empty()
 func _physics_process(delta: float) -> void:
 	if game.modal != null or is_queued_for_deletion(): return
-	if not game.state.spirit_present(record,game.state.zone):
+	if not ((record.active and record.hp>0) if game.state.continent_ready else game.state.spirit_present(record,game.state.zone)):
 		queue_free()
 		return
 	if burst_remaining > 0:
@@ -71,7 +71,7 @@ func _physics_process(delta: float) -> void:
 		repath = 0
 	if record.get("assignment")=="village":
 		var citizens: Array=game.state.villagers.filter(func(v):return int(v.id)==int(record.get("guard_villager",0)))
-		guard_anchor=Vector2(citizens[0].at[0],citizens[0].at[1]) if not citizens.is_empty() else Vector2(560,400)
+		guard_anchor=Vector2(citizens[0].at[0],citizens[0].at[1]) if not citizens.is_empty() else (YinContinent.CAPITALS.village if game.state.continent_ready else Vector2(560,400))
 	var target: Vector2 = game.player.position + Vector2(-24 - int(record.id) % 3 * 18, 22)
 	if not game.world.is_safe_position(target): target = game.player.position
 	if last_order == "guard": target = guard_anchor + Vector2.from_angle(int(time / 3) * PI / 2 + int(record.id)) * 36

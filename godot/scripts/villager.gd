@@ -8,12 +8,17 @@ var home: Vector2
 var walking: bool = false
 var walk_clock: float = 0
 var brain_state: String = "work"
+var attack_cooldown: float=0
+var attack_flash: float=0
+var combat_target: YinEnemy
+var attack_count: int=0
 func _ready() -> void:
 	material = ShaderMaterial.new()
 	material.shader = preload("res://shaders/hit_flash.gdshader")
 	home = position
 	collision_layer = 0
 	collision_mask = 1
+	var body:=CollisionShape2D.new();var box:=RectangleShape2D.new();box.size=Vector2(14,10);body.shape=box;body.position=Vector2(0,-4);add_child(body)
 	var hurtbox := YinAllyHurtbox.new()
 	hurtbox.actor = self
 	add_child(hurtbox)
@@ -21,6 +26,10 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	if game.modal != null: return
 	time += delta
+	attack_cooldown=maxf(0,attack_cooldown-delta);attack_flash=maxf(0,attack_flash-delta)
+	if game.state.continent_ready and defend(delta):
+		queue_redraw()
+		return
 	invincible = maxf(0, invincible - delta)
 	brain_state = "wounded" if record.hp <= 0 else ("shelter" if game.state.raid_status == "active" or record.hp < 30 else ("rest" if game.state.minutes >= 1200 else "work"))
 	var drift: float = 4 if brain_state in ["shelter", "rest"] else 12
@@ -32,6 +41,34 @@ func _physics_process(delta: float) -> void:
 	material.set_shader_parameter("motion_clock", time)
 	material.set_shader_parameter("motion_amount", 0.6 if walking else 0.12)
 	queue_redraw()
+func defend(delta: float) -> bool:
+	if record.hp<=0:return false
+	combat_target=null
+	var best: float=300
+	for foe in get_tree().get_nodes_in_group("enemies"):
+		if foe.is_queued_for_deletion() or foe.record.dead or YinFactions.friendly(game.state,foe.record):continue
+		if foe.position.distance_to(home)>360:continue
+		var d: float=position.distance_to(foe.position)
+		if d<best:best=d;combat_target=foe
+	if combat_target==null:return false
+	brain_state="defend";walking=false
+	var ranged: bool=int(record.id)%2==0
+	var reach: float=144 if ranged else 42
+	if best>reach:
+		var path: PackedVector2Array=game.world.path_to(position,combat_target.position)
+		var next: Vector2=combat_target.position
+		for p in path:
+			if p.distance_to(position)>10:next=p;break
+		velocity=position.direction_to(next)*40;move_and_slide();walking=true;walk_clock+=delta
+	elif attack_cooldown<=0:
+		var ray=PhysicsRayQueryParameters2D.create(position+Vector2(0,-10),combat_target.position+Vector2(0,-10),1)
+		if get_world_2d().direct_space_state.intersect_ray(ray).is_empty():
+			attack_cooldown=1.35 if ranged else 0.9;attack_flash=0.22;attack_count+=1
+			if ranged:game.world.spell_trace(position+Vector2(0,-24),combat_target.position+Vector2(0,-20),"lightning")
+			combat_target.receive_faction_hit(12 if ranged else 16)
+			game.world.impact(combat_target.position+Vector2(0,-20),position.direction_to(combat_target.position),"sword")
+	record.at=[position.x,position.y]
+	return true
 func receive_hit(damage: int) -> void:
 	if record.hp <= 0 or invincible > 0: return
 	record.hp = maxi(0, record.hp - damage)
@@ -51,6 +88,10 @@ func _draw() -> void:
 	YinActorArt.contact_shadow(self,9)
 	var pose: Dictionary = YinActorArt.npc_pose(int(record.id), walk_clock, walking, game.player.position.distance_to(position) < 50 and not walking)
 	YinActorArt.draw_pose(self, pose, Color("98aaa0") if record.hp == 0 else Color.WHITE)
+	if attack_flash>0:
+		var direction: Vector2=position.direction_to(combat_target.position) if is_instance_valid(combat_target) else Vector2.RIGHT
+		draw_line(Vector2(6,-22),Vector2(6,-22)+direction*29,Color("e6d9a9"),3)
+		draw_arc(Vector2(0,-20)+direction*17,18,-PI*0.7,PI*0.3,12,Color("f4ddb4"),2)
 	if record.hp < 100:
 		draw_rect(Rect2(-18, -60, 36, 3), Color("162d2c"))
 		draw_rect(Rect2(-18, -60, 36 * float(record.hp) / 100, 3), Color("a5b780"))

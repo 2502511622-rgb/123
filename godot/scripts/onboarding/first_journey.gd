@@ -12,8 +12,9 @@ static func guide(state) -> Dictionary:
 		if YinAdventure.progress(state,ID)<2:
 			var enemies: Array=state.enemies.filter(func(e):return e.zone=="graveyard" and not e.dead and not e.has("war_id"))
 			var target: Vector2=Vector2(enemies[0].at[0],enemies[0].at[1]) if not enemies.is_empty() else Vector2(280,240)
-			return {"title":"初次守夜 · %d/2"%YinAdventure.progress(state,ID),"hint":"东南灯门 → 乱葬坡" if state.zone=="farm" else "击败异怪 · 红圈亮起先闪避", "at":Vector2(846,501) if state.zone=="farm" else target,"zone":"farm" if state.zone=="farm" else "graveyard"}
-		return {"title":"守夜完成 · 领取银剑","hint":"O复命 · 领取银剑与35文" if state.zone=="farm" else "西南灯门返回义庄 · O复命", "at":Vector2(155,547),"zone":"graveyard"}
+			if state.continent_ready and state.zone=="farm":target=Vector2(3200,3552)
+			return {"title":"初次守夜 · %d/2"%YinAdventure.progress(state,ID),"hint":(("沿东路过界河桥 → 乱葬岗" if state.zone in ["farm","village"] else "前往东南乱葬岗 · 清理两只异怪") if state.continent_ready and state.zone!="graveyard" else ("东南灯门 → 乱葬坡" if state.zone=="farm" else "击败异怪 · 红圈亮起先闪避")), "at":(target if state.continent_ready else Vector2(846,501)) if state.zone=="farm" else target,"zone":"farm" if state.zone=="farm" else "graveyard"}
+		return {"title":"守夜完成 · 领取银剑","hint":"O复命 · 领取银剑与35文" if state.zone=="farm" else "沿西路过桥返回义庄 · O复命" if state.continent_ready else "西南灯门返回义庄 · O复命", "at":YinContinent.HOME if state.continent_ready else Vector2(155,547),"zone":"graveyard"}
 	if quest.get("equipped",false):return {}
 	var reward: Array=state.equipment.filter(func(g):return g.weapon=="silver_sword" and g.tier>=2)
 	if not reward.is_empty() and state.weapon_slots.melee!=reward[0].id:
