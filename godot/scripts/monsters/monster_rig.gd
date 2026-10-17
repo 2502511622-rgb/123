@@ -24,6 +24,7 @@ func present(kind: String,pose: Dictionary,missing: Array,clock: float,moving: b
 	joints=modular.joints
 
 func _process(delta: float) -> void:
+	if not is_visible_in_tree():return
 	var game=get_tree().get_first_node_in_group("yintian_game")
 	if game!=null and game.modal!=null:return
 	if actor!=null:

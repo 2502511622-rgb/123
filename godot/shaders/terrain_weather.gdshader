@@ -1,4 +1,6 @@
 shader_type canvas_item;
+render_mode blend_disabled;
+uniform bool cache_mask30=false;
 uniform float clock_time=0.0;
 uniform float wetness=0.0;
 uniform float snow=0.0;
@@ -229,5 +231,10 @@ void fragment(){
  }
 	if(indoor){surface=texture(material_atlas,local_uv+vec2(0.5,0.5)).rgb*1.32;}
 	COLOR=vec4(surface,COLOR.a);
+ }
+ if(cache_mask30){
+  float mask=tile>=11.0 && tile<=13.0?1.0:0.0;
+  if(mask<.5 && continent && coast29(world_at)>.5 && texture(landscape_field,world_at/map_size).g<-.34){mask=.5;}
+  COLOR.a=mask;
  }
 }

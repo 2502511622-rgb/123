@@ -104,15 +104,54 @@ func draw_continent() -> void:
 	for id in YinAdventure.CHESTS:
 		if id in game.state.opened_chests:continue
 		var spec: Dictionary=YinAdventure.CHESTS[id]
-		draw_rect(Rect2(point(YinContinent.to_world(spec.zone,spec.at))-Vector2.ONE,Vector2(2,2)),Color("d6bb76"),false)
+		draw_rect(Rect2(point(YinAdventure.chest_at(id,true))-Vector2.ONE,Vector2(2,2)),Color("d6bb76"),false)
 	for actor in get_tree().get_nodes_in_group("enemies")+get_tree().get_nodes_in_group("faction_guards"):
 		if actor.is_queued_for_deletion() or actor.record.dead:continue
 		var at=point(actor.position)
-		draw_circle(at,1.5 if actor.record.has("war_id") else 0.65,YinFactions.COLORS.get(actor.record.get("faction",""),Color("c47168")))
+		draw_circle(at,2.2 if actor.record.has("war_id") else 1.0,Color("d77d6d") if actor.is_in_group("enemies") else Color("83bbb8"))
 	for war in game.state.factions.wars:
 		if size.x>200:
 			var from: Vector2=point(YinContinent.CAPITALS[war.attacker]);var to: Vector2=point(YinContinent.CAPITALS[war.defender])
 			draw_dashed_line(from,to,Color("d7a27388"),1,5)
 	var guide: Dictionary=YinFirstJourney.guide(game.state)
 	if not guide.is_empty() and guide.at!=Vector2.ZERO:draw_arc(point(guide.at),4,0,TAU,12,Color("ffe0a2"),1)
-	draw_circle(point(game.player.position),2,Color("fff0be"))
+	draw_navigation30()
+	draw_circle(point(game.player.position),2.5,Color("fff0be"))
+
+func _gui_input(event: InputEvent):
+	if size.x<200 or not game.state.continent_ready:return
+	if event is InputEventMouseButton and event.pressed and event.button_index==MOUSE_BUTTON_LEFT:
+		var at=(event.position-Vector2(5,17))/(size-Vector2(10,23))*game.world.level_size
+		# Snap to actual landmarks and cache positions when the click is nearby.
+		var label="标记地点";var closest=9.0
+		for id in YinAdventure.CHESTS:
+			if id in game.state.opened_chests:continue
+			var place=YinAdventure.chest_at(id,true);var distance=event.position.distance_to(point(place))
+			if distance<closest:closest=distance;at=place;label=YinAdventure.CHESTS[id].name
+		for id in YinWorldDistricts.PLACES:
+			var place=YinWorldDistricts.PLACES[id];var distance=event.position.distance_to(point(place.at))
+			if distance<closest:closest=distance;at=place.at;label=place.name
+		var route=game.world.path_to(game.player.position,at,Vector2(8,6))
+		if not route.is_empty():game.navigation_target={"at":at,"name":label,"route":route};queue_redraw()
+		accept_event()
+func _get_tooltip(at: Vector2) -> String:
+	if size.x<200:return "Tab 查看地图与路线"
+	for id in YinWorldDistricts.PLACES:
+		var place=YinWorldDistricts.PLACES[id]
+		if point(place.at).distance_to(at)<9:return place.name+" · "+str(roundi(game.player.position.distance_to(place.at)/32.0))+"步"
+	return "左键标记可行路线"
+func draw_navigation30():
+	var target: Dictionary=game.get("navigation_target") if game.get("navigation_target")!=null else {}
+	if target.is_empty():
+		var guide=YinFirstJourney.guide(game.state)
+		if not guide.is_empty() and guide.at!=Vector2.ZERO:target={"at":guide.at,"name":guide.title}
+	if target.is_empty():return
+	var at=point(target.at)
+	if size.x>200:
+		var route: PackedVector2Array=target.get("route",PackedVector2Array())
+		for i in range(1,route.size()):draw_line(point(route[i-1]),point(route[i]),Color("e2d4a8"),1.5)
+		var label="%s · 约%d步"%[target.name,roundi(game.player.position.distance_to(target.at)/32.0)]
+		draw_string(preload("res://assets/mossfield-font.ttf"),Vector2(7,size.y-5),label,HORIZONTAL_ALIGNMENT_LEFT,size.x-14,10,Color("ffe4a2"))
+	draw_circle(at,4,Color("17222c"));draw_arc(at,4,0,TAU,16,Color("ffe4a2"),1.5)
+	var origin=point(game.player.position);var direction=(at-origin).normalized()
+	draw_line(origin+direction*4,origin+direction*11,Color("ffe4a2"),2)

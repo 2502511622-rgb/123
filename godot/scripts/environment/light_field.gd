@@ -3,6 +3,7 @@ extends RefCounted
 var viewport: SubViewport
 var root: Node2D
 var world: FarmWorld
+var quality: int=2
 var count: int = -1
 var sources: Array = []
 var blocked_rays: int = 0
@@ -73,7 +74,10 @@ static func hit_distance(at: Vector2, direction: Vector2, rect: Rect2, limit: fl
 	return maxf(0, near) if far >= 0 else limit
 func update(time: float) -> void:
 	if count != world.environment_revision or sources.any(func(s): return not is_instance_valid(s.node) or s.node.is_queued_for_deletion()): rebuild()
-	root.transform = world.get_global_transform_with_canvas()
+	var size_value=Vector2i(320,180) if quality==0 else Vector2i(640,360)
+	if viewport.size!=size_value:viewport.size=size_value
+	var factor=Vector2(viewport.size)/Vector2(640,360)
+	root.transform = Transform2D(0,Vector2.ZERO).scaled(factor)*world.get_global_transform_with_canvas()
 	for source in sources:
-		source.polygon.visible = Rect2(-130, -130, 900, 620).has_point(root.transform * source.polygon.position)
+		source.polygon.visible = Rect2(Vector2(-130,-130)*factor,Vector2(900,620)*factor).has_point(root.transform * source.polygon.position)
 		if source.polygon.visible: source.polygon.material.set_shader_parameter("clock_time", time)

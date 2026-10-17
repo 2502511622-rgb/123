@@ -1,5 +1,7 @@
 class_name YinEnemy
 extends CharacterBody2D
+var spec_cache: Dictionary={}
+var spec_kind=""
 var motion:=YinMonsterMotion.new()
 var model: YinMonsterRig
 var body_shape: CollisionShape2D
@@ -21,6 +23,8 @@ var burst_remaining: int = 0
 var burst_timer: float = 0
 var route: PackedVector2Array = []
 var repath: float = 0
+var perception_clock: float=0
+var perception_guard: bool=false
 var victim: Node2D
 var bleed_time: float = 0
 var bleed_tick: float = 0
@@ -46,11 +50,12 @@ var health_receiver: YinHealthReceiver
 var hurtbox: YinHurtbox
 
 func _ready() -> void:
+	spec_cache=YinBalance.MONSTERS[record.kind].duplicate();spec_kind=record.kind
 	game.world.combat_index().invalidate()
 	var flash_material := ShaderMaterial.new()
 	flash_material.shader = preload("res://shaders/hit_flash.gdshader")
 	material = flash_material
-	material.set_shader_parameter("environment_blend",0.35)
+	material.set_shader_parameter("environment_blend",0.22)
 	health_receiver = YinHealthReceiver.new()
 	health_receiver.name = "HealthReceiver"
 	health_receiver.bind_record(record)
@@ -76,6 +81,7 @@ func _ready() -> void:
 	add_child(model)
 
 func _physics_process(delta: float) -> void:
+	perception_clock=maxf(0,perception_clock-delta)
 	if record.dead:
 		queue_free()
 		return
@@ -86,6 +92,7 @@ func _physics_process(delta: float) -> void:
 		motion.update(self,delta)
 		if freeze_lock <= 0 and hit_stop <= 0: art_clock += delta*YinEnemyPack.movement_factor(record.kind,record.get("severed",[]))
 		if velocity.length() > 2: art_facing = velocity.normalized()
+		material.set_shader_parameter("contour",.5 if windup>0 else .22)
 		material.set_shader_parameter("motion_clock", art_clock)
 		material.set_shader_parameter("motion_amount", 0.0)
 		if windup>0 and is_instance_valid(victim):art_facing=position.direction_to(victim.position)
@@ -113,7 +120,12 @@ func _physics_process(delta: float) -> void:
 		if not defending:
 			velocity=Vector2.ZERO
 			return
-	victim = faction_target() if record.has("war_id") or record.has("garrison_region") or record.has("returning_region") else game.closest_ally(position)
+	var guard=is_in_group("faction_guards")
+	var lost=not is_instance_valid(victim) or victim.is_queued_for_deletion()
+	if not lost and victim is YinEnemy:lost=victim.record.dead
+	if perception_clock<=0 or lost or guard!=perception_guard:
+		perception_clock=.1;perception_guard=guard
+		victim = faction_target() if record.has("war_id") or record.has("garrison_region") or record.has("returning_region") else game.closest_ally(position)
 	if victim == null:
 		if record.has("war_id") or record.has("garrison_region") or record.has("returning_region"):march_objective(delta)
 		return
@@ -146,10 +158,11 @@ func _physics_process(delta: float) -> void:
 		elif record.kind != "opera_boss": passive_clock = 0
 	stun = maxf(0, stun - delta)
 	cooldown = maxf(0, cooldown - delta)
-	var spec: Dictionary = YinBalance.MONSTERS[record.kind].duplicate()
+	if spec_kind!=record.kind:spec_cache=YinBalance.MONSTERS[record.kind].duplicate();spec_kind=record.kind
+	var spec: Dictionary = spec_cache
 	spec.pattern = YinAbilities.meta(record.kind).pattern
 	if record.kind=="gunner" and YinEnemyPack.missing("arm_right",record.get("severed",[])):spec.pattern="melee"
-	spec.speed *= YinEnemyPack.movement_factor(record.kind,record.get("severed",[]))
+	spec.speed = float(YinBalance.MONSTERS[record.kind].speed)*YinEnemyPack.movement_factor(record.kind,record.get("severed",[]))
 	if chill_time > 0: spec.speed *= 0.45
 	if "head" in record.get("severed", []):
 		windup = 0
@@ -194,7 +207,7 @@ func _physics_process(delta: float) -> void:
 				charge_hit = false
 			elif ranged:
 				volley(spec.pattern)
-			elif victim.position.distance_to(attack_center) < (57 if boss else (42 if record.kind == "brute" else 29)):
+			elif victim.position.distance_to(attack_center) < attack_radius30():
 				var ray := PhysicsRayQueryParameters2D.create(position + Vector2(0, -4), victim.position + Vector2(0, -4), 1)
 				if get_world_2d().direct_space_state.intersect_ray(ray).is_empty(): hurt_victim(int(record.get("damage", spec.damage)))
 			if record.kind == "boss": volley("boss")
@@ -351,9 +364,9 @@ func _draw() -> void:
 	var art_height: float = YinMonsterArt.visual_height(record.kind)+7-model.position.y
 	var reveal: bool = record.hp < record.max_hp or record.kind in YinAbilities.BOSSES or record.get("elite", false) or position.distance_to(game.player.position) < 160
 	if reveal:
-		draw_rect(Rect2(-16, -art_height, 32, 3), Color("413e3e"))
-		draw_rect(Rect2(-16, -art_height, 32 * health_trail / record.max_hp, 3), Color("e6bb83"))
-		draw_rect(Rect2(-16, -art_height, 32 * float(record.hp) / record.max_hp, 3), Color("aa7164"))
+		draw_rect(Rect2(-20, -art_height-1, 40, 6), Color("171c25"))
+		draw_rect(Rect2(-19, -art_height, 38 * health_trail / record.max_hp, 4), Color("e6bb83"))
+		draw_rect(Rect2(-19, -art_height, 38 * float(record.hp) / record.max_hp, 4), Color("ca8d76"))
 	if windup>0:draw_string(preload("res://assets/mossfield-font.ttf"),Vector2(19,-art_height-5),"蓄力",HORIZONTAL_ALIGNMENT_LEFT,-1,10,Color("ffd793"))
 	if shield > 0: draw_arc(Vector2(0, -25), 25, 0, TAU, 20, Color("96c0db"), 2)
 	if burn_time > 0: draw_circle(Vector2(8, -24), 3, Color("f4a261"))
@@ -373,8 +386,9 @@ func _draw() -> void:
 		draw_arc(Vector2(0, -14), 26, 0, TAU * (1 - windup / 0.85), 24, Color("e6b17c"), 2)
 	elif windup > 0:
 		var local_center: Vector2 = attack_center - position
-		draw_circle(local_center, 57 if boss else (42 if record.kind == "brute" else 29), Color(0.8, 0.24, 0.16, 0.28))
-		draw_arc(local_center, 57 if boss else (42 if record.kind == "brute" else 29), -PI / 2, -PI / 2 + TAU * (1 - windup / (0.8 if boss else 0.5)), 32, Color("f0bc7d"), 3)
+		draw_circle(local_center,attack_radius30(),Color(.78,.25,.18,.20))
+		draw_arc(local_center,attack_radius30(),0,TAU,40,Color("f2b77e"),1.5)
+		draw_arc(local_center, attack_radius30()-3, -PI / 2, -PI / 2 + TAU * (1 - windup / (0.8 if boss else 0.5)), 32, Color("f0bc7d"), 3)
 		draw_rect(Rect2(local_center - Vector2(2, 2), Vector2(4, 4)), Color("f0bc7d"))
 
 func hurt_victim(damage: int) -> void:
@@ -517,7 +531,7 @@ func faction_tick(delta: float, spec: Dictionary) -> void:
 	elif windup > 0:
 		windup -= delta
 		if windup <= 0:
-			if sight and victim.position.distance_to(attack_center) < 45:
+			if sight and victim.position.distance_to(attack_center) < attack_radius30():
 				if victim is YinEnemy:
 					victim.receive_faction_hit(int(record.damage))
 				else: hurt_victim(int(record.damage))
@@ -593,3 +607,7 @@ func march_objective(delta: float) -> void:
 		while not route.is_empty() and position.distance_to(route[0])<8:route.remove_at(0)
 		if not route.is_empty():velocity=position.direction_to(route[0])*float(YinBalance.MONSTERS[record.kind].speed)*YinEnemyPack.movement_factor(record.kind,record.get("severed",[]))
 	step_body(delta);record.at=[position.x,position.y]
+
+func attack_radius30() -> float:
+	if record.has("war_id") or record.has("garrison_region"):return 45.0
+	return 57.0 if record.kind in YinAbilities.BOSSES else 42.0 if record.kind=="brute" else 29.0

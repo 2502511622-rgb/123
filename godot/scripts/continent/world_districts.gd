@@ -16,6 +16,9 @@ const ROUTES=[
  [Vector2(4896,1600),Vector2(5152,1776),Vector2(5376,1952),Vector2(5536,2128),Vector2(5664,2072)],
  ]
 const PLACES={
+ "road_supplies":{"name":"遗落的行旅箱","at":Vector2(2544,3536),"region":"village","art":"crates","text":"箱盖留着一道爪痕，下面压着护甲和止息药。一次只能拿走一份，留下的也许能帮到后来者。"},
+ "road_bowl":{"name":"桥前温汤","at":Vector2(2976,3504),"region":"village","art":"offering","text":"村民在桥前留下还温着的药汤与路费。刻在碗边的小字：活着回来，再替下一位添上。"},
+ "road_tracks":{"name":"界河逃生印","at":Vector2(3456,3592),"region":"graveyard","art":"banner","text":"脚印绕开主路，通往守墓人的藏箱。布条上画着一条绕石而行的小径，旁边写着：不要追着第一声哭喊走。"},
  "temple_bell":{"name":"无声钟庭","at":Vector2(1168,896),"region":"temple","art":"bell","text":"半埋的铜钟内壁刻着同一行小字：钟响时，不要回头。最后一条刻痕却停在‘回’字上。钟舌已被人仔细取走，旁边还留着拖行的印子。"},
  "temple_library":{"name":"埋经回廊","at":Vector2(1920,1248),"region":"temple","art":"scrolls","text":"经页只剩朝内的一面没有褪色。有人将它们一张张折成路标，指向佛殿后的暗门。沙里露出一枚青槐木牌，这条朝圣路曾经通向村庄。"},
  "temple_cistern":{"name":"断水净池","at":Vector2(2048,864),"region":"temple","art":"basin","text":"净池早已干涸，池壁却湿着。石缝里不是水，是被风磨成粉末的香灰。七只水碗倒扣在边缘，只有朝向乱葬岗的一只仍是正的。"},

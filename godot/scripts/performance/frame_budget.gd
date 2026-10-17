@@ -40,6 +40,8 @@ func apply_tier(value: int) -> void:
  if not is_instance_valid(game.world):return
  var env: YinEnvironment=game.world.environment
  env.terrain_material.set_shader_parameter("quality",2-tier)
+ env.light_field.quality=2-tier
+ env.effects_quality=2-tier
  game.atmosphere.lighting.set_shader_parameter("quality",2-tier)
  # Geometry density changes; walking interaction and real combat stay at 60 Hz.
  for chunk in game.world.grass.chunks:

@@ -40,6 +40,7 @@ var combat: YinCombatController
 var smart_button: Button
 var shooting_mouse: bool = false
 var minimap: YinMinimap
+var navigation_target: Dictionary={}
 var character_tab: String = "背包"
 var quest_tracker: Button
 var npc_dialogue := YinNpcDialogue.new()
@@ -938,7 +939,7 @@ func show_journal() -> void:
 	open_modal("阴田手札 · 十日祭帖", "\n\n".join(state.journal))
 
 func show_factions() -> void:
-	var box := open_modal("四方势力 · P", YinFactions.report(state))
+	var box := open_modal("四方势力 · P", YinGuidance30.war_summary(state))
 	for war in state.factions.wars:
 		for side in ["defender","attacker"]:
 			var choice:=button("支援%s · %s"%["守方" if side=="defender" else "攻方",YinFactions.NAMES[war[side]]],func():
@@ -965,6 +966,12 @@ func show_factions() -> void:
 		show_factions()
 		notify_action(message)
 	))
+
+	var more=button("实力、领地与历史战报 ▸",func():
+		var details=open_modal("势力详情",YinFactions.report(state))
+		details.add_child(button("返回战况",show_factions))
+	)
+	box.add_child(more)
 
 func show_pause() -> void:
 	var box := open_modal("暂停", "进度自动保存 · 世界已暂停")
@@ -1077,16 +1084,16 @@ func equipment_content(box: VBoxContainer) -> void:
 	box.add_child(slots)
 	for slot in ["melee","primary","secondary"]:
 		var worn: Array=state.equipment.filter(func(gear):return gear.id==state.weapon_slots[slot])
-		var text: String={"melee":"近战","primary":"主武器","secondary":"副武器"}[slot]+"\n"+(YinBalance.WEAPONS[worn[0].weapon].name if not worn.is_empty() else "空位")
+		var text: String={"melee":"近战","primary":"主武器","secondary":"副武器"}[slot]+" · "+(YinBalance.WEAPONS[worn[0].weapon].name if not worn.is_empty() else "空位")
 		var slot_button:=button(text,func():
 			if worn.is_empty():return
 			state.equip(worn[0].id);player.held_item=state.current_gear().weapon
 			persist();show_equipment()
-		,Vector2(160,35))
+		,Vector2(160,30))
 		slot_button.disabled=worn.is_empty()
 		if not worn.is_empty():
 			slot_button.icon=YinBalance.icon(worn[0].weapon);slot_button.expand_icon=true
-			slot_button.add_theme_constant_override("icon_max_width",22)
+			slot_button.add_theme_constant_override("icon_max_width",16)
 		slots.add_child(slot_button)
 	var displayed: Array = state.equipment.duplicate()
 	var opening_reward: bool=not YinFirstJourney.guide(state).is_empty() and state.quests.has("first_watch") and state.quests.first_watch.claimed
@@ -1105,7 +1112,7 @@ func equipment_content(box: VBoxContainer) -> void:
 			info = "伤害 %d · " % YinBalance.damage(spec.damage, YinBalance.level(state.cultivation), gear)
 			info += "弹匣 %d/%d" % [gear.magazine, spec.magazine] if spec.ammo != "" else ("气力 %d" % spec.energy if gear.weapon in YinBalance.MAGIC else "距离 %d" % spec.range)
 		if gear.weapon!="armor":info+=" · 间隔%.2fs"%float(spec.interval)
-		var equip_button := button("%s  %s\n%s" % [YinBalance.gear_name(gear), "已装备" if gear.id in state.weapon_slots.values() or gear.id == state.equipped_armor else "点击装备", info + ("\n" + YinAbilities.affix_text(gear, YinBalance.level(state.cultivation)) if gear.weapon != "armor" else "")], func():
+		var equip_button := button("%s  %s\n%s" % [YinBalance.gear_name(gear), "已装备" if gear.id in state.weapon_slots.values() or gear.id == state.equipped_armor else "点击装备", info + ("\n"+YinAbilities.affix_text(gear,YinBalance.level(state.cultivation)) if gear.weapon!="armor" else "")], func():
 			state.equip(gear.id)
 			player.held_item = state.current_gear().weapon
 			persist()
@@ -1117,18 +1124,25 @@ func equipment_content(box: VBoxContainer) -> void:
 		equip_button.add_theme_stylebox_override("normal", style("223a33", YinBalance.COLORS[int(gear.quality)].darkened(0.35).to_html(false)))
 		equip_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		equip_button.alignment=HORIZONTAL_ALIGNMENT_LEFT
+		equip_button.clip_text=true
+		equip_button.text_overrun_behavior=TextServer.OVERRUN_TRIM_ELLIPSIS
 		equip_button.icon = YinBalance.icon(gear.weapon)
 		equip_button.expand_icon=true
-		equip_button.add_theme_constant_override("icon_max_width",44)
+		equip_button.add_theme_constant_override("icon_max_width",24)
 		equip_button.tooltip_text = YinWeaponLore.describe(gear.weapon) + "\n获取时自带词条，无需加工\n" + YinAbilities.affix_text(gear, YinBalance.level(state.cultivation))
 		var comparison: Array=state.equipment.filter(func(other):return other.id in state.weapon_slots.values() and ((gear.weapon in YinBalance.MELEE and other.weapon in YinBalance.MELEE) or (gear.weapon in YinBalance.GUNS and other.weapon in YinBalance.GUNS) or (gear.weapon in YinBalance.MAGIC and other.weapon in YinBalance.MAGIC)))
 		if gear.weapon!="armor" and not comparison.is_empty() and comparison[0].id!=gear.id:
 			var old: Dictionary=comparison[0]
 			var delta_damage: int=YinBalance.damage(spec.damage,YinBalance.level(state.cultivation),gear)-YinBalance.damage(YinBalance.WEAPONS[old.weapon].damage,YinBalance.level(state.cultivation),old)
 			equip_button.text+="\n对比"+YinBalance.WEAPONS[old.weapon].name+"：伤害%+d"%delta_damage
-		else:equip_button.text+="\n"+YinWeaponLore.describe(gear.weapon)
+		else:pass
 		row.add_child(equip_button)
-		equip_button.custom_minimum_size.y = 58
+		equip_button.custom_minimum_size.y = 52
+		row.add_child(button("详情",func():
+			var detail=open_modal(YinBalance.gear_name(gear),info+"\n"+YinAbilities.affix_text(gear,YinBalance.level(state.cultivation))+"\n\n"+YinWeaponLore.describe(gear.weapon))
+			detail.add_child(button("装备",func():state.equip(gear.id);player.held_item=state.current_gear().weapon;persist();show_equipment()))
+			detail.add_child(button("返回装备",show_equipment))
+		,Vector2(48,40)))
 		if gear.id not in [state.equipped_gear, state.equipped_armor] and gear.id not in state.weapon_slots.values() and not (opening_reward and gear.weapon=="silver_sword"):
 			row.add_child(button("拆解", func():
 				var result: String = state.salvage(gear.id)
@@ -1183,7 +1197,7 @@ func show_character(tab: String = "背包") -> void:
 		tabs.add_child(tab_button)
 	scroll.custom_minimum_size.y = 214
 	box.get_child(0).add_theme_font_override("font",YinAppearance.name_font())
-	box.get_child(0).text = "%s · %d 文 · Lv%d · 随从 %d/%d" % [state.appearance.name,state.money,level_value,state.spirits.size(),state.capacity()]
+	box.get_child(0).text = "%s · %d 文 · Lv%d · 收容 %d/%d · 出战不限" % [state.appearance.name,state.money,level_value,state.spirits.size(),state.capacity()]
 	box.get_child(0).add_theme_font_size_override("font_size", 10)
 	match tab:
 		"背包":
@@ -1212,11 +1226,7 @@ func show_character(tab: String = "背包") -> void:
 			view.mutated.connect(func(): persist())
 			columns.add_child(view)
 		"穿戴":
-			var worn := Label.new()
-			worn.text = "护甲：%s · 护甲值 %d" % ["未穿戴" if state.armor_gear().is_empty() else YinBalance.gear_name(state.armor_gear()), YinBalance.armor_value(state.armor_gear())]
-			worn.add_theme_font_size_override("font_size", 11)
-			worn.add_theme_color_override("font_color", Color("ded9bf"))
-			box.add_child(worn)
+			box.get_child(0).text+=" · 护甲%d"%YinBalance.armor_value(state.armor_gear())
 			equipment_content(box)
 			box.add_child(button("外观定制",func(): show_character("外观"),Vector2(120,24)))
 		"外观":
@@ -1224,7 +1234,7 @@ func show_character(tab: String = "背包") -> void:
 			panel.name = "AppearancePanel"
 			panel.game = self
 			panel.applied.connect(func():
-				box.get_child(0).text="%s · %d 文 · Lv%d · 随从 %d/%d"%[state.appearance.name,state.money,YinBalance.level(state.cultivation),state.spirits.size(),state.capacity()]
+				box.get_child(0).text="%s · %d 文 · Lv%d · 收容 %d/%d · 出战不限"%[state.appearance.name,state.money,YinBalance.level(state.cultivation),state.spirits.size(),state.capacity()]
 				refresh("外观已保存。")
 			)
 			box.add_child(panel)
@@ -1234,11 +1244,13 @@ func show_character(tab: String = "背包") -> void:
 		"地图":
 			var atlas := YinMinimap.new()
 			atlas.game = self
-			atlas.custom_minimum_size = Vector2(410, 160)
+			tabs.hide();scroll.custom_minimum_size.y=246
+			box.get_child(0).text="左键标路 · 金色目标 · 红色敌人 · 青色友军"
+			atlas.custom_minimum_size = Vector2(508, 192)
 			box.add_child(atlas)
 			var route_label := Label.new()
 			route_label.text = "义庄 → 乱葬坡 → 后山铳林\n后山东北 → 沉水村【井中龙婆】\n后山东南 → 废戏台【无面伶王】\n后山向东 → 断碑营地 / 枯井 / 山门遗址\n村东码头 → 岛国【荒冢 / 风山 / 双面社】\n村北山道 → 大佛寺【修罗道场 / 护法殿】\n黄点出口 · 红点敌人 · 蓝点役灵 · 白点自己"
-			if seamless:route_label.text="西北大佛寺 · 东北岛国 · 西南青槐村 · 东南乱葬岗\n蓝色界河 · 棕色桥梁 · 彩点军队 · 白点旅人\n沿桥跨境，无需出口传送；战场与军队位置实时显示。"
+			if seamless:route_label.text="沿桥跨境 · 橙色虚线为战线 · 悬停地点查看名称"
 			route_label.add_theme_font_size_override("font_size", 11)
 			route_label.add_theme_color_override("font_color", Color("ded9bf"))
 			box.add_child(route_label)
@@ -1462,18 +1474,17 @@ func update_quest_tracker() -> void:
 	quest_tracker.position = Vector2(436, 104)
 	var spec: Dictionary = YinAdventure.QUESTS[id]
 	var count: int = YinAdventure.progress(state, id)
-	quest_tracker.text = "O %s  %d/%d\n%s" % [spec.name, count, spec.target, "返回村庄复命" if count >= spec.target else {"hunt": "前往乱葬坡", "delivery": "收集物资后交给委托人", "survey": "探索后山三处遗址", "temple_visit": "从村北山道前往大佛寺", "temple_hunt": "调查佛寺四类异怪", "temple_boss": "大佛寺平息护法战意", "temple_relic": "向阿祁领取般若剑", "island_visit": "从村东码头乘船", "island_hunt": "岛国调查五类妖怪", "island_boss": "岛国祭场平息首领", "island_relic": "向阿祁缔结神器契约"}[spec.kind]]
+	quest_tracker.text = "O %s  %d/%d\n%s" % [spec.name, count, spec.target, "返回村庄复命" if count >= spec.target else {"hunt": "前往乱葬坡", "delivery": "收集物资后交给委托人", "survey": "探索后山三处遗址", "temple_visit": "从村北山道前往大佛寺", "temple_hunt": "调查佛寺四类异怪", "temple_boss": "大佛寺平息护法战意", "temple_relic": "向阿祁领取般若剑", "island_visit": "沿界河桥前往东北岛国", "island_hunt": "岛国调查五类妖怪", "island_boss": "岛国祭场平息首领", "island_relic": "向阿祁缔结神器契约"}[spec.kind]]
 	quest_tracker.tooltip_text = spec.description
 func show_quests() -> void:
 	var box := open_modal("委托", "O 打开任务栏 · 一次追踪一项")
-	box.get_child(0).text = "主线：获取装备，平衡四方势力。田园经营可自由选择。"
+	box.get_child(0).text = "当前目标：获取装备，平衡四方势力。"
 	if not state.quests.has(YinFirstJourney.ID):
 		box.add_child(button("接取 · 初次守夜（推荐从这里开始）",func():YinFirstJourney.start(state);persist();show_quests()))
 	else:
 		var first: Dictionary=YinFirstJourney.guide(state)
 		if not first.is_empty():
-			var instruction: Label=paragraph(box,first.title+"\n"+first.hint,12)
-			instruction.custom_minimum_size.x=410
+			box.get_child(0).text="当前目标："+first.title+"\n"+first.hint
 		if not state.quests.first_watch.claimed:
 			var claim:=button("复命 · 领取银剑与35文",func():
 				var result: String=YinAdventure.claim(state,YinFirstJourney.ID,0)
@@ -1481,18 +1492,12 @@ func show_quests() -> void:
 			)
 			claim.disabled=state.zone!="farm" or YinAdventure.progress(state,YinFirstJourney.ID)<2
 			box.add_child(claim)
-	var overview: Label=paragraph(box,state.mainline_summary(),11)
-	overview.custom_minimum_size.x=418
-	box.add_child(button("领取主线阶段奖励",func():
-		var result: String = state.claim_mainline()
-		show_quests()
-		refresh(result)
-		persist()
-	))
+	box.add_child(button("主线阶段 · 奖励与进度 ▸",show_milestones30))
 	box.add_child(button("查看四方实力与调停",show_factions))
 	for id in state.quests:
 		var spec: Dictionary = YinAdventure.QUESTS[id]
 		var completed: bool = state.quests[id].claimed
+		if id==YinFirstJourney.ID or completed:continue
 		var summary := Label.new()
 		summary.text = "%s · %s\n%s" % [spec.name, "已领取奖励" if completed else "%d/%d" % [YinAdventure.progress(state, id), spec.target], spec.description]
 		summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -1506,6 +1511,17 @@ func show_quests() -> void:
 				persist()
 				show_quests()
 			))
+func show_milestones30() -> void:
+	var box=open_modal("阶段进度",state.mainline_summary())
+	box.add_child(button("领取主线阶段奖励",func():
+		var result=state.claim_mainline();persist();show_milestones30();refresh(result)
+	))
+	var done=[]
+	for id in state.quests:
+		if state.quests[id].claimed:done.append(YinAdventure.QUESTS[id].name)
+	if not done.is_empty():paragraph(box,"已完成委托："+"、".join(done))
+	box.add_child(button("返回当前委托",show_quests))
+
 func show_npc_quests(record: Dictionary) -> void:
 	var box := open_modal(record.name + " · 委托", "复命时领取报酬；奖励由委托规则决定。")
 	var offered: bool = false
@@ -1571,6 +1587,9 @@ func show_chat(record: Dictionary) -> void:
 	var send := func():
 		var text: String = input.text.strip_edges()
 		if text == "": return
+		if "宝箱" in text or "探索" in text or "附近" in text and ("装备" in text or "奖励" in text):
+			var hint=YinGuidance30.chest_hint(state,player.position)
+			if not hint.is_empty():navigation_target={"at":hint.at,"name":hint.name,"route":world.path_to(player.position,hint.at,Vector2(8,6))}
 		dialogue_log[record.id].append("你：" + text)
 		dialogue_log[record.id].append(record.name + "：" + npc_dialogue.reply(state, record, text))
 		while dialogue_log[record.id].size() > 6: dialogue_log[record.id].pop_front()
@@ -1648,6 +1667,7 @@ func use_landmark(id: String) -> String:
 	return {"camp":"完成营地整备：生命+20、气力+10。","well":"完成井水净身：中毒、灼烧与束缚已清除。","temple":"完成役灵祈安：存活役灵恢复20%生命。"}[id]
 
 func show_world_echo(id: String) -> void:
+	if id in ["road_supplies","road_bowl","road_tracks"]:show_road_event30(id);return
 	if not YinWorldDistricts.PLACES.has(id):return
 	var place: Dictionary=YinWorldDistricts.PLACES[id]
 	var box=open_modal(place.name,place.text)
@@ -1692,3 +1712,34 @@ func travel_post28(id: String) -> void:
 	if nearest_enemy(at,250)!=null:refresh("目的地正在交战，驿路暂时关闭。");return
 	close_modal();player.position=at;player.velocity=Vector2.ZERO;player.get_node("Camera2D").reset_smoothing()
 	player.get_node("Camera2D").force_update_scroll();update_territory();persist();refresh("沿已打通的驿路抵达。")
+
+func show_road_event30(id: String) -> void:
+	var spec=YinWorldDistricts.PLACES[id]
+	state.world_echoes[id]=true
+	var box=open_modal(spec.name,spec.text)
+	var claimed=state.exploration_rewards.has(id)
+	if id=="road_tracks":
+		box.add_child(button("循脚印标记守墓人的藏箱",func():
+			var at=YinAdventure.chest_at("grave_cache",true)
+			navigation_target={"at":at,"name":"守墓人的箱子","route":world.path_to(player.position,at,Vector2(8,6))}
+			state.exploration_rewards[id]=true;persist();close_modal();refresh("地图已标出支路藏箱。")
+		))
+	elif not claimed:
+		for choice in (["取行旅护甲 · 一阶","止息药 · 气力+30"] if id=="road_supplies" else ["温汤 · 生命+20","路费 · 12文"]):
+			var option=button(choice,func():
+				if state.exploration_rewards.has(id):return
+				if nearest_enemy(player.position,170)!=null:feedback(box,"先避开附近敌人。战斗中无法取用。");return
+				if choice.begins_with("取"):
+					if state.equipment.size()>=64:feedback(box,"装备行囊已满。");return
+					state.grant_gear("armor",1,0)
+				elif choice.begins_with("止"):state.energy=mini(100,state.energy+30)
+				elif choice.begins_with("温"):state.health=mini(100,state.health+20)
+				else:state.money+=12
+				state.exploration_rewards[id]=true;persist();show_road_event30(id);refresh("已取用："+choice)
+			)
+			option.disabled=nearest_enemy(player.position,170)!=null or choice.begins_with("温") and state.health>=100 or choice.begins_with("止") and state.energy>=100
+			box.add_child(option)
+	else:
+		paragraph(box,"你已取用一份，余下的留给后来者。")
+		if id=="road_supplies":box.add_child(button("B 查看行旅护甲与装备",show_equipment))
+	box.add_child(button("继续赶路 · Esc",close_modal));persist()

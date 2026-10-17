@@ -92,7 +92,7 @@ func stump_positions() -> Array[Vector2]:
  return result
 
 func _process(delta: float) -> void:
- if frozen_frame>=0:return
+ if frozen_frame>=0 or not is_visible_in_tree():return
  var game=get_tree().get_first_node_in_group("yintian_game")
  if game!=null and game.modal!=null:return
  var actor=get_parent().get("actor")

@@ -134,7 +134,7 @@ func _physics_process(delta: float) -> void:
 	get_node("Camera2D").offset = Vector2(2 if int(hit_feedback * 40) % 2 == 0 else -2, 0) if hit_feedback > 0 else Vector2.ZERO
 	if impact_shake>0:get_node("Camera2D").offset+=Vector2(sin(visual_clock*115),cos(visual_clock*91))*minf(3,impact_shake*24)
 	material.set_shader_parameter("motion_clock", visual_clock)
-	material.set_shader_parameter("motion_amount", 0.0 if int(appearance.body)==0 else 0.9 if direction.length() > 0 else 0.15)
+	material.set_shader_parameter("motion_amount", 0.0)
 	var previous_position: Vector2 = position
 	move_and_slide()
 	if direction.length()>0 and dodge_time<=0:

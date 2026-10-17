@@ -4,6 +4,7 @@ var world: FarmWorld
 var time: float = 0
 var wind: float = 0.5
 var wetness: float = 0
+var effects_quality: int=2
 var rain: float = 0
 var indoor: bool = false
 var ground: YinEnvironmentLayer
@@ -26,6 +27,7 @@ var plot_flags := PackedByteArray()
 var regional: YinRegionalClimate
 var landscape29: YinLandscape29
 var wilderness29: YinWilderness29
+var ground_cache30: YinGroundCache30
 var terrain_material: ShaderMaterial
 func _ready() -> void:
 	indoor = world.state.zone in ["hall", "shop"]
@@ -91,6 +93,9 @@ func bake() -> void:
 	light_field.rebuild()
 	refresh_reflections()
 	baked = true
+	if world is YinContinentWorld and DisplayServer.get_name()!="headless" and ground_cache30==null:
+		ground_cache30=YinGroundCache30.new();ground_cache30.world=world;world.add_child(ground_cache30)
+		var culling=load("res://scripts/performance/prop_culling30.gd").new();culling.world=world;world.add_child(culling)
 func refresh_soil() -> void:
 	if soil_material == null: return
 	var flags := PackedByteArray()
@@ -135,16 +140,16 @@ func _process(delta: float) -> void:
 	refresh_soil()
 	time += delta
 	if regional!=null:regional.update(delta)
-	terrain_material.set_shader_parameter("blood_moon29",regional.blood if regional!=null else 0.0)
+	if ground_cache30==null or not ground_cache30.active:terrain_material.set_shader_parameter("blood_moon29",regional.blood if regional!=null else 0.0)
 	var rain_target=regional.rain_target if regional!=null else (1.0 if world.state.weather=="rain" and not indoor else 0.0)
 	rain = move_toward(rain,rain_target,delta*1.2)
 	wetness = move_toward(wetness, 1.0 if rain > 0.1 else 0.0, delta * (0.14 if rain > 0.1 else 0.025))
 	wind = (0.65 + 0.35 * sin(time * 0.35) + 0.25 * sin(time * 0.91)) * (1.5 if rain > 0.2 else 1.0)
 	if regional!=null:wind+=regional.dust*1.6+regional.snow*0.35
-	terrain_material.set_shader_parameter("clock_time", time)
-	terrain_material.set_shader_parameter("wetness", wetness)
-	if regional!=null:
-		terrain_material.set_shader_parameter("snow",regional.snow);terrain_material.set_shader_parameter("dust",regional.dust)
+	if ground_cache30==null or not ground_cache30.active:
+		terrain_material.set_shader_parameter("clock_time", time)
+		terrain_material.set_shader_parameter("wetness", wetness)
+		if regional!=null:terrain_material.set_shader_parameter("snow",regional.snow);terrain_material.set_shader_parameter("dust",regional.dust)
 	if world.canopy_material!=null:
 		world.canopy_material.set_shader_parameter("clock_time",time);world.canopy_material.set_shader_parameter("wind",wind);world.canopy_material.set_shader_parameter("wetness",wetness)
 	if regional!=null:
@@ -154,7 +159,7 @@ func _process(delta: float) -> void:
 	light_field.update(time)
 	if reflected_prop_count != world.environment_revision: refresh_reflections()
 	var screen: Rect2 = visible_rect().grow(130)
-	for actor in world.actors.get_children():
+	for actor in world.combat_index().nearby(world.player.position,850)+get_tree().get_nodes_in_group("villagers")+get_tree().get_nodes_in_group("companions")+[world.player]:
 		if actor is CharacterBody2D and actor.material is ShaderMaterial and screen.has_point(actor.position): actor.material.set_shader_parameter("wetness", wetness)
 	for reflection in reflections:
 		var source: Object = reflection.get_meta("source").get_ref()
@@ -190,20 +195,19 @@ func _process(delta: float) -> void:
 	ground.queue_redraw()
 	foreground.queue_redraw()
 func visible_rect() -> Rect2:
-	var transform: Transform2D = world.get_global_transform_with_canvas()
-	return transform.affine_inverse()*Rect2(Vector2.ZERO,world.get_viewport_rect().size)
+	return world.screen_bounds()
 func exposed(at: Vector2) -> bool:
 	return world.is_safe_position(at)
 func emit_splash() -> void:
-	if splashes.size() >= 90: return
+	if splashes.size() >= [28,50,90][effects_quality]: return
 	var screen: Rect2 = visible_rect()
 	var at := screen.position + Vector2(random.randf_range(0, 640), random.randf_range(0, 360))
 	if not exposed(at): return
 	splashes.append({"at": at, "age": 0.0, "water": is_water(at)})
 func emit_leaf() -> void:
-	if leaves.size() >= 54: return
+	if leaves.size() >= [20,34,54][effects_quality]: return
 	var screen: Rect2 = visible_rect().grow(90)
-	var trees: Array = world.get_tree().get_nodes_in_group("wind_trees").filter(func(t): return not t.is_queued_for_deletion() and t.get_parent() == world.actors and screen.has_point(t.position))
+	var trees: Array = world.visible_props30().filter(func(t): return not t.is_queued_for_deletion() and t.is_in_group("wind_trees") and t.get_parent() == world.actors and screen.has_point(t.position))
 	if trees.is_empty(): return
 	var tree: Node2D = trees[random.randi_range(0, trees.size() - 1)]
 	leaves.append({"at": tree.position + Vector2(random.randf_range(-25, 20), random.randf_range(-5, 8)), "height": random.randf_range(65, 110), "age": 0.0, "angle": random.randf_range(0, TAU), "phase": random.randf() * TAU, "color": [Color("aab57b"), Color("b8a16a"), Color("7f9b6e")][random.randi_range(0, 2)]})
@@ -216,13 +220,14 @@ func draw_ground(canvas: Node2D) -> void:
 	var screen: Rect2 = visible_rect().grow(100)
 	# Directional canopy shadows share the same wind clock as the actual foliage.
 	var sun: float = clampf((world.state.minutes - 360) / 720.0, 0, 1)
-	for tree in world.get_tree().get_nodes_in_group("wind_trees"):
+	for tree in world.visible_props30():
+		if not tree.is_in_group("wind_trees"):continue
 		if tree.is_queued_for_deletion() or tree.get_parent() != world.actors or not screen.has_point(tree.position): continue
 		canvas.draw_set_transform(tree.position + Vector2(10 - sun * 32 + sin(time + tree.position.x) * wind, 5), -0.15 + sun * 0.3, Vector2(1.0, 0.43))
 		canvas.draw_texture(tree.get_node("ArtSprite").texture, Vector2(-48, -42), Color(0.08, 0.17, 0.17, 0.20 * (1.0 - rain * 0.5)))
 		canvas.draw_set_transform(Vector2.ZERO)
 	# A shallow projected footprint gives buildings height without altering collisions.
-	for body in world.actors.get_children():
+	for body in world.visible_props30():
 		if not body is StaticBody2D or body.is_queued_for_deletion() or not screen.has_point(body.position): continue
 		var sprite: Sprite2D = body.get_node_or_null("ArtSprite")
 		if sprite == null or sprite.texture not in [YinArt.texture("cottage"), YinArt.texture("store")]: continue
@@ -235,7 +240,7 @@ func draw_ground(canvas: Node2D) -> void:
 		for y in range(cell_start.y, cell_start.y + 18):
 			for x in range(cell_start.x, cell_start.x + 28):
 				var tile: int = world.tile_farm.ground.get_cell_atlas_coords(Vector2i(x, y)).x
-				if (tile < 16 and tile!=10) or (x * 13 + y * 7) % 3 != 0: continue
+				if (tile < 16 and tile!=10) or (x * 13 + y * 7) % (6 if effects_quality==0 else 3) != 0: continue
 				var at := Vector2(x * 32 + 7, y * 32 + 18)
 				if not exposed(at): continue
 				canvas.draw_set_transform(at, 0, Vector2(1, 0.28))
@@ -269,14 +274,15 @@ func draw_front(canvas: Node2D) -> void:
 			canvas.draw_rect(Rect2(screen.position+Vector2(0,i*9),Vector2(screen.size.x,9)),Color(.43,.51,.52,alpha))
 			canvas.draw_rect(Rect2(Vector2(screen.position.x,screen.end.y-(i+1)*9),Vector2(screen.size.x,9)),Color(.43,.51,.52,alpha*.7))
 	if rain > 0.01:
-		for i in range(125):
-			var speed: float = 145 + (i % 4) * 42
-			var x: float = screen.position.x + fposmod(i * 97 - time * (28 + wind * 20) + screen.position.x * 0.2, 680) - 20
-			var y: float = screen.position.y + fposmod(i * 53 + time * speed, 400) - 20
-			var at := Vector2(x, y)
-			var tint := Color(0.67, 0.79, 0.82, rain * (0.11 + (i % 3) * 0.04))
-			canvas.draw_line(at, at + Vector2(-2 - wind * 2, 5 + i % 6), tint, 1)
-		for body in world.actors.get_children():
+		# Same live rain motion, submitted as three color batches, not 125 draws.
+		var groups=[PackedVector2Array(),PackedVector2Array(),PackedVector2Array()]
+		for i in range([54,85,125][effects_quality]):
+			var speed: float=145+(i%4)*42
+			var x: float=screen.position.x+fposmod(i*97-time*(28+wind*20)+screen.position.x*.2,680)-20
+			var y: float=screen.position.y+fposmod(i*53+time*speed,400)-20
+			var at=Vector2(x,y);groups[i%3].append(at);groups[i%3].append(at+Vector2(-2-wind*2,5+i%6))
+		for i in range(3):canvas.draw_multiline(groups[i],Color(.67,.79,.82,rain*(.11+i*.04)),1)
+		for body in world.visible_props30():
 			if not body is StaticBody2D or body.is_queued_for_deletion() or not screen.grow(100).has_point(body.position): continue
 			for source in body.get_children():
 				if not source is Sprite2D:continue

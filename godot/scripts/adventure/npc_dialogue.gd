@@ -2,9 +2,23 @@ class_name YinNpcDialogue
 extends RefCounted
 # Offline intent rules and short conversation memory, not a network or local LLM.
 var previous_topics: Dictionary = {}
-func reply(state, npc: Dictionary, message: String) -> String:
+var previous_queries: Dictionary = {}
+func reply(state,npc: Dictionary,message: String) -> String:
+	if ("再说" in message or message=="然后") and previous_queries.has(npc.id):message=previous_queries[npc.id]
+	previous_queries[npc.id]=message
+	return answer(state,npc,message)
+func answer(state, npc: Dictionary, message: String) -> String:
 	message = message.strip_edges().substr(0, 500)
 	if message == "": return "想问什么？可以聊委托、宝箱、武器或村里的近况。"
+	if "种田" in message or "播种" in message or "农作" in message:return "如今已经没有种田事务了。探索装备、协助村民和平衡四方势力，才是你要走的路。"
+	if ("刚才" in message or "击败" in message or "杀了" in message) and ("怪" in message or "谁" in message or "什么" in message):return YinGuidance30.history_reply(state)
+	if "宝箱" in message or "探索" in message or "附近" in message and ("奖励" in message or "装备" in message):
+		var at=Vector2(npc.at[0],npc.at[1]) if npc.has("at") else YinContinent.HOME
+		var hint=YinGuidance30.chest_hint(state,at)
+		if hint.is_empty():
+			if not state.continent_ready and not YinAdventure.CHESTS.values().any(func(c):return c.zone==state.zone):return "这一区域没有已知宝箱。去后山东侧的断碑营地、枯井或山门寻找，先腾出行囊，留心守卫。"
+			return "这一带已知的箱子都已开启，去其他领地看看。"
+		return "%s在%s方向，约%d步。已在地图标出；沿主路绕过界河，不要直穿河水。箱子附近可能有守卫。"%[hint.name,YinGuidance30.direction(at,hint.at),hint.distance]
 	if "势力" in message or "进攻" in message or "战况" in message: return YinFactions.report(state)
 	if "文殊" in message or "般若" in message: return "般若剑随你的修为成长。每次命中都让燃烧、冰冻、闪电共存，无需刻录。完成砚青、秋婶、柳伯的佛寺调查，再请阿祁开锋。"
 	if "饿鬼" in message: return "饿鬼细喉大腹，饥渴难填；会吞附近遗骸疗伤，咬中还会夺气。先超度遗骸，燃烧和镇符也能阻止吞食。"
@@ -20,10 +34,10 @@ func reply(state, npc: Dictionary, message: String) -> String:
 	if "以津真天" in message: return "荒冢金鸟在问亡者何时安葬。附近未处理遗骸越多，毒鸣越强；先超度，再战。"
 	if "天狗" in message: return "风山修验者以羽扇起山岚。风障蓄势时子弹难进，镇符能打断它。"
 	if "宿傩" in message: return "双面四臂武人轮换双向剑斩与弓阵。贴身看双刃，远处避两面弓箭，别只盯着正面。"
-	if "岛国" in message or "世界" in message: return "这片世界由不同时地的诡异传说缝合。村东渡船通往岛国，苇岸、荒冢、风山、双面社各有异闻。先找砚青接裂海委托。"
+	if "岛国" in message or "世界" in message: return "这片世界由不同时地的诡异传说缝合。沿界河桥与北行驿路可抵达东北的岛国，苇岸、荒冢、风山、双面社各有异闻。先找砚青接裂海委托。"
 	var topic: String = "greeting"
 	if "委托" in message or "帮" in message or "任务" in message: topic = "quest"
-	elif "宝箱" in message or "探索" in message or "地图" in message: topic = "explore"
+	elif "宝箱" in message or "探索" in message or "探索" in message or "地图" in message: topic = "explore"
 	elif "武器" in message or "附魔" in message or "冰" in message or "火" in message: topic = "weapon"
 	elif "断头" in message or "鬼" in message or "怪" in message: topic = "enemy"
 	elif "救" in message or "夜" in message or "近况" in message: topic = "raid"
@@ -47,4 +61,10 @@ func reply(state, npc: Dictionary, message: String) -> String:
 		"weapon": return "鞭子够远，银剑稳，左轮每发都得算着打。魔法书与娃娃耗气力。燃烧持续灼伤，冰冻减速，闪电跳跃；火冰会消解。"
 		"enemy": return "鬼物断腿会跛行，断头后会乱窜，无法再攻击；不过已经射出的弹丸仍有危险。"
 		"raid": return "今夜正需援手，先看书信，护住村里人。" if state.raid_status in ["warned", "active"] else "村庄完好度 %d。每三日可能收到求救信，黄昏前做好准备。" % state.village_integrity
-	return {1: "村里的路要靠大家守住。先清理乱葬坡，再往后山走。", 2: "身上带伤，就来找我。别把气力全耗在一次施术上。", 3: "没有一把兵器适合所有敌人。留好副武器，换着打。", 4: "三份槐木就够修灯了；余下的路，我替你照着。", 5: "村西的田还能种。种田、护村、探索，都能谋生。", 6: "我想知道后山三处遗址还留下什么。亲自走到那里，回来告诉我。"}.get(int(npc.id), "小心夜路。")
+	if not any_word(message,["你好","在吗","聊聊","再说","然后","近况"]):return "这件事我还不知道。你可以问战况、已击败的怪物、附近宝箱，或我的委托。"
+	return {1: "村里的路要靠大家守住。先清理乱葬坡，再往后山走。", 2: "身上带伤，就来找我。别把气力全耗在一次施术上。", 3: "没有一把兵器适合所有敌人。留好副武器，换着打。", 4: "三份槐木就够修灯了；余下的路，我替你照着。", 5: "村西驿路有失落的补给。探索遗物、协助护村，都能谋生。", 6: "我想知道后山三处遗址还留下什么。亲自走到那里，回来告诉我。"}.get(int(npc.id), "小心夜路。")
+
+func any_word(message: String,words: Array) -> bool:
+	for word in words:
+		if word in message:return true
+	return false

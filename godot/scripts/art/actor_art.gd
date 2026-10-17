@@ -10,14 +10,18 @@ const HERO_WALK_ALT = preload("res://assets/jrpg/hero_walk_alt.png")
 const HERO_ATTACK = preload("res://assets/jrpg/hero_attack.png")
 const NPC = preload("res://assets/pixel30/npc.png")
 const PIXEL_WALK = preload("res://assets/pixel30/hero-walk.png")
+const PIXEL_WALK_ALT = preload("res://assets/pixel30/hero-alt-walk.png")
+const PIXEL_COMBAT_ALT = preload("res://assets/pixel30/hero-alt-combat.png")
 const PIXEL_COMBAT = preload("res://assets/pixel30/hero-combat.png")
 static var pixel_data: Dictionary={}
-static func pixel_pose(direction: Vector2,walk: float,moving: bool,attack: float,hurt: float,duration: float) -> Dictionary:
+static func pixel_pose(direction: Vector2,walk: float,moving: bool,attack: float,hurt: float,duration: float,body: int=0) -> Dictionary:
 	if pixel_data.is_empty():pixel_data=JSON.parse_string(FileAccess.get_file_as_string("res://assets/pixel30/manifest.json"))
 	var row=direction_row(direction);var combat=hurt>.08 or attack>0 or not moving
 	var col=7 if hurt>.08 else YinStrikeTimeline.pose_frame(1.0-attack/maxf(duration,.01))+1 if attack>0 else 0 if combat else int(walk*16.0)%8
-	var frame: Dictionary=pixel_data["combat" if combat else "walk"][row][col]
-	var pose=framed_pose(PIXEL_COMBAT if combat else PIXEL_WALK,frame,frame,float(frame.rect[3]))
+	var frame: Dictionary=pixel_data[("alt-" if body==1 else "")+("combat" if combat else "walk")][row][col]
+	var texture=PIXEL_COMBAT_ALT if combat else PIXEL_WALK_ALT
+	if body==0:texture=PIXEL_COMBAT if combat else PIXEL_WALK
+	var pose=framed_pose(texture,frame,frame,float(frame.rect[3]))
 	pose.rigid=true;pose.authored_frames=true
 	return pose
 static var npc_cache: Dictionary = {}
@@ -58,7 +62,7 @@ static func framed_pose(texture_value: Texture2D, frame: Dictionary, reference: 
 		result.hand=hand
 	return result
 static func hero_motion_pose(direction: Vector2, walk: float, moving: bool, attack: float, hurt: float, duration: float = 0.22, body: int = 0) -> Dictionary:
-	if body==0:return pixel_pose(direction,walk,moving,attack,hurt,duration)
+	if body in [0,1]:return pixel_pose(direction,walk,moving,attack,hurt,duration,body)
 	var row: int = direction_row(direction)
 	var walking: Array = atlas().hero_walk_alt if body==1 else atlas().hero_walk
 	var combat: Array = atlas().hero_attack_alt if body==1 else atlas().hero_attack

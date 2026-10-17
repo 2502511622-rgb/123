@@ -407,6 +407,7 @@ func kill_enemy(id: int, at: Vector2, source_gear_id: int = 0) -> void:
 		if e.zone == "island" and not YinIsland.available(self, e.kind): return
 		if e.zone == "temple" and not YinTemple.available(self, e.kind): return
 		e.dead = true
+		e.player_slain = true
 		if e.has("war_id"):
 			for war in factions.wars:
 				if int(war.id)==int(e.war_id):war.player_kills=int(war.get("player_kills",0))+1
@@ -674,6 +675,7 @@ func restore(data: Dictionary) -> bool:
 	if not YinFactions.validate(data.factions): return false
 	for e in data.enemies:
 		if not e is Dictionary: return false
+		if e.has("player_slain") and not e.player_slain is bool:return false
 		if e.has("player_allied") and not e.player_allied is bool:return false
 		if e.has("returning_region") and e.returning_region not in YinFactions.IDS:return false
 		if e.has("garrison_region") and (e.garrison_region not in YinFactions.IDS or e.get("faction") not in YinFactions.IDS):return false

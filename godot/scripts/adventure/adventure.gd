@@ -27,7 +27,7 @@ const QUESTS = {
 	"temple_wrath": {"npc": 1, "name": "止息修罗", "kind": "temple_boss", "boss": "asura", "target": 1, "money": 130, "weapon": "", "parent": "temple_catalog", "description": "柳伯请你平息阿修罗的争斗嗔怒。六臂战阵留有空隙，半血后的战意更盛。"},
 	"temple_guardian": {"npc": 6, "name": "守藏之问", "kind": "temple_boss", "boss": "yaksha", "target": 1, "money": 160, "weapon": "", "parent": "temple_wrath", "description": "砚青请你前往大佛下的护法殿，挑战守藏夜叉。镇符可破护障，避开疾刺路线。"},
 	"temple_wisdom": {"npc": 3, "name": "般若开锋", "kind": "temple_relic", "target": 1, "money": 60, "weapon": "prajna", "parent": "temple_guardian", "description": "向阿祁讲述佛寺四障与两位护法的见闻，领取文殊般若剑。剑随修为成长，每次命中三相附魔共存。"},
-	"island_arrival": {"npc": 6, "name": "裂海异乡", "kind": "island_visit", "target": 1, "money": 35, "weapon": "", "description": "从青槐村东码头乘船抵达岛国，再向砚青讲述缝合海岸。"},
+	"island_arrival": {"npc": 6, "name": "裂海异乡", "kind": "island_visit", "target": 1, "money": 35, "weapon": "", "description": "沿界河桥与北行驿路抵达东北岛国，再向砚青讲述缝合海岸。"},
 	"island_catalog": {"npc": 6, "name": "五妖异闻", "kind": "island_hunt", "target": 5, "money": 80, "weapon": "", "parent": "island_arrival", "description": "分别击败河童、提灯妖怪、一本踏鞴、络新妇、丛原火，记录它们的特点。"},
 	"island_lament": {"npc": 2, "name": "何时安葬", "kind": "island_boss", "boss": "itsumade", "target": 1, "money": 100, "weapon": "", "parent": "island_catalog", "description": "找秋婶接续异闻；超度荒冢附近遗骸可削弱以津真天，平息金羽毒鸣后复命。"},
 	"island_gale": {"npc": 6, "name": "风山修验", "kind": "island_boss", "boss": "daitengu", "target": 1, "money": 120, "weapon": "", "parent": "island_lament", "description": "砚青请你登风山。镇符可打断大天狗的风障蓄势；击败后归还山路。"},

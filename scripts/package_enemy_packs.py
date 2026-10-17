@@ -12,7 +12,7 @@ for kind, entry in manifest.items():
         archive.write(source/f'{kind}.png',f'{kind}/atlas.png')
         archive.writestr(f'{kind}/manifest.json',json.dumps(entry,ensure_ascii=False,indent=2))
         archive.writestr(f'{kind}/README.txt',
-            'YinGui World v0.28 / original generated pixel artwork\n'
+            'YinGui World v0.30 / original generated pixel artwork\n'
             '96x96 transparent cells, 8 columns. Root (48,90).\n'
             'Six independently authored anatomical parts; one neutral source pose.\n'
             'Walk: eight interpolated whole-part joint keys; attack: six windup/strike/recovery keys.\n'

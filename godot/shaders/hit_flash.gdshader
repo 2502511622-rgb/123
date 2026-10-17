@@ -1,4 +1,5 @@
 shader_type canvas_item;
+uniform float contour=0.0;
 uniform float flash : hint_range(0.0, 1.0) = 0.0;
 uniform float environment_blend = 0.0;
 uniform float wetness : hint_range(0.0, 1.0) = 0.0;
@@ -63,6 +64,7 @@ void fragment() {
  float matte=edge*smoothstep(0.65,0.92,luma);
  lit*=1.0-matte*0.42;
  lit=mix(lit,lit*environment_tint.rgb*1.12,environment_blend);
+ lit=mix(lit,vec3(.48,.49,.44),edge*contour*(1.0-flash));
  float boots=1.0-smoothstep(2.0,23.0,actor_ground_y-actor_world.y);
  lit*=1.0-wetness*(0.06+boots*0.16);
  lit=mix(lit,vec3(0.50,0.39,0.27)*max(luma,0.25),dust_cover*boots*0.35);

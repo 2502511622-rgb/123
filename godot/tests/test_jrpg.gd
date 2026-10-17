@@ -48,7 +48,7 @@ func run() -> void:
 		for direction in [Vector2.DOWN,Vector2.UP,Vector2.LEFT,Vector2.RIGHT]:
 			var idle: Dictionary=YinActorArt.hero_motion_pose(direction,0,false,0,0,0.22,body)
 			var attack: Dictionary=YinActorArt.hero_motion_pose(direction,0,false,0.12,0,0.22,body)
-			var expected=YinActorArt.PIXEL_COMBAT if body==0 else YinActorArt.HERO_ATTACK
+			var expected=YinActorArt.PIXEL_COMBAT if body==0 else YinActorArt.PIXEL_COMBAT_ALT
 			check(idle.texture==expected and attack.texture==expected and Rect2(Vector2.ZERO,idle.texture.get_size()).encloses(idle.source),"JRPG neutral standing and combat source "+str(body)+str(direction))
 	var legacy: Dictionary=FarmState.new().snapshot()
 	legacy.version=10

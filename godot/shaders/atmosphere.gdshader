@@ -24,6 +24,20 @@ void fragment() {
 	vec2 p=floor(SCREEN_UV*vec2(640.0,360.0));
 	vec2 at=p+world_offset;
 	vec3 scene=texture(screen_texture,SCREEN_UV).rgb;
+	if(quality==0){
+		vec3 ambient=mix(vec3(1.04,1.02,.97),vec3(.46,.61,.73),night);
+		ambient*=mix(vec3(1),vec3(.82,.90,.96),rain);
+		ambient+=vec3(.12,.035,-.045)*warmth*(1.0-rain);
+		ambient=mix(ambient,vec3(.70,.72,.80),snowfall*.4);
+		ambient=mix(ambient,vec3(.80,.62,.42),sandstorm*.4);
+		ambient=mix(ambient,vec3(.64,.53,.57),bloodmoon*.27);
+		float glow=texture(light_field,SCREEN_UV).r;
+		scene*=ambient+vec3(1.15,.64,.23)*min(glow,1.5)*(.18+night*.88);
+		scene+=vec3(.17,.095,.026)*max(0.0,glow-.15)*(.25+night*.75);
+		float fog=(.4+.25*sin(at.y*.018+at.x*.004+clock_time*.08))*(mist+rain*.04);
+		scene=mix(scene,fog_tint.rgb,fog);
+		COLOR=vec4(clamp(scene,vec3(0),vec3(1)),1);
+	}else{
 	// A small tilt-shift falloff at the extreme frame; never blur the player or HUD.
 	float edge_focus=smoothstep(0.34,0.5,abs(SCREEN_UV.y-0.5))*smoothstep(70.0,150.0,length(p-hero))*focus_strength;
 	vec3 soft=scene;
@@ -41,10 +55,15 @@ void fragment() {
 	if(quality>1){halo=(texture(light_field,SCREEN_UV+pixel*vec2(3,0)).r+texture(light_field,SCREEN_UV-pixel*vec2(3,0)).r+texture(light_field,SCREEN_UV+pixel*vec2(0,3)).r+texture(light_field,SCREEN_UV-pixel*vec2(0,3)).r)*0.25;}
 	scene*=ambient+vec3(1.15,0.64,0.23)*min(glow,1.5)*(0.18+night*0.88);
 	scene+=vec3(0.17,0.095,0.026)*max(0.0,halo-0.15)*(0.25+night*0.75);
-	float beams=pow(max(0.0,sin(at.x*0.022+at.y*0.009+sin(clock_time*0.09)*0.35)),12.0);
-	scene+=vec3(0.09,0.085,0.048)*beams*sunshine*(1.0-rain)*smoothstep(45.0,130.0,length(p-hero));
-	float bands=sin(at.y*0.018+sin(at.x*0.004+clock_time*0.045)*2.0+clock_time*0.08);
-	float fog=smoothstep(0.15,1.0,bands)*(mist+rain*0.04)*smoothstep(35.0,140.0,length(p-hero));
+	float distance_hero=length(p-hero);
+	if(sunshine>.01 && rain<.99){
+		float beam=max(0.0,sin(at.x*.022+at.y*.009+sin(clock_time*.09)*.35));
+		float square=beam*beam;float fourth=square*square;
+		float beams=fourth*fourth*fourth;
+		scene+=vec3(.09,.085,.048)*beams*sunshine*(1.0-rain)*smoothstep(45.0,130.0,distance_hero);
+	}
+	float bands=quality==0?sin(at.y*.018+at.x*.004+clock_time*.08):sin(at.y*.018+sin(at.x*.004+clock_time*.045)*2.0+clock_time*.08);
+	float fog=smoothstep(.15,1.0,bands)*(mist+rain*.04)*smoothstep(35.0,140.0,distance_hero);
 	scene=mix(scene,fog_tint.rgb,fog);
 	float highlight=max(max(scene.r,scene.g),scene.b);
 	vec3 bloom=max(soft-vec3(0.64),vec3(0.0));
@@ -52,4 +71,5 @@ void fragment() {
 	float vignette=smoothstep(0.28,0.68,length(SCREEN_UV-vec2(0.5)));
 	scene*=1.0-vignette*0.12;
 	COLOR=vec4(clamp(scene,vec3(0.0),vec3(1.0)),1.0);
+	}
 }

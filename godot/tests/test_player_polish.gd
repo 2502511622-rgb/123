@@ -130,7 +130,9 @@ func run() -> void:
 	await capture("polish-item")
 	await key(KEY_ESCAPE)
 	await key(KEY_O)
-	check(game.modal!=null and find_button(game.modal,"领取主线")!=null,"task panel makes equipment and faction goals accessible")
+	check(game.modal!=null and find_button(game.modal,"主线阶段")!=null,"task panel exposes compact equipment and faction goals")
+	await click(find_button(game.modal,"主线阶段"))
+	check(find_button(game.modal,"领取主线")!=null,"stage reward remains accessible through its actual detail action")
 	await capture("polish-goals")
 	await key(KEY_ESCAPE)
 	# Real map travel uses the existing route installer; inspect each map's navigation UI.

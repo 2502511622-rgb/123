@@ -9,28 +9,29 @@ func check(value: bool,label: String):
  checks+=1;print("PIXEL30 ","PASS " if value else "FAIL ",label)
  if not value:failures+=1
 func run():
- var image=YinActorArt.PIXEL_WALK.get_image()
- for direction in [Vector2.DOWN,Vector2.UP,Vector2.LEFT,Vector2.RIGHT]:
-  var poses={};var silhouettes={};var hands={}
-  for i in range(8):
-   var pose=YinActorArt.hero_motion_pose(direction,(i+.1)/16.0,true,0,0)
-   var region=image.get_region(Rect2i(pose.source));poses[hash(region.get_data())]=true
-   var alpha=Image.create(96,96,false,Image.FORMAT_R8)
-   var at=Vector2i(pose.destination.position)+Vector2i(48,90)
-   for y in range(region.get_height()):
-    for x in range(region.get_width()):
-     if at.y+y>=68:alpha.set_pixel(at.x+x,at.y+y,Color(region.get_pixel(x,y).a,0,0))
-   silhouettes[hash(alpha.get_data())]=true;hands[pose.hand]=true
-   check(pose.get("authored_frames",false) and pose.get("rigid",false),"walk uses source pixels without leg deformation "+str(direction)+str(i))
-  check(poses.size()==8 and silhouettes.size()>=6,"eight source poses and independently changing lower-body silhouette "+str(direction))
-  check(hands.size()>=4,"weapon grip follows moving source hand "+str(direction))
-  var combat={}
-  for i in range(100):
-   var pose=YinActorArt.hero_motion_pose(direction,0,false,.22*(1.0-(i+.1)/100),0)
-   combat[pose.source]=true
-  var idle=YinActorArt.hero_motion_pose(direction,0,false,0,0)
-  var hurt=YinActorArt.hero_motion_pose(direction,0,false,0,.3)
-  check(combat.size()==6 and not combat.has(idle.source) and not combat.has(hurt.source) and idle.source!=hurt.source,"six strike phases, separate idle and hurt "+str(direction))
+ for body in range(2):
+  var image=(YinActorArt.PIXEL_WALK if body==0 else YinActorArt.PIXEL_WALK_ALT).get_image()
+  for direction in [Vector2.DOWN,Vector2.UP,Vector2.LEFT,Vector2.RIGHT]:
+   var poses={};var silhouettes={};var hands={}
+   for i in range(8):
+    var pose=YinActorArt.hero_motion_pose(direction,(i+.1)/16.0,true,0,0,.22,body)
+    var region=image.get_region(Rect2i(pose.source));poses[hash(region.get_data())]=true
+    var alpha=Image.create(96,96,false,Image.FORMAT_R8)
+    var at=Vector2i(pose.destination.position)+Vector2i(48,90)
+    for y in range(region.get_height()):
+     for x in range(region.get_width()):
+      if at.y+y>=68:alpha.set_pixel(at.x+x,at.y+y,Color(region.get_pixel(x,y).a,0,0))
+    silhouettes[hash(alpha.get_data())]=true;hands[pose.hand]=true
+    check(pose.get("authored_frames",false) and pose.get("rigid",false),"walk uses source pixels without leg deformation "+str(direction)+str(i))
+   check(poses.size()==8 and silhouettes.size()>=6,"eight source poses and independently changing lower-body silhouette "+str(direction))
+   check(hands.size()>=4,"weapon grip follows moving source hand "+str(direction))
+   var combat={}
+   for i in range(100):
+    var pose=YinActorArt.hero_motion_pose(direction,0,false,.22*(1.0-(i+.1)/100),0,.22,body)
+    combat[pose.source]=true
+   var idle=YinActorArt.hero_motion_pose(direction,0,false,0,0,.22,body)
+   var hurt=YinActorArt.hero_motion_pose(direction,0,false,0,.3,.22,body)
+   check(combat.size()==6 and not combat.has(idle.source) and not combat.has(hurt.source) and idle.source!=hurt.source,"six strike phases, separate idle and hurt "+str(direction))
  for id in range(1,7):
   var frames={}
   for state in [[0,false,false],[.16,true,false],[.46,true,false],[0,false,true]]:

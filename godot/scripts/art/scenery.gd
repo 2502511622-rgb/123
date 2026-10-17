@@ -40,7 +40,7 @@ func _draw() -> void:
 		for x in range(lo.x,hi.x+1):
 			for detail in detail_chunks.get(Vector2i(x,y),[]):stamp(detail.at,detail.icon)
 	# Contact shadows sit under the actual prop, respecting tree harvesting.
-	for prop_node in world.actors.get_children():
+	for prop_node in world.visible_props30():
 		if not prop_node is StaticBody2D or prop_node.is_queued_for_deletion() or not screen.has_point(prop_node.position): continue
 		var width: float = 24
 		for child in prop_node.get_children():

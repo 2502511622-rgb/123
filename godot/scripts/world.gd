@@ -36,13 +36,32 @@ func shared_canopy() -> ShaderMaterial:
 	if canopy_material==null:
 		canopy_material=ShaderMaterial.new();canopy_material.shader=preload("res://shaders/canopy.gdshader");canopy_material.set_shader_parameter("world_phase",true)
 	return canopy_material
+var prop_chunks30: Dictionary={}
+var visible_props_key30=Vector3i(-1,-1,-1)
+var visible_props_cache30: Array=[]
 var actor_index: YinActorIndex
 func combat_index() -> YinActorIndex:
 	if actor_index==null:
 		actor_index=YinActorIndex.new();actor_index.world=self;add_child(actor_index)
 	return actor_index
+func visible_props30() -> Array:
+	var key=Vector3i(Engine.get_process_frames(),Engine.get_physics_frames(),environment_revision)
+	if key==visible_props_key30:return visible_props_cache30
+	visible_props_key30=key;visible_props_cache30=[]
+	var view=screen_bounds().grow(320)
+	var lo=Vector2i((view.position/256).floor());var hi=Vector2i((view.end/256).floor())
+	for y in range(lo.y,hi.y+1):
+		for x in range(lo.x,hi.x+1):
+			for body in prop_chunks30.get(Vector2i(x,y),[]):
+				if is_instance_valid(body) and not body.is_queued_for_deletion() and view.has_point(body.position):visible_props_cache30.append(body)
+	return visible_props_cache30
+var bounds_frame=Vector2i(-1,-1)
+var bounds_cache: Rect2
 func screen_bounds() -> Rect2:
-	return get_global_transform_with_canvas().affine_inverse()*Rect2(Vector2.ZERO,get_viewport_rect().size)
+	var frame=Vector2i(Engine.get_process_frames(),Engine.get_physics_frames())
+	if frame!=bounds_frame:
+		bounds_frame=frame;bounds_cache=get_global_transform_with_canvas().affine_inverse()*Rect2(Vector2.ZERO,get_viewport_rect().size)
+	return bounds_cache
 
 
 func _ready() -> void:
@@ -193,6 +212,9 @@ func prop(name_text: String, at: Vector2, offset: Vector2, collision_rect: Rect2
 	body.position = at
 	body.set_meta("interaction_anchor",at)
 	actors.add_child(body)
+	var bucket=Vector2i((at/256).floor())
+	if not prop_chunks30.has(bucket):prop_chunks30[bucket]=[]
+	prop_chunks30[bucket].append(body)
 	var sprite: Sprite2D = YinWindSprite.new() if name_text.begins_with("tree") or name_text=="dead_pine" else Sprite2D.new()
 	if sprite is YinWindSprite:
 		sprite.world = self

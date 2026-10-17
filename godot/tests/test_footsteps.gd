@@ -29,9 +29,10 @@ func rendered_feet():
  var probe=Probe.new();probe.position=Vector2(80,140);probe.scale=Vector2(2,2)
  # Side view has two separately visible soles; a front neutral pose occludes
  # one boot behind the other, so splitting that image in half cannot track feet.
- # Retain the legacy deformation GPU check for the alternate outfit only.
- # Default outfit now uses new authored pixel poses (test_pixel30.gd).
- probe.pose=YinActorArt.hero_motion_pose(Vector2.RIGHT,0,true,0,0,.22,1)
+ # Retain the old deformation helper GPU check for historical compatibility.
+ # Both live outfits now use new authored pixel poses (test_pixel30.gd).
+ var legacy=YinActorArt.atlas().hero_walk_alt[3][0]
+ probe.pose=YinActorArt.framed_pose(YinActorArt.HERO_WALK_ALT,legacy,legacy,50)
  probe.pose.gait_phase=0;probe.pose.gait_strength=1.0;probe.pose.gait_row=3;viewport.add_child(probe)
  var split=int(80+(probe.pose.destination.position.x+probe.pose.destination.size.x*.5)*2)
  var left_up=await read_probe(viewport,probe,PI/2)

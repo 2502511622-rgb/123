@@ -3,7 +3,7 @@ extends SceneTree
 # fixed cell origin and opaque alpha. No procedural pose creation or tween bake.
 func _initialize():
  var manifest={}
- for action in ["walk","combat"]:
+ for action in ["walk","combat","alt-walk","alt-combat"]:
   var image=Image.load_from_file("res://assets/pixel30/source/hero-"+action+".png")
   if image==null:quit(1);return
   var atlas=Image.create(768,384,false,Image.FORMAT_RGBA8);var rows=[]
@@ -60,4 +60,4 @@ func _initialize():
    rows.append(frames)
   manifest.npc=rows;atlas.save_png("res://assets/pixel30/npc.png")
  var f=FileAccess.open("res://assets/pixel30/manifest.json",FileAccess.WRITE);f.store_string(JSON.stringify(manifest," "));f.close()
- print("PIXEL30 imported 32 walk and 32 combat/idle/hurt source poses");quit()
+ print("PIXEL30 imported two presets, each 32 walk and 32 combat/idle/hurt source poses");quit()

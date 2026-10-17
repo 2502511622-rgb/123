@@ -39,6 +39,6 @@ func run():
   check(game.state.snapshot()==data,"reward is single-use "+place)
  check(game.world.get_instance_id()==id,"travel and rewards preserve persistent world and armies")
  var restored=FarmState.new()
- check(restored.restore(JSON.parse_string(JSON.stringify(game.state.snapshot()))) and restored.exploration_rewards.size()==16,"all claimed rewards persist")
+ check(restored.restore(JSON.parse_string(JSON.stringify(game.state.snapshot()))) and restored.exploration_rewards.size()==YinWorldDistricts.PLACES.size() and restored.exploration_rewards==game.state.exploration_rewards,"all claimed rewards persist")
  print("EXPLORATION28 RESULT ",checks," checks ",failures," failures")
  game.queue_free();await frames();quit(1 if failures else 0)
