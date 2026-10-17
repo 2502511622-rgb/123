@@ -92,7 +92,8 @@ func _physics_process(delta: float) -> void:
 		motion.update(self,delta)
 		if freeze_lock <= 0 and hit_stop <= 0: art_clock += delta*YinEnemyPack.movement_factor(record.kind,record.get("severed",[]))
 		if velocity.length() > 2: art_facing = velocity.normalized()
-		material.set_shader_parameter("contour",.5 if windup>0 else .22)
+		material.set_shader_parameter("contour",.62 if windup>0 else .38)
+		material.set_shader_parameter("readability",.65 if position.distance_to(game.player.position)<220 and not is_in_group("faction_guards") else 0.0)
 		material.set_shader_parameter("motion_clock", art_clock)
 		material.set_shader_parameter("motion_amount", 0.0)
 		if windup>0 and is_instance_valid(victim):art_facing=position.direction_to(victim.position)
@@ -347,7 +348,7 @@ func _draw() -> void:
 		if record.has("war_id") and position.distance_to(game.player.position)<140:draw_string(preload("res://assets/mossfield-font.ttf"), Vector2(-18, -YinMonsterArt.visual_height(record.kind)-27), YinFactions.NAMES[record.faction], HORIZONTAL_ALIGNMENT_LEFT, -1, 10, YinFactions.COLORS[record.faction])
 	YinActorArt.contact_shadow(self,15 if record.kind in YinAbilities.BOSSES else 10,float(motion.descriptor(record.kind).gait),clampf(velocity.length()/45.0,0,1))
 	if position.distance_to(game.player.position)<145:
-		draw_arc(Vector2(0,-3),float(YinBodyProfile.spec(record.kind).size.x)*0.5+3,0,TAU,24,Color(0.88,0.56,0.41,0.75 if windup>0 else 0.3),1.2)
+		draw_arc(Vector2(0,-3),float(YinBodyProfile.spec(record.kind).size.x)*0.5+3,0,TAU,24,Color("80b4ad") if is_in_group("faction_guards") else Color(0.88,0.56,0.41,0.95 if windup>0 else 0.55),1.5)
 	var boss: bool = record.kind in YinAbilities.BOSSES
 	var tint := Color.WHITE if hit_flash > 0.065 else (Color("d79279") if hit_flash > 0 else (Color("8eafd0") if stun > 0.3 or chill_time > 0 else Color("e1e5ce")))
 	if record.kind == "wraith": tint.a = 0.55 if not record.suppressed else 1.0
@@ -364,9 +365,9 @@ func _draw() -> void:
 	var art_height: float = YinMonsterArt.visual_height(record.kind)+7-model.position.y
 	var reveal: bool = record.hp < record.max_hp or record.kind in YinAbilities.BOSSES or record.get("elite", false) or position.distance_to(game.player.position) < 160
 	if reveal:
-		draw_rect(Rect2(-20, -art_height-1, 40, 6), Color("171c25"))
-		draw_rect(Rect2(-19, -art_height, 38 * health_trail / record.max_hp, 4), Color("e6bb83"))
-		draw_rect(Rect2(-19, -art_height, 38 * float(record.hp) / record.max_hp, 4), Color("ca8d76"))
+		draw_rect(Rect2(-23, -art_height-1, 46, 7), Color("10151d"))
+		draw_rect(Rect2(-22, -art_height, 44 * health_trail / record.max_hp, 5), Color("e6bb83"))
+		draw_rect(Rect2(-22, -art_height, 44 * float(record.hp) / record.max_hp, 5), Color("de9b80"))
 	if windup>0:draw_string(preload("res://assets/mossfield-font.ttf"),Vector2(19,-art_height-5),"蓄力",HORIZONTAL_ALIGNMENT_LEFT,-1,10,Color("ffd793"))
 	if shield > 0: draw_arc(Vector2(0, -25), 25, 0, TAU, 20, Color("96c0db"), 2)
 	if burn_time > 0: draw_circle(Vector2(8, -24), 3, Color("f4a261"))
@@ -375,7 +376,10 @@ func _draw() -> void:
 	var caption: String = YinBalance.MONSTERS[record.kind].name + " Lv%d" % int(record.get("level", 1)) + (" · 精英" if record.get("elite", false) else "")
 	if record.get("faction", "") == "village": caption = "护村役卫 Lv%d" % int(record.get("level", 1))
 	if reveal:
-		draw_string(preload("res://assets/mossfield-font.ttf"), Vector2(-24, -art_height - 5), caption, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color("e6c485") if record.get("elite", false) else Color("c8c9ae"))
+		var font=preload("res://assets/mossfield-font.ttf")
+		var text_at=Vector2(-24,-art_height-6)
+		draw_string_outline(font,text_at,caption,HORIZONTAL_ALIGNMENT_LEFT,-1,11,3,Color("131921"))
+		draw_string(font,text_at,caption,HORIZONTAL_ALIGNMENT_LEFT,-1,11,Color("f0cc91") if record.get("elite",false) else Color("e0ddc1"))
 	if YinTemple.ROWS.has(record.kind):
 		YinTempleCombat.draw_warning(self)
 	elif YinIsland.ROWS.has(record.kind):

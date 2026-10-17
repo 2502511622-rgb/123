@@ -665,7 +665,9 @@ func interact() -> void:
 	match interaction:
 		"treasure":
 			var id: String = world.nearest_chest()
-			notify_action(YinAdventure.open_chest(state, id, player.position))
+			var before=state.next_gear_id
+			var message=YinAdventure.open_chest(state,id,player.position)
+			persist();present_reward30(before,message,close_modal)
 		"villager": show_villager()
 		"shipping": notify_action(state.sell())
 		"npc": show_npc()
@@ -715,18 +717,20 @@ func open_modal(title_text: String, description: String) -> VBoxContainer:
 	layout.add_child(heading)
 	var scroll := ScrollContainer.new()
 	scroll.name = "Scroll"
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	scroll.custom_minimum_size = Vector2(436, 209)
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	layout.add_child(scroll)
 	var column := VBoxContainer.new()
 	column.name = "Content"
-	column.custom_minimum_size.x = 420
+	column.custom_minimum_size.x = 0
 	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	column.add_theme_constant_override("separation", 8)
 	scroll.add_child(column)
 	var desc := Label.new()
 	desc.text = description
-	desc.custom_minimum_size.x = 418
+	desc.custom_minimum_size.x = 0
+	desc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	desc.add_theme_font_size_override("font_size", 12)
 	desc.add_theme_color_override("font_color", Color("acb6a2"))
@@ -1075,6 +1079,37 @@ func spawn_gear_pickups() -> void:
 		pickup.position = Vector2(record.at[0], record.at[1])
 		pickup.add_to_group("gear_pickups")
 		world.actors.add_child(pickup)
+func present_reward30(first_id: int, message: String, back: Callable) -> void:
+	var rewards=state.equipment.filter(func(g):return int(g.id)>=first_id)
+	if rewards.is_empty():back.call();refresh(message);return
+	show_reward_gear30(int(rewards[0].id),message,back)
+
+func show_reward_gear30(gear_id: int, message: String, back: Callable) -> void:
+	var items=state.equipment.filter(func(g):return int(g.id)==gear_id)
+	if items.is_empty():back.call();return
+	var gear: Dictionary=items[0]
+	var slot="armor" if gear.weapon=="armor" else state.gear_slot(gear.weapon)
+	var current_id=int(state.equipped_armor if slot=="armor" else state.weapon_slots[slot])
+	var worn=state.equipment.filter(func(g):return int(g.id)==current_id)
+	var old: Dictionary={} if worn.is_empty() else worn[0]
+	var level_value=YinBalance.level(state.cultivation)
+	var value=YinBalance.armor_value(gear) if slot=="armor" else YinBalance.damage(YinBalance.WEAPONS[gear.weapon].damage,level_value,gear)
+	var old_value=0 if old.is_empty() else (YinBalance.armor_value(old) if slot=="armor" else YinBalance.damage(YinBalance.WEAPONS[old.weapon].damage,level_value,old))
+	var metric="护甲" if slot=="armor" else "单次伤害"
+	var box=open_modal("获得装备 · "+YinBalance.WEAPONS[gear.weapon].name,message)
+	paragraph(box,"新装备："+YinBalance.gear_name(gear)+"\n当前："+("空位" if old.is_empty() else YinBalance.gear_name(old))+"\n%s %d → %d（%+d）"%[metric,old_value,value,value-old_value],12)
+	box.add_child(button("装备并继续",func():
+		if state.equip(gear_id):
+			combat.cancel_reload();player.held_item=state.current_gear().weapon
+			persist();close_modal();refresh("已装备："+YinBalance.gear_name(gear))
+	))
+	box.add_child(button("暂存行囊 · 返回",back))
+
+	if slot!="armor":
+		paragraph(box,YinAbilities.affix_text(gear,level_value)+"\n"+YinWeaponLore.describe(gear.weapon))
+	else:paragraph(box,"护甲提供减伤；装备护甲不会切换手持武器。")
+	paragraph(box,"伤害比较为单次基础伤害，未包含攻速与附魔收益。" if slot!="armor" else "可直接穿戴，或先存入行囊。")
+
 func show_equipment() -> void:
 	show_character("穿戴")
 
@@ -1281,7 +1316,8 @@ func paragraph(box: VBoxContainer, text: String, font_size: int = 11) -> Label:
 	var result := Label.new()
 	result.text = text
 	result.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	result.custom_minimum_size.x = 492
+	result.custom_minimum_size.x = 0
+	result.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	result.add_theme_font_size_override("font_size", font_size)
 	result.add_theme_color_override("font_color", Color("c0c8ad"))
 	box.add_child(result)
@@ -1487,8 +1523,9 @@ func show_quests() -> void:
 			box.get_child(0).text="当前目标："+first.title+"\n"+first.hint
 		if not state.quests.first_watch.claimed:
 			var claim:=button("复命 · 领取银剑与35文",func():
+				var before=state.next_gear_id
 				var result: String=YinAdventure.claim(state,YinFirstJourney.ID,0)
-				persist();show_quests();refresh(result)
+				persist();present_reward30(before,result,show_quests)
 			)
 			claim.disabled=state.zone!="farm" or YinAdventure.progress(state,YinFirstJourney.ID)<2
 			box.add_child(claim)
@@ -1545,10 +1582,10 @@ func show_npc_quests(record: Dictionary) -> void:
 			))
 		elif not state.quests[id].claimed:
 			box.add_child(button("复命 · %d/%d" % [YinAdventure.progress(state, id), spec.target], func():
+				var before=state.next_gear_id
 				var message: String = YinAdventure.claim(state, id, int(record.id))
 				persist()
-				show_npc_quests(record)
-				refresh(message)
+				present_reward30(before,message,func():show_npc_quests(record))
 			))
 		else:
 			detail.text += "\n已完成并领取。"
@@ -1677,7 +1714,8 @@ func show_world_echo(id: String) -> void:
 	if not state.exploration_rewards.has(id):
 		var reward=button("领取探索遗物 · "+YinExploration28.reward_text(id),func():
 			if nearest_enemy(player.position,170)!=null:feedback(box,"先清理周围的敌人，再开启遗物。");return
-			var result=YinExploration28.claim(state,id);persist();show_world_echo(id);refresh(result)
+			var before=state.next_gear_id
+			var result=YinExploration28.claim(state,id);persist();present_reward30(before,result,func():show_world_echo(id))
 		)
 		reward.disabled=nearest_enemy(player.position,170)!=null;box.add_child(reward)
 		if reward.disabled:paragraph(box,"附近仍有守卫，清理后可领取探索遗物。",11)
@@ -1730,8 +1768,11 @@ func show_road_event30(id: String) -> void:
 				if state.exploration_rewards.has(id):return
 				if nearest_enemy(player.position,170)!=null:feedback(box,"先避开附近敌人。战斗中无法取用。");return
 				if choice.begins_with("取"):
-					if state.equipment.size()>=64:feedback(box,"装备行囊已满。");return
-					state.grant_gear("armor",1,0)
+					if state.equipment.size()>=20:feedback(box,"装备行囊已满。");return
+					var gear=state.grant_gear("armor",1,0)
+					if gear.is_empty():feedback(box,"未能领取护甲，请整理行囊。");return
+					state.exploration_rewards[id]=true;persist()
+					show_reward_gear30(gear.id,"已领取行旅护甲。",func():show_road_event30(id));return
 				elif choice.begins_with("止"):state.energy=mini(100,state.energy+30)
 				elif choice.begins_with("温"):state.health=mini(100,state.health+20)
 				else:state.money+=12
@@ -1742,4 +1783,4 @@ func show_road_event30(id: String) -> void:
 	else:
 		paragraph(box,"你已取用一份，余下的留给后来者。")
 		if id=="road_supplies":box.add_child(button("B 查看行旅护甲与装备",show_equipment))
-	box.add_child(button("继续赶路 · Esc",close_modal));persist()
+	persist()

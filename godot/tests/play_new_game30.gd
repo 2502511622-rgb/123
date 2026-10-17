@@ -39,6 +39,12 @@ func find_button(node: Node,text: String) -> Button:
   var found=find_button(child,text)
   if found!=null:return found
  return null
+func press_button(control: Button):
+ if control==null:return
+ var scroll=game.modal.get_node("ModalCard/Layout/Scroll");scroll.ensure_control_visible(control);await frames(2)
+ for down in [true,false]:
+  var event=InputEventMouseButton.new();event.button_index=MOUSE_BUTTON_LEFT;event.position=control.get_global_rect().get_center();event.pressed=down;root.push_input(event,true);await frames(1)
+ await frames(2)
 func run():
  game=load("res://scenes/main.tscn").instantiate();root.add_child(game);await frames(8)
  if game.modal!=null:key(KEY_ESCAPE)
@@ -59,6 +65,7 @@ func run():
     for down in [true,false]:
      var event=InputEventMouseButton.new();event.button_index=MOUSE_BUTTON_LEFT;event.position=take.get_global_rect().get_center();event.pressed=down;root.push_input(event,true);await frames(1)
    await capture("journey-road-choice")
+   if game.modal!=null:await press_button(find_button(game.modal,"装备并继续"))
    road_done=game.state.exploration_rewards.has("road_supplies")
    print("NEW PLAYER ROAD chosen=",road_done," hp=",game.state.health)
    if game.modal!=null:key(KEY_ESCAPE);await frames(2)
@@ -77,7 +84,8 @@ func run():
      for down in [true,false]:
       var event=InputEventMouseButton.new();event.button_index=MOUSE_BUTTON_LEFT;event.pressed=down;event.position=at;root.push_input(event,true);await frames(1)
      await frames();await capture("journey-reward")
-    print("NEW PLAYER reward claimed=",game.state.quests.first_watch.claimed)
+    if game.modal!=null:await press_button(find_button(game.modal,"装备并继续"))
+    print("NEW PLAYER reward claimed=",game.state.quests.first_watch.claimed," held=",game.player.held_item," armor=",game.state.equipped_armor)
     break
    move_to(YinContinent.HOME)
   else:
@@ -113,6 +121,7 @@ func run():
     var event=InputEventMouseButton.new();event.button_index=MOUSE_BUTTON_LEFT;event.pressed=down;event.position=point;root.push_input(event,true);await frames(1)
    await frames();await capture("branch-reward")
   print("NEW PLAYER BRANCH claimed=",game.state.exploration_rewards.has("village_watch")," actual gear=",game.state.equipment.back())
+  if game.modal!=null:await press_button(find_button(game.modal,"暂存行囊"))
   var travel=find_button(game.modal,"循驿路返回义庄") if game.modal!=null else null
   if travel!=null:
    var point=travel.get_global_rect().get_center()
