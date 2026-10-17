@@ -33,10 +33,100 @@ vec3 continuous_ground(vec2 at,vec2 quadrant){
  vec3 d=terrain_patch(base+vec2(1,1),p,quadrant);
  return mix(mix(a,b,weight.x),mix(c,d,weight.x),weight.y);
 }
+uniform bool landscape_enabled=false;
+uniform bool forest_zone=false;
+uniform bool grave_zone=false;
+uniform float blood_moon29=0.0;
+uniform sampler2D landscape_field : filter_linear, repeat_disable;
+uniform sampler2D landscape_materials : filter_nearest, repeat_disable;
+uniform sampler2D coast_materials : filter_nearest, repeat_disable;
+// Polynomial hash keeps world-space variation without dozens of sine calls per pixel.
+vec2 hash29(vec2 p){
+ vec3 q=fract(vec3(p.x,p.y,p.x)*vec3(.1031,.1030,.0973));
+ q+=dot(q,q.yxz+33.33);
+ return fract((q.xx+q.yz)*q.zy);
+}
+float noise29(vec2 p){
+ vec2 i=floor(p),f=fract(p);f=f*f*(3.0-2.0*f);
+ return mix(mix(hash29(i).x,hash29(i+vec2(1,0)).x,f.x),mix(hash29(i+vec2(0,1)).x,hash29(i+vec2(1,1)).x,f.x),f.y);
+}
+vec3 patch29(vec2 corner,vec2 p,float row){
+ vec2 h=hash29(corner+vec2(row*37.0,19.0));
+ float variant=row==1.0?(h.x<.52?0.0:(h.x<.80?3.0:(h.x<.95?1.0:2.0))):floor(h.x*4.0);
+ vec2 uv=vec2(.30)+hash29(corner+31.0)*.40+(p-corner)*.28;
+ if(h.y>.5){uv.x=1.0-uv.x;}
+ return texture(landscape_materials,(vec2(variant,row)+uv)/vec2(4,3)).rgb;
+}
+vec3 material29(vec2 at,float row){
+ vec2 p=floor(at)/48.0,base=floor(p),f=fract(p);f=f*f*(3.0-2.0*f);
+ return mix(mix(patch29(base,p,row),patch29(base+vec2(1,0),p,row),f.x),mix(patch29(base+vec2(0,1),p,row),patch29(base+vec2(1,1),p,row),f.x),f.y);
+}
+vec3 coast_patch29(vec2 corner,vec2 p){
+ vec2 h=hash29(corner+73.0);
+ float v=h.x<.40?0.0:(h.x<.75?2.0:(h.x<.94?1.0:3.0));
+ vec2 uv=vec2(.30)+hash29(corner+91.0)*.40+(p-corner)*.28;
+ return texture(coast_materials,(vec2(mod(v,2.0),floor(v/2.0))+uv)*.5).rgb;
+}
+vec3 coast_ground29(vec2 at){
+ vec2 p=floor(at)/64.0,b=floor(p),f=fract(p);f=f*f*(3.0-2.0*f);
+ return mix(mix(coast_patch29(b,p),coast_patch29(b+vec2(1,0),p),f.x),mix(coast_patch29(b+vec2(0,1),p),coast_patch29(b+vec2(1,1),p),f.x),f.y);
+}
+float coast29(vec2 at){
+ if(!continent){return 0.0;}
+ vec2 q=abs(at-vec2(5656,2072))-vec2(424,232);
+ return 1.0-smoothstep(-24.0,72.0,max(q.x,q.y));
+}
+vec3 landscape29(vec2 at){
+ vec3 field=texture(landscape_field,at/map_size).rgb;
+ float n=noise29(at/23.0),fine=noise29(floor(at)/3.0);
+ float d=field.r+(fine-.5)*3.0+(n-.5)*2.0;
+ float road=1.0-smoothstep(-1.5,1.8,d);
+ float shoulder=1.0-smoothstep(1.0,19.0,d);
+ bool mountain=grave_zone || (continent && at.x>3296.0 && at.y>2496.0);
+ float forest=grave_zone?0.0:forest_zone?1.0:(continent?(at.x<3104.0?1.0:max(smoothstep(3824.0,3904.0,at.y),smoothstep(5180.0,5256.0,at.x)*smoothstep(3300.0,3372.0,at.y))):1.0);
+ vec3 ground=material29(at,mountain && forest<.999?2.0:1.0);
+ if(mountain && forest>.0 && forest<.999){ground=mix(ground,material29(at,1.0),forest);}
+ ground=mix(ground,vec3(.19,.235,.205),forest*.14);
+ ground=mix(ground,mix(vec3(.24,.245,.235),vec3(.14,.205,.15),forest),.28);
+ ground*=.96+(noise29(at/160.0)-.5)*.12;
+ float coastal=coast29(at);
+ if(coastal>.0){
+  vec3 shore=coast_ground29(at);
+  shore*=1.0-smoothstep(.0,.7,-field.g)*.25;
+  ground=mix(ground,shore,coastal);
+ }
+ vec3 earth=mix(ground,vec3(.25,.225,.18),.50);
+ if(mountain){earth=mix(earth,vec3(.255,.225,.22),.25);}
+ vec3 stone=shoulder>.001?material29(at,0.0)*.88:ground;
+ if(mountain){stone=mix(stone,earth,.73*(1.0-forest));}
+ if(coastal>.0){stone=mix(stone,earth,coastal*.90);}
+ vec3 surface=mix(ground,earth,shoulder*.65);
+ surface=mix(surface,stone,road);
+ float fragments=step(.70,fine)*(1.0-smoothstep(0.0,10.0,abs(d-3.0)));
+ surface=mix(surface,stone,fragments*.23);
+ float pit=clamp(-field.g,0.0,1.0);
+ surface=mix(surface,vec3(.12,.105,.105),pit*.48);
+ float relief=clamp((dFdx(field.g)+dFdy(field.g))*3.5,-.12,.12);
+ surface*=1.0+max(field.g,0.0)*.13-relief-clamp(field.b,0.0,.30)*.55;
+ float pooled=smoothstep(.34,.78,pit+(n-.5)*.23)*max(coastal,wetness*.65);
+ vec3 water=mix(vec3(.20,.245,.25),vec3(.28,.315,.31),.5+.5*sin(at.y*.13+sin(at.x*.04)+clock_time*.25));
+ surface=mix(surface,mix(earth*.65,water,.72),pooled*.72);
+ surface+=vec3(.025,.032,.030)*pooled*pow(max(0.0,sin(at.x*.10+at.y*.17+clock_time*.4)),14.0);
+ if(mountain){
+  float shadow=(1.0-clamp(dot(surface,vec3(.299,.587,.114))*2.5,0.0,1.0));
+  surface=mix(surface,surface*vec3(1.13,.85,.87),shadow*(.12+blood_moon29*.30)*(1.0-forest*.65));
+  surface+=vec3(.028,.004,.006)*blood_moon29*max(0.0,noise29(at/240.0)-.58);
+ }
+ surface*=1.0-wetness*.11;
+ if(continent && at.x>3296.0 && at.y<2304.0){surface=mix(surface,vec3(.62,.67,.69),snow*.55);}
+ return surface;
+}
 void fragment(){
 	// TileMap batches may remap UVs: the actual map type comes from world coordinates.
 	vec2 tile_uv=(floor(world_at/32.0)+0.5)/(map_size/32.0);
 	float tile=floor(texture(terrain_types,tile_uv).r*255.0+0.5);
+ bool use_landscape=landscape_enabled && !indoor && !(tile>=11.0 && tile<=13.0) && ((!continent && (forest_zone || grave_zone)) || (continent && (world_at.y>2496.0 || coast29(world_at)>.0)));
+ if(use_landscape){COLOR=vec4(landscape29(world_at),COLOR.a);}else{
 	vec2 local_uv=clamp(fract(floor(world_at)/96.0),vec2(0.002),vec2(0.998))*0.5;
 	vec3 region_turf=turf_tint.rgb;
 	if(continent){
@@ -139,4 +229,5 @@ void fragment(){
  }
 	if(indoor){surface=texture(material_atlas,local_uv+vec2(0.5,0.5)).rgb*1.32;}
 	COLOR=vec4(surface,COLOR.a);
+ }
 }

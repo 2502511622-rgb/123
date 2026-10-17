@@ -50,7 +50,7 @@ func _physics_process(delta: float) -> void:
 	walking = position.distance_to(previous) > 0.01
 	if walking: walk_clock += delta
 	material.set_shader_parameter("motion_clock", time)
-	material.set_shader_parameter("motion_amount", 0.6 if walking else 0.12)
+	material.set_shader_parameter("motion_amount", 0.0)
 	queue_redraw()
 func weather_shelter(delta: float) -> bool:
 	var climate=game.world.environment.regional

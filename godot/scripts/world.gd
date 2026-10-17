@@ -203,7 +203,7 @@ func prop(name_text: String, at: Vector2, offset: Vector2, collision_rect: Rect2
 	sprite.texture = YinWorldDetailArt.texture(name_text) if YinWorldDetailArt.SIZES.has(name_text) else YinBiomeArt.texture(name_text) if biome else (YinArt.texture(name_text) if detailed or YinWorldArt.REGIONS.has(name_text) else load("res://assets/%s.png" % name_text))
 	sprite.name = "ArtSprite"
 	if name_text == "tree":
-		sprite.texture = YinArt.texture(YinRegionStyle.tree(YinContinent.faction(at) if self is YinContinentWorld else state.zone,at))
+		sprite.texture = YinArt.texture(YinRegionStyle.tree(YinContinent.zone_at(at) if self is YinContinentWorld else state.zone,at))
 	sprite.centered = false
 	sprite.position = Vector2(-48, -124) if name_text == "tree" else (Vector2(-16, -48) if name_text == "npc" else offset)
 	sprite.scale = Vector2.ONE if detailed else Vector2(2, 2)
@@ -549,7 +549,9 @@ func path_to(start: Vector2,end: Vector2,half_size: Vector2=Vector2(7,5)) -> Pac
 				if not inside_level(Vector2(x*step+offset.x,y*step+offset.y)):grid.set_point_solid(Vector2i(x,y))
 				if self is YinContinentWorld:
 					var terrain=tile_farm.ground.get_cell_atlas_coords(Vector2i(x,y)).x
-					grid.set_point_weight_scale(Vector2i(x,y),1.0 if terrain==10 or terrain>=16 else 1.5)
+					var road=terrain==10 or terrain>=16
+					if environment!=null and environment.landscape29!=null:road=environment.landscape29.sample(Vector2(x*step+offset.x,y*step+offset.y))<0
+					grid.set_point_weight_scale(Vector2i(x,y),1.0 if road else 1.5)
 		# Rasterize each expanded obstacle locally rather than scan every obstacle per cell.
 		# A 32px navigation edge must not skip thin lanterns/posts between
 		# two free grid centres. Reserve cells by their footprint on the continent.

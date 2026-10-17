@@ -4,7 +4,7 @@ import json
 import zipfile
 root=Path(__file__).resolve().parents[1]
 paths=[root/'README.md']
-paths.extend(p for folder in ['godot','scripts','docs','artifacts'] for p in (root/folder).rglob('*') if p.is_file() and '.godot' not in p.parts and '__pycache__' not in p.parts and not (folder=='docs' and p.suffix.lower()=='.gif' and 'reset28' not in p.parts))
+paths.extend(p for folder in ['godot','scripts','docs','artifacts'] for p in (root/folder).rglob('*') if p.is_file() and '.godot' not in p.parts and '__pycache__' not in p.parts and not (folder=='docs' and (root/'docs/images') in p.parents) and not (folder=='docs' and p.suffix.lower()=='.gif' and 'reset28' not in p.parts and 'landscape29' not in p.parts))
 output=root/'yintian-godot.zip'
 with zipfile.ZipFile(output,'w',zipfile.ZIP_DEFLATED) as archive:
  for path in sorted(paths):archive.write(path,Path('yintian')/path.relative_to(root))

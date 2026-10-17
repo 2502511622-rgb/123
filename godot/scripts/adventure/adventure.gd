@@ -1,6 +1,7 @@
 class_name YinAdventure
 extends RefCounted
 const CHESTS = {
+	"island_ruin": {"name":"潮痕遗匣","zone":"island","at":Vector2(1888,1488),"world_at":Vector2(5664,2072),"weapon":"silver_sword","tier":3},
 	"temple_alms": {"name": "施食旧匣", "zone": "temple", "at": Vector2(576, 1056), "weapon": "silver_sword", "tier": 3},
 	"temple_sutra": {"name": "梦障经匣", "zone": "temple", "at": Vector2(1376, 928), "weapon": "spellbook", "tier": 4},
 	"grave_cache": {"name": "守墓人的箱子", "zone": "graveyard", "at": Vector2(448, 500), "weapon": "whip", "tier": 1},
@@ -11,6 +12,9 @@ const CHESTS = {
 	"sunken_cache": {"name": "沉水银匣", "zone": "sunken", "at": Vector2(1088, 704), "weapon": "silver_sword", "tier": 3},
 	"theatre_cache": {"name": "戏台道具箱", "zone": "theatre", "at": Vector2(1088, 704), "weapon": "curse_doll", "tier": 3}
 }
+static func chest_at(id: String,continent: bool=false) -> Vector2:
+	var spec: Dictionary=CHESTS[id]
+	return spec.get("world_at",YinContinent.to_world(spec.zone,spec.at)) if continent else spec.at
 const LANDMARKS = {
 	"camp": {"name": "断碑营地", "at": Vector2(2304, 384)},
 	"well": {"name": "枯井", "at": Vector2(2432, 1024)},
@@ -81,9 +85,9 @@ static func open_chest(state, id: String, player_at: Vector2) -> String:
 	if not CHESTS.has(id): return "没有这个宝箱。"
 	var spec: Dictionary = CHESTS[id]
 	if id in state.opened_chests: return "宝箱已经打开。"
-	var chest_at: Vector2=YinContinent.to_world(spec.zone,spec.at) if state.continent_ready else spec.at
-	if (not state.continent_ready and spec.zone != state.zone) or player_at.distance_to(chest_at) > 56: return "走近宝箱再开启。"
-	if state.enemies.any(func(e): return e.zone == spec.zone and not e.dead and Vector2(e.at[0], e.at[1]).distance_to(chest_at) < 150): return "附近仍有守卫，先清理再开箱。"
+	var position_value: Vector2=chest_at(id,state.continent_ready)
+	if (not state.continent_ready and spec.zone != state.zone) or player_at.distance_to(position_value) > 56: return "走近宝箱再开启。"
+	if state.enemies.any(func(e): return e.zone == spec.zone and not e.dead and Vector2(e.at[0], e.at[1]).distance_to(position_value) < 150): return "附近仍有守卫，先清理再开箱。"
 	var supplies: Dictionary = {"light_ammo": 12, "rifle_ammo": 6, "scrap": 1}
 	if state.equipment.size() >= 20 or not state.can_gain_many(supplies): return "装备或行囊已满，宝箱奖励仍保留。"
 	var gear: Dictionary = state.grant_gear(spec.weapon, spec.tier, 2)

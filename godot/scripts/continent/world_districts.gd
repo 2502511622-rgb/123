@@ -11,6 +11,9 @@ const ROUTES=[
  [Vector2(800,3552),Vector2(1168,3552),Vector2(1504,3552),Vector2(2048,3488),Vector2(2576,3616),Vector2(3200,3552)],
  [Vector2(1504,2400),Vector2(1584,2800),Vector2(1392,3136),Vector2(1504,3552),Vector2(1616,3888),Vector2(1248,3952),Vector2(1088,3744),Vector2(1168,3552)],
  [Vector2(1504,3552),Vector2(1808,3264),Vector2(2096,3312),Vector2(2048,3488)],
+ [Vector2(4320,3648),Vector2(4464,3728),Vector2(4592,3784),Vector2(4704,3795)],
+ [Vector2(3872,3504),Vector2(4000,3408),Vector2(4136,3336),Vector2(4224,3284)],
+ [Vector2(4896,1600),Vector2(5152,1776),Vector2(5376,1952),Vector2(5536,2128),Vector2(5664,2072)],
  ]
 const PLACES={
  "temple_bell":{"name":"无声钟庭","at":Vector2(1168,896),"region":"temple","art":"bell","text":"半埋的铜钟内壁刻着同一行小字：钟响时，不要回头。最后一条刻痕却停在‘回’字上。钟舌已被人仔细取走，旁边还留着拖行的印子。"},
@@ -33,7 +36,8 @@ const PLACES={
 static func road(at: Vector2,a: Vector2,b: Vector2) -> float:
  return at.distance_to(Geometry2D.get_closest_point_to_segment(at,a,b))
 static func paint_roads(world: FarmWorld) -> void:
- for route in ROUTES:
+ for route_index in range(ROUTES.size()):
+  var route=ROUTES[route_index]
   for i in range(route.size()-1):
    var a: Vector2=route[i];var b: Vector2=route[i+1]
    var bounds=Rect2(a,b-a).abs().grow(52)
@@ -41,7 +45,7 @@ static func paint_roads(world: FarmWorld) -> void:
    for y in range(lo.y,hi.y+1):
     for x in range(lo.x,hi.x+1):
      var at=Vector2(x*32+16,y*32+16)
-     if road(at,a,b)<29 and not YinContinent.water(at):world.tile_farm.ground.set_cell(Vector2i(x,y),0,Vector2i(10,0))
+     if road(at,a,b)<(18 if route_index>=9 else 29) and not YinContinent.water(at):world.tile_farm.ground.set_cell(Vector2i(x,y),0,Vector2i(10,0))
 static func build(world: YinContinentWorld) -> void:
  paint_roads(world)
  # Temple: a broken processional axis, a sheltered side library and a dry-water court.
@@ -62,7 +66,7 @@ static func build(world: YinContinentWorld) -> void:
  # Mountain: clusters and winding passages, not a cemetery laid out like a town.
  for at in [Vector2(4480,3120),Vector2(4720,3104),Vector2(5152,3008),Vector2(4512,3504),Vector2(5264,3520),Vector2(5408,3920),Vector2(4848,4112)]:world.biome_prop("mountain_crag",at,50)
  for at in [Vector2(4696,3344),Vector2(5120,3680),Vector2(4544,3840),Vector2(5232,4080)]:world.biome_prop("dead_pine",at,18)
- for at in [Vector2(4720,3296),Vector2(4776,3328),Vector2(4688,3392),Vector2(5056,3808),Vector2(5136,3824)]:world.biome_prop("burial_cairn",at,28)
+ # Three authored grave groups are installed by YinWilderness29.
  world.biome_prop("mountain_hut",Vector2(4544,4000),64)
  # Village: shared spaces, a market lane and a lived-in river approach.
  for at in [Vector2(1264,3328),Vector2(1824,3376),Vector2(1696,3808),Vector2(1072,3856)]:world.prop("cottage",at,Vector2(-80,-136),Rect2(-38,-24,76,24))

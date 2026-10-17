@@ -48,6 +48,7 @@ func build_settlements() -> void:
  var rng=RandomNumberGenerator.new();rng.seed=2301
  for i in range(560):
   var at=Vector2(rng.randf_range(64,6336),rng.randf_range(64,4736))
+  if YinLandscape29.COAST.grow(70).has_point(at):continue
   if YinContinent.water(at) or absf(at.y-1056)<120 or absf(at.y-3552)<120 or absf(at.x-1504)<120 or absf(at.x-4896)<120:continue
   var clear=false
   for p in YinContinent.points():
@@ -66,7 +67,7 @@ func build_settlements() -> void:
   if side=="temple":
    if i%3!=0:continue
    kind="desert_columns" if i%2==0 else "rock"
-  elif side=="graveyard":kind=["dead_pine","mountain_crag","burial_cairn"][i%3]
+  elif side=="graveyard":kind=YinRegionStyle.tree("forest",at) if YinLandscape29.forest(at) else ["dead_pine","mountain_crag"][i%2]
   elif i%6==0:kind="rock"
   if kind.begins_with("tree") or kind=="dead_pine":trees.append(at)
   if YinBiomeArt.SIZES.has(kind):
@@ -98,7 +99,7 @@ func nearest_interaction() -> String:
  var echo=YinWorldDistricts.nearest(self,player.position)
  if echo!="" and player.position.distance_to(YinWorldDistricts.PLACES[echo].at+Vector2(0,18))<best:selected="echo27:"+echo;best=player.position.distance_to(YinWorldDistricts.PLACES[echo].at+Vector2(0,18))
  var chest=nearest_chest()
- if chest!="":selected="treasure";best=player.position.distance_to(YinContinent.to_world(YinAdventure.CHESTS[chest].zone,YinAdventure.CHESTS[chest].at))
+ if chest!="":selected="treasure";best=player.position.distance_to(YinAdventure.chest_at(chest,true))
  for p in YinContinent.points():
   var d=player.position.distance_to(p.at)
   if d<best and can_interact(p.at,p.range):best=d;selected=p.id
@@ -113,8 +114,8 @@ func nearest_interaction() -> String:
 func nearest_chest() -> String:
  for id in YinAdventure.CHESTS:
   var p=YinAdventure.CHESTS[id]
-  if id not in state.opened_chests and can_interact(YinContinent.to_world(p.zone,p.at),46):return id
+  if id not in state.opened_chests and can_interact(YinAdventure.chest_at(id,true),46):return id
  return ""
 func install_chests(game: Node2D) -> void:
  for id in YinAdventure.CHESTS:
-  var chest=YinTreasureChest.new();chest.chest_id=id;chest.game=game;chest.position=YinContinent.to_world(YinAdventure.CHESTS[id].zone,YinAdventure.CHESTS[id].at);actors.add_child(chest)
+  var chest=YinTreasureChest.new();chest.chest_id=id;chest.game=game;chest.position=YinAdventure.chest_at(id,true);actors.add_child(chest)

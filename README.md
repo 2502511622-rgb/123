@@ -1,10 +1,22 @@
-# 阴诡世界 v0.28.1 · Q版完整肢体、支路遗物与真实驻军
+# 阴诡世界 v0.29 · 林间曲径、荒岭孤坟与海岛遗迹
 
 **Godot 4.6 / 俯视角像素 2D / 连续大地图 / 四方势力 / 装备探索 / 实时战斗 / 村民自卫与随从指挥**
 
 旅人来到诡异缝合的异境，以义庄为营地，穿过界河与桥梁，探索装备、结识村民，介入四方势力的纷争。种田玩法已移除。
 
 ![四方领地大地图](docs/world23/map.png)
+
+## v0.29：地表、场景与手绘像素风第一批
+
+按用户指定的《莫塔之子》手绘像素方向接入第一批原创素材：默认主角新增 32 个行走和 32 个攻击/待机/受击源姿态，六位村民更换独立待机、左右步与交谈帧。新主角取消旧腿部网格变形，握持点跟随源帧。23 类怪物、第二套主角、全部建筑与技能尚未完成这轮风格替换；[规范与剩余范围](docs/PIXEL_ART_DIRECTION.md) 如实列出。
+
+16 种地面材质打破重复平铺，道路改为连续曲线与宽窄变化，石板经过碎石、泥土和枯草过渡到植被。后山采用深绿分层植被、树荫和疏密留白；荒岭以三组坟丘、凹坑、半埋棺木和残碑形成重点，血月改为克制的暗红阴影。
+
+岛国海岸新增非对称残拱与滩涂，包含不规则浅洼、贝壳、海草、船板、环境潮蟹和实际可领取的遗匣。门洞碰撞、角色遮挡、道路加速与寻路共同验证；原有江户荒街保留。
+
+![后山道路与植被](docs/landscape29/forest.png)
+
+[三地实机画面、实现与测试范围](docs/LANDSCAPES_V029.md) · [下载 Godot 源码工程](yintian-godot.zip)
 
 ## v0.28.1：修正滑步，左右脚交替抬起
 
@@ -407,7 +419,7 @@ python scripts/package_game.py
 
 `MOSSFIELD_RUNTIME_DIR` 是保留的启动脚本覆盖选项；默认存档和缓存位于仓库父目录 `.runtime/`。Windows / macOS 直接通过 Godot 导入即可。
 
-美术和环境音由本项目生成；当前怪物源素材在 `godot/assets/monsters28/source/`，使用 `godot/tools/bake_monsters28.gd` 整理图集；历史美术和声音工具为 `scripts/generate_art.py`、`generate_audio.py`。字体为重命名的 Noto CJK 字符子集，许可与模板 MIT 署名保留在 `godot/licenses/`。美术重生成需 Pillow，字体重生成需 fonttools；游戏运行均不需要它们。无声 / 无窗口验证不启用音频播放。
+美术和环境音由本项目生成；当前怪物源素材在 `godot/assets/monsters28/source/`，使用 `godot/tools/bake_monsters28.gd` 整理图集；历史美术和声音工具为 `scripts/generate_art.py`、`generate_audio.py`。字体为重命名的 Noto CJK 字符子集，许可与模板 MIT 署名保留在 `godot/licenses/`。美术重生成需 Pillow，字体重生成需 fonttools；游戏运行均不需要它们。源码下载包保留当前美术原稿和验证图，早期 `docs/images/` 展示图仅在 GitHub 仓库收录。无声 / 无窗口验证不启用音频播放。
 
 仓库仍保留早期网页原型与 `mossfield-godot.zip`，本版的下载文件是 **`yintian-godot.zip`**。
 

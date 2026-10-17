@@ -35,7 +35,7 @@ void fragment() {
 	ambient+=vec3(0.12,0.035,-0.045)*warmth*(1.0-rain);
 	ambient=mix(ambient,vec3(0.70,0.72,0.80),snowfall*0.4);
 	ambient=mix(ambient,vec3(0.80,0.62,0.42),sandstorm*0.4);
-	ambient=mix(ambient,vec3(0.76,0.38,0.40),bloodmoon*0.65);
+	ambient=mix(ambient,vec3(0.64,0.53,0.57),bloodmoon*0.27);
 	float glow=texture(light_field,SCREEN_UV).r;
 	float halo=glow;
 	if(quality>1){halo=(texture(light_field,SCREEN_UV+pixel*vec2(3,0)).r+texture(light_field,SCREEN_UV-pixel*vec2(3,0)).r+texture(light_field,SCREEN_UV+pixel*vec2(0,3)).r+texture(light_field,SCREEN_UV-pixel*vec2(0,3)).r)*0.25;}

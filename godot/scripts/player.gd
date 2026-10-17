@@ -134,7 +134,7 @@ func _physics_process(delta: float) -> void:
 	get_node("Camera2D").offset = Vector2(2 if int(hit_feedback * 40) % 2 == 0 else -2, 0) if hit_feedback > 0 else Vector2.ZERO
 	if impact_shake>0:get_node("Camera2D").offset+=Vector2(sin(visual_clock*115),cos(visual_clock*91))*minf(3,impact_shake*24)
 	material.set_shader_parameter("motion_clock", visual_clock)
-	material.set_shader_parameter("motion_amount", 0.9 if direction.length() > 0 else 0.15)
+	material.set_shader_parameter("motion_amount", 0.0 if int(appearance.body)==0 else 0.9 if direction.length() > 0 else 0.15)
 	var previous_position: Vector2 = position
 	move_and_slide()
 	if direction.length()>0 and dodge_time<=0:
@@ -163,6 +163,7 @@ func _draw() -> void:
 	var pose: Dictionary = art_pose()
 	var gait: float=animation_time*16.0*TAU/8.0
 	body_offset=Vector2(sin(gait)*0.5,-absf(sin(gait))*1.1)*gait_blend
+	if pose.get("authored_frames",false):body_offset=Vector2.ZERO
 	if attack_time>0:body_offset=YinActionMotion.body_offset(swing_direction,YinActionMotion.phase(attack_time,attack_duration),heavy_attack)
 	YinAppearance.pose_uniforms(material,pose)
 	var direction_row: int=YinActorArt.direction_row(visual_facing)
@@ -176,12 +177,13 @@ func _draw() -> void:
 	if pose.has("hand"):art_hand=pose.hand
 	art_hand+=body_offset
 	art_hand.x*=turn_scale_x
-	if attack_time<=0:art_hand+=Vector2(sin(gait)*0.8,sin(gait)*0.6)*gait_blend
+	if attack_time<=0 and not pose.get("authored_frames",false):art_hand+=Vector2(sin(gait)*0.8,sin(gait)*0.6)*gait_blend
 	for ghost in ghosts:
 		YinActorArt.draw_pose(self, YinActorArt.hero_motion_pose(visual_facing, animation_time, true, 0, 0,0.22,int(appearance.body)), Color(0.55, 0.85, 0.79, (1 - ghost.age / 0.18) * 0.3), ghost.at - position)
 	YinActorArt.contact_shadow(self,10,animation_time*16.0*TAU/8.0,velocity.length()/SPEED)
 	var tint := Color("ef9a82") if hit_feedback > 0 else (Color(1, 1, 1, 0.55 if int(invincible * 20) % 2 == 0 else 1.0) if invincible > 0 else Color.WHITE)
 	var lean: float = dodge_direction.x * 0.12 if dodge_time > 0 else velocity.x/SPEED*0.025
+	if pose.get("authored_frames",false) and dodge_time<=0:lean=0.0
 	if attack_time>0:lean=swing_direction.x*YinActionMotion.force(YinActionMotion.phase(attack_time,attack_duration))*(0.13 if heavy_attack else 0.07)
 	body_lean=lean
 	draw_set_transform(Vector2.ZERO, lean,Vector2(turn_scale_x,1))

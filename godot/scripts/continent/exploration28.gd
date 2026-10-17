@@ -18,8 +18,11 @@ static func claim(s,id: String) -> String:
  return "获得："+reward_text(id)
 static func road_speed(game: Node2D) -> float:
  if game==null or not game.state.continent_ready or game.player.attack_time>0 or game.player.dodge_time>0:return 1.0
- var cell=Vector2i((game.player.position/32).floor())
- var tile=game.world.tile_farm.ground.get_cell_atlas_coords(cell).x
- if tile!=10 and tile<16:return 1.0
+ if game.world.environment!=null and game.world.environment.landscape29!=null:
+  if game.world.environment.landscape29.sample(game.player.position)> -2:return 1.0
+ else:
+  var cell=Vector2i((game.player.position/32).floor())
+  var tile=game.world.tile_farm.ground.get_cell_atlas_coords(cell).x
+  if tile!=10 and tile<16:return 1.0
  if game.nearest_enemy(game.player.position,250)!=null:return 1.0
  return 1.5

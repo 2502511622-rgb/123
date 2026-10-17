@@ -11,9 +11,9 @@ func frames(n):
 func run():
  game=load("res://scenes/main.tscn").instantiate();root.add_child(game);await frames(5);game.close_modal()
  Engine.max_fps=0;DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
- for scenario in ["home","combat"]:
+ for scenario in ["home","combat","forest","coast"]:
   game.state.weather="rain" if scenario=="combat" else "sun"
-  game.player.position=YinContinent.HOME+Vector2(0,96) if scenario=="home" else Vector2(4200,3050)
+  game.player.position={"home":YinContinent.HOME+Vector2(0,96),"combat":Vector2(4200,3050),"forest":Vector2(5100,4216),"coast":Vector2(5552,2160)}[scenario]
   game.player.invincible=1000
   var warm=Time.get_ticks_msec()
   while Time.get_ticks_msec()-warm<8000:await process_frame

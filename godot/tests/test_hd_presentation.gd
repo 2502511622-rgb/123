@@ -29,9 +29,9 @@ func run():
 		check(poses.size()==6,"all six weighted authored attack poses remain reachable "+weapon)
 	check(YinStrikeTimeline.pose_frame(0.49)==2 and YinStrikeTimeline.pose_frame(0.50)==3,"attack contact divides extension from follow-through")
 	for direction in [Vector2.DOWN,Vector2.UP,Vector2.LEFT,Vector2.RIGHT]:
-		check(YinActorArt.hero_pose(direction,0).texture==YinActorArt.HERO_ATTACK,"legacy gallery and current actor share new source "+str(direction))
+		check(YinActorArt.hero_pose(direction,0).texture==YinActorArt.HERO_ATTACK,"legacy gallery source remains available "+str(direction))
 		var pose: Dictionary=YinActorArt.hero_motion_pose(direction,0,true,0,0)
-		check(pose.texture==YinActorArt.HERO_WALK and pose.source.has_area(),"current four-direction walk source "+str(direction))
+		check(pose.texture==YinActorArt.PIXEL_WALK and pose.source.has_area() and pose.get("authored_frames",false),"current four-direction authored pixel walk source "+str(direction))
 	game=load("res://scenes/main.tscn").instantiate();root.add_child(game);await frames(4)
 	game.close_modal();game.state.intro_seen=true
 	game.player.position=Vector2(300,350)

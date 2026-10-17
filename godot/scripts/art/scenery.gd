@@ -21,6 +21,8 @@ func bake() -> void:
 	for i in range(int(world.level_size.x * world.level_size.y / 5500)):
 		var at := Vector2(random.randi_range(24, int(world.level_size.x) - 24), random.randi_range(24, int(world.level_size.y) - 24))
 		if not world.is_safe_position(at): continue
+		if world.state.zone in ["forest","graveyard"] and not world is YinContinentWorld:continue
+		if world is YinContinentWorld and (at.y>2496 or YinLandscape29.COAST.has_point(at)):continue
 		if world.state.zone == "farm" and Rect2(304, 240, 288, 224).has_point(at): continue
 		var tile: int = world.tile_farm.ground.get_cell_atlas_coords(Vector2i(at / 32)).x
 		if tile >= 8 and tile != 14 and tile != 15: continue

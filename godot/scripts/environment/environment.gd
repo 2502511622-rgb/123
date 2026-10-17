@@ -24,6 +24,8 @@ var baked: bool = false
 var soil_material: ShaderMaterial
 var plot_flags := PackedByteArray()
 var regional: YinRegionalClimate
+var landscape29: YinLandscape29
+var wilderness29: YinWilderness29
 var terrain_material: ShaderMaterial
 func _ready() -> void:
 	indoor = world.state.zone in ["hall", "shop"]
@@ -74,6 +76,17 @@ func bake() -> void:
 	terrain_types = ImageTexture.create_from_image(types)
 	terrain_material.set_shader_parameter("terrain_types", terrain_types)
 	terrain_material.set_shader_parameter("map_size", world.level_size)
+	if not indoor:
+		landscape29=YinLandscape29.new();landscape29.bake(world)
+		terrain_material.set_shader_parameter("landscape_field",landscape29.texture)
+		terrain_material.set_shader_parameter("landscape_materials",load("res://assets/landscape29/materials.png"))
+		terrain_material.set_shader_parameter("coast_materials",load("res://assets/landscape29/coast.png"))
+		terrain_material.set_shader_parameter("landscape_enabled",true)
+		terrain_material.set_shader_parameter("forest_zone",world.state.zone=="forest")
+		terrain_material.set_shader_parameter("grave_zone",world.state.zone=="graveyard")
+		if wilderness29==null:
+			wilderness29=YinWilderness29.new();wilderness29.world=world;world.add_child(wilderness29)
+
 	ground_mask = ImageTexture.create_from_image(image)
 	light_field.rebuild()
 	refresh_reflections()
@@ -122,6 +135,7 @@ func _process(delta: float) -> void:
 	refresh_soil()
 	time += delta
 	if regional!=null:regional.update(delta)
+	terrain_material.set_shader_parameter("blood_moon29",regional.blood if regional!=null else 0.0)
 	var rain_target=regional.rain_target if regional!=null else (1.0 if world.state.weather=="rain" and not indoor else 0.0)
 	rain = move_toward(rain,rain_target,delta*1.2)
 	wetness = move_toward(wetness, 1.0 if rain > 0.1 else 0.0, delta * (0.14 if rain > 0.1 else 0.025))
@@ -248,6 +262,12 @@ func draw_front(canvas: Node2D) -> void:
 	if indoor or not baked: return
 	if regional!=null:regional.draw_front(canvas)
 	var screen: Rect2 = visible_rect()
+	if world is YinContinentWorld and YinLandscape29.COAST.grow(96).has_point(world.player.position):
+		# Faint sea haze at the distant screen margins, never a solid fog wall.
+		for i in range(6):
+			var alpha=(6-i)*.003
+			canvas.draw_rect(Rect2(screen.position+Vector2(0,i*9),Vector2(screen.size.x,9)),Color(.43,.51,.52,alpha))
+			canvas.draw_rect(Rect2(Vector2(screen.position.x,screen.end.y-(i+1)*9),Vector2(screen.size.x,9)),Color(.43,.51,.52,alpha*.7))
 	if rain > 0.01:
 		for i in range(125):
 			var speed: float = 145 + (i % 4) * 42

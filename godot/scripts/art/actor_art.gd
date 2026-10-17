@@ -8,7 +8,18 @@ const TENGU = preload("res://assets/monsters28/daitengu.png")
 const HERO_WALK = preload("res://assets/jrpg/hero_walk.png")
 const HERO_WALK_ALT = preload("res://assets/jrpg/hero_walk_alt.png")
 const HERO_ATTACK = preload("res://assets/jrpg/hero_attack.png")
-const NPC = preload("res://assets/jrpg/npc.png")
+const NPC = preload("res://assets/pixel30/npc.png")
+const PIXEL_WALK = preload("res://assets/pixel30/hero-walk.png")
+const PIXEL_COMBAT = preload("res://assets/pixel30/hero-combat.png")
+static var pixel_data: Dictionary={}
+static func pixel_pose(direction: Vector2,walk: float,moving: bool,attack: float,hurt: float,duration: float) -> Dictionary:
+	if pixel_data.is_empty():pixel_data=JSON.parse_string(FileAccess.get_file_as_string("res://assets/pixel30/manifest.json"))
+	var row=direction_row(direction);var combat=hurt>.08 or attack>0 or not moving
+	var col=7 if hurt>.08 else YinStrikeTimeline.pose_frame(1.0-attack/maxf(duration,.01))+1 if attack>0 else 0 if combat else int(walk*16.0)%8
+	var frame: Dictionary=pixel_data["combat" if combat else "walk"][row][col]
+	var pose=framed_pose(PIXEL_COMBAT if combat else PIXEL_WALK,frame,frame,float(frame.rect[3]))
+	pose.rigid=true;pose.authored_frames=true
+	return pose
 static var npc_cache: Dictionary = {}
 static var data: Dictionary = {}
 static var anatomy: Dictionary = {}
@@ -47,6 +58,7 @@ static func framed_pose(texture_value: Texture2D, frame: Dictionary, reference: 
 		result.hand=hand
 	return result
 static func hero_motion_pose(direction: Vector2, walk: float, moving: bool, attack: float, hurt: float, duration: float = 0.22, body: int = 0) -> Dictionary:
+	if body==0:return pixel_pose(direction,walk,moving,attack,hurt,duration)
 	var row: int = direction_row(direction)
 	var walking: Array = atlas().hero_walk_alt if body==1 else atlas().hero_walk
 	var combat: Array = atlas().hero_attack_alt if body==1 else atlas().hero_attack
@@ -60,10 +72,14 @@ static func hero_motion_pose(direction: Vector2, walk: float, moving: bool, atta
 static func npc_pose(id: int, clock: float, moving: bool, talking: bool = false) -> Dictionary:
 	var column: int = clampi(id-1, 0, 5)
 	var row: int = 3 if talking else ([0, 1, 0, 2][int(clock*7) % 4] if moving else 0)
-	return framed_pose(NPC, atlas().npc[row][column], atlas().npc[0][column], 48)
+	if pixel_data.is_empty():pixel_data=JSON.parse_string(FileAccess.get_file_as_string("res://assets/pixel30/manifest.json"))
+	var frame: Dictionary=pixel_data.npc[row][column]
+	var pose=framed_pose(NPC,frame,frame,float(frame.rect[3]));pose.rigid=true;pose.authored_frames=true
+	return pose
 static func npc_texture(id: int) -> Texture2D:
 	if not npc_cache.has(id):
-		var frame: Dictionary = atlas().npc[0][clampi(id-1,0,5)]
+		if pixel_data.is_empty():pixel_data=JSON.parse_string(FileAccess.get_file_as_string("res://assets/pixel30/manifest.json"))
+		var frame: Dictionary = pixel_data.npc[0][clampi(id-1,0,5)]
 		var image: Image = NPC.get_image().get_region(rect_from(frame.rect))
 		image.resize(32, 48, Image.INTERPOLATE_NEAREST)
 		npc_cache[id] = ImageTexture.create_from_image(image)
@@ -84,7 +100,7 @@ static func draw_pose(canvas: CanvasItem, pose: Dictionary, color: Color = Color
 		var uv: Rect2 = Rect2(pose.source.position/size_value,pose.source.size/size_value)
 		canvas.draw_primitive(vertices,PackedColorArray([color,color,color,color]),PackedVector2Array([uv.position,Vector2(uv.end.x,uv.position.y),uv.end,Vector2(uv.position.x,uv.end.y)]),pose.texture)
 		return
-	if pose.has("gait_phase") and float(pose.get("gait_strength",0))>0.01:
+	if not pose.get("authored_frames",false) and pose.has("gait_phase") and float(pose.get("gait_strength",0))>0.01:
 		YinFootstep.draw(canvas,pose,destination,color,offset)
 		return
 	var bands: int = animation_bands if not pose.get("rigid",false) and pose.texture in [HERO, HERO_WALK, HERO_WALK_ALT, HERO_ATTACK, NPC] else 1

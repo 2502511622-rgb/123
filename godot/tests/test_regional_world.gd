@@ -52,7 +52,7 @@ func run():
  var biome=game.world.actors.get_children().filter(func(n):return n.has_meta("biome_prop"))
  check(biome.any(func(n):return n.get_meta("biome_prop")=="desert_hall") and biome.any(func(n):return n.get_meta("biome_prop")=="desert_buddha"),"desert has ruined temple hall and eroded Buddha")
  check(biome.filter(func(n):return n.get_meta("biome_prop")=="edo_shop").size()==4 and biome.filter(func(n):return n.get_meta("biome_prop")=="edo_house").size()==4,"Edo town has two actual rows of ruined shopfronts")
- check(biome.any(func(n):return n.get_meta("biome_prop")=="mountain_crag") and biome.any(func(n):return n.get_meta("biome_prop")=="burial_cairn"),"graveyard uses crags and irregular burial cairns")
+ check(biome.any(func(n):return n.get_meta("biome_prop")=="mountain_crag") and game.world.environment.wilderness29.props.filter(func(p):return p.art=="mound").size()==3,"graveyard retains crags and exactly three authored burial mounds")
  check(not game.world.grass.grass_at(Vector2(1400,900)),"desert contains no lush village grass")
  check(not game.world.grass.grass_at(Vector2(4896,960)),"Edo main street stays clear of floating grass blades")
  await place(Vector2(1504,864));climate.forced_event="clear";await frames(10)
